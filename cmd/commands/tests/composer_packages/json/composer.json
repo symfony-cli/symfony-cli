@@ -1,0 +1,83 @@
+{
+    "name": "sensio/symfony-live-website",
+    "description": "",
+    "require": {
+        "php": ">=7.1",
+        "ext-iconv": "*",
+        "ext-mbstring": "*",
+        "doctrine/annotations": "^1.0",
+        "doctrine/doctrine-bundle": "~1.2",
+        "doctrine/orm": "~2.5",
+        "erusev/parsedown": "~1.5",
+        "ezyang/htmlpurifier": "^4.8",
+        "raven/raven": "~0.8",
+        "sensio/framework-extra-bundle": "~5.0",
+        "sensiolabs/connect-bundle": "~4.2",
+        "sensiolabs/connect-internal": "~5.0",
+        "sensiolabs/connect-internal-bundle": "~4.1",
+        "symfony/asset": "^3.4",
+        "symfony/cache": "^3.3|^4.0",
+        "symfony/console": "^3.4",
+        "symfony/expression-language": "^3.4",
+        "symfony/flex": "^1.0",
+        "symfony/form": "^3.4",
+        "symfony/framework-bundle": "^3.4",
+        "symfony/lts": "^3",
+        "symfony/monolog-bundle": "^3.2",
+        "symfony/process": "^3.4",
+        "symfony/security-bundle": "^3.4",
+        "symfony/serializer": "^3.4",
+        "symfony/swiftmailer-bundle": "^3.1",
+        "symfony/twig-bundle": "^3.4",
+        "symfony/validator": "^3.4",
+        "symfony/web-link": "^3.4",
+        "symfony/yaml": "^3.4",
+        "twig/extensions": "^1.0"
+    },
+    "require-dev": {
+        "doctrine/data-fixtures": "@stable",
+        "doctrine/doctrine-fixtures-bundle": "@stable",
+        "symfony/debug-bundle": "^3.4",
+        "symfony/dotenv": "^3.4",
+        "symfony/stopwatch": "^3.4",
+        "symfony/var-dumper": "^3.4",
+        "symfony/web-profiler-bundle": "^3.4",
+        "symfony/web-server-bundle": "^3.4"
+    },
+    "autoload": {
+        "psr-4": { "App\\": "src/" }
+    },
+    "autoload-dev": {
+        "psr-4": { "App\\Tests\\": "tests/" }
+    },
+    "config": {
+        "platform": {
+            "php": "7.1.3"
+        },
+        "preferred-install": {
+            "*": "dist"
+        },
+        "sort-packages": true
+    },
+    "replace": {
+        "symfony/polyfill-apcu": "*",
+        "symfony/polyfill-iconv": "*",
+        "symfony/polyfill-mbstring": "*",
+        "symfony/polyfill-php70": "*",
+        "symfony/polyfill-php56": "*",
+        "symfony/polyfill-php55": "*",
+        "symfony/polyfill-php54": "*"
+    },
+    "scripts": {
+        "auto-scripts": {
+            "cache:clear": "symfony-cmd",
+            "assets:install --symlink --relative %PUBLIC_DIR%": "symfony-cmd"
+        },
+        "post-install-cmd": [
+            "@auto-scripts"
+        ],
+        "post-update-cmd": [
+            "@auto-scripts"
+        ]
+    }
+}

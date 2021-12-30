@@ -1,0 +1,8 @@
+{
+    "projects": [
+        {
+            "hostnames": ["sensiocloud.awards.symfony.dev"],
+            "proxy_to": "https://awards---symfony---com---awards-e7fswwq-ism4mega7wpx6.eu.sensiosite.cloud"
+        }
+    ]
+}

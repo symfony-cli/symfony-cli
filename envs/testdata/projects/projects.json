@@ -1,0 +1,29 @@
+{
+    "settings": {
+        "tld": "dev"
+    },
+    "projects": [
+        {
+            "dir": "/does/not/exists/anymore",
+            "hostnames": ["null.dev"]
+        },
+        {
+            "dir": "/Users/fabien/Code/github/symfonycorp/oss-websites/core/twig.sensiolabs.org",
+            "document_root": "public",
+            "hostnames": ["twig.dev"],
+            "disable_mail_catcher": true
+        },
+        {
+            "dir": "/Users/fabien/Code/github/symfonycorp/oss-websites/core/security.sensiolabs.org",
+            "hostnames": ["security.dev", "sec.dev"]
+        },
+        {
+            "dir": "/Users/fabien/Code/github/symfonycorp/oss-websites/core/silex.sensiolabs.org",
+            "hostnames": ["silex.dev"]
+        },
+        {
+            "dir": "/Users/fabien/Code/github/symfonycorp/symfony.com",
+            "hostnames": ["symfony.dev", "symfony.com.dev"]
+        }
+    ]
+}

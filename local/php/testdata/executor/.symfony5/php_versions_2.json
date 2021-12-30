@@ -1,0 +1,13 @@
+[
+    {
+        "version": "7.2.0",
+        "path": "",
+        "php_path": "../bin/php",
+        "fpm_path": "",
+        "cgi_path": "",
+        "php_config_path": "",
+        "phpize_path": "",
+        "phpdbg_path": "",
+        "is_system": true
+    }
+]

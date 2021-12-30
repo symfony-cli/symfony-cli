@@ -1,0 +1,55 @@
+{
+    "name": "project/name",
+    "type": "project",
+    "license": "proprietary",
+    "description": "Project description",
+    "require": {
+        "php": ">=7.0",
+        "doctrine/doctrine-bundle": "^1.6",
+        "sensio/framework-extra-bundle": "^3.0",
+        "sensiolabs/security-checker": "5.0.x-dev",
+        "symfony/asset": "3.4.x-dev",
+        "symfony/cache": "3.4.x-dev",
+        "symfony/config": "3.4.x-dev",
+        "symfony/console": "3.4.x-dev",
+        "symfony/debug-bundle": "3.4.x-dev",
+        "symfony/var-dumper": "3.4.x-dev",
+        "symfony/dependency-injection": "3.4.x-dev",
+        "symfony/finder": "3.4.x-dev",
+        "symfony/flex": "^1.0",
+        "symfony/framework-bundle": "3.4.x-dev",
+        "symfony/http-kernel": "3.4.x-dev",
+        "symfony/process": "3.4.x-dev",
+        "symfony/profiler-pack": "^1.0",
+        "symfony/routing": "3.4.x-dev",
+        "symfony/twig-bridge": "3.4.x-dev",
+        "symfony/twig-bundle": "3.4.x-dev",
+        "symfony/web-server-bundle": "3.4.x-dev",
+        "symfony/yaml": "3.4.x-dev"
+    },
+    "require-dev": {
+        "symfony/dotenv": "3.4.x-dev"
+    },
+    "config": {
+        "platform": {
+            "php": "7.1"
+        },
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": { "App\\": "src/", "App\\Tests\\": "tests/" }
+    },
+    "scripts": {
+        "auto-scripts": {
+            "make cache-warmup": "script",
+            "assets:install --symlink --relative %PUBLIC_DIR%": "symfony-cmd",
+            "security-checker security:check": "script"
+        },
+        "post-install-cmd": [
+            "@auto-scripts"
+        ],
+        "post-update-cmd": [
+            "@auto-scripts"
+        ]
+    }
+}

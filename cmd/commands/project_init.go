@@ -1,0 +1,101 @@
+package commands
+
+import (
+	"bytes"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/symfony-cli/console"
+	"github.com/symfony-cli/symfony-cli/git"
+	"github.com/symfony-cli/terminal"
+)
+
+// initCmd represents the init command
+var projectInitCmd = &console.Command{
+	Category: "project",
+	Name:     "init",
+	Aliases:  []*console.Alias{{Name: "init"}},
+	Usage:    "Initialize a new project using templates",
+	Description: `Initialize a new project using templates.
+Templates used by this tool are fetched from ` + templatesGitRepository + `.
+`,
+	Flags: []console.Flag{
+		dirFlag,
+		&console.StringFlag{Name: "template", Usage: "Project template to use", DefaultText: "autodetermined"},
+		&console.StringFlag{Name: "title", Usage: "Project title", DefaultText: "autodetermined based on directory name"},
+		&console.StringFlag{Name: "slug", DefaultValue: "app", Usage: "Project slug"},
+		&console.StringFlag{Name: "php", Usage: "PHP version to use"},
+		// FIXME: services should also be used to configure Docker? Instead of Flex?
+		// FIXME: services can also be guessed via the existing Docker Compose file?
+		&console.StringSliceFlag{Name: "service", Usage: "Configure some services", Hidden: true},
+		&console.BoolFlag{Name: "dump", Usage: "Dump file content instead of writing them on disk"},
+		&console.BoolFlag{Name: "force", Usage: "Force the overwrite of the files even if they already exists", Hidden: true},
+	},
+	Before: CheckGitIsAvailable,
+	Action: func(c *console.Context) error {
+		ui := terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin)
+
+		projectDir, err := getProjectDir(c.String("dir"))
+		if err != nil {
+			return err
+		}
+
+		minorPHPVersion, err := forcePHPVersion(c.String("php"), projectDir)
+		if err != nil {
+			return err
+		}
+
+		if buf, err := gitInit(projectDir); err != nil {
+			fmt.Print(buf.String())
+			return err
+		}
+		slug := c.String("slug")
+		if slug == "" {
+			slug = "app"
+		}
+
+		cloudServices, err := parseCloudServices(c.StringSlice("service"))
+		if err != nil {
+			return err
+		}
+
+		createdFiles, err := createRequiredFilesProject(projectDir, slug, c.String("template"), minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
+		if err != nil {
+			return err
+		}
+
+		if c.Bool("dump") {
+			return nil
+		}
+
+		terminal.Println("\n<info>Project configured</>")
+		terminal.Println("")
+
+		if len(createdFiles) > 0 {
+			terminal.Println("The following files were created automatically:")
+			for _, file := range createdFiles {
+				terminal.Println("", file)
+			}
+			terminal.Println("")
+
+			ui.Section("Next Steps")
+
+			terminal.Println(" * Adapt the generated files if needed")
+			terminal.Printf(" * Commit them: <info>git add %s && git commit -m\"Add Platform.sh configuration\"</>\n", strings.Join(createdFiles, " "))
+			terminal.Printf(" * Deploy: <info>%s deploy</>\n", c.App.HelpName)
+		} else {
+			terminal.Printf("Deploy the project via <info>%s deploy</>.\n", c.App.HelpName)
+		}
+
+		return nil
+	},
+}
+
+func gitInit(cwd string) (*bytes.Buffer, error) {
+	if _, err := os.Stat(filepath.Join(cwd, ".git")); err == nil || !os.IsNotExist(err) {
+		return nil, nil
+	}
+	return git.Init(cwd, false)
+}

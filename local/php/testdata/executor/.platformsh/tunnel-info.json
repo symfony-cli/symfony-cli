@@ -1,0 +1,31 @@
+[
+    {
+        "projectId": "aew7pfa7t2ut2",
+        "environmentId": "master",
+        "appName": "app",
+        "relationship": "database",
+        "serviceKey": 0,
+        "remotePort": 5432,
+        "remoteHost": "database.internal",
+        "localPort": 30001,
+        "service": {
+            "username": "main",
+            "scheme": "pgsql",
+            "service": "database",
+            "ip": "169.254.125.177",
+            "hostname": "k7zxx76cgco7nec6uecrc7ppc4.database.service._.fr-1.platformsh.site",
+            "cluster": "aew7pfa7t2ut2-main-bvxea6i",
+            "host": "database.internal",
+            "rel": "postgresql",
+            "path": "main",
+            "query": {
+                "is_master": true
+            },
+            "password": "main",
+            "type": "postgresql:13",
+            "port": 5432
+        },
+        "pid": 441860
+    }
+
+]

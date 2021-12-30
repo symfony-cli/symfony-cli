@@ -1,0 +1,19 @@
+name: security
+
+type: 'php:7.1'
+
+relationships:
+    database: "securitydb:postgresql"
+    security-server: "security-server:http"
+
+web:
+    locations:
+        '/':
+            root: 'public'
+            passthru: '/index.php'
+            expires: 1d
+
+disk: 256
+
+mounts:
+    '/var': 'shared:files/var'

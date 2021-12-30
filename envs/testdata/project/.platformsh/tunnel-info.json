@@ -1,0 +1,59 @@
+[
+    {
+        "projectId": "ism4mega7wpx6",
+        "environmentId": "toto",
+        "appName": "security",
+        "relationship": "security-server",
+        "serviceKey": 0,
+        "remotePort": 80,
+        "remoteHost": "security-server.internal",
+        "localPort": 30000,
+        "service": {
+            "username": null,
+            "scheme": "http",
+            "service": "security-server",
+            "fragment": null,
+            "ip": "169.254.159.42",
+            "hostname": "627ctynllggszzn2tjxeesa53i.security-server.service._.fr-1.platformsh.site",
+            "public": false,
+            "cluster": "ism4mega7wpx6-main-bvxea6i",
+            "host": "security-server.internal",
+            "rel": "http",
+            "query": [],
+            "path": null,
+            "password": null,
+            "type": "php:8.0",
+            "port": 80,
+            "host_mapped": false
+        },
+        "pid": 441831
+    },
+    {
+        "projectId": "ism4mega7wpx6",
+        "environmentId": "toto",
+        "appName": "security",
+        "relationship": "database",
+        "serviceKey": 0,
+        "remotePort": 5432,
+        "remoteHost": "database.internal",
+        "localPort": 30001,
+        "service": {
+            "username": "main",
+            "scheme": "pgsql",
+            "service": "database",
+            "ip": "169.254.125.177",
+            "hostname": "k7zxx76cgco7nec6uecrc7ppc4.database.service._.fr-1.platformsh.site",
+            "cluster": "ism4mega7wpx6-main-bvxea6i",
+            "host": "database.internal",
+            "rel": "postgresql",
+            "path": "main",
+            "query": {
+                "is_master": true
+            },
+            "password": "main",
+            "type": "postgresql:13",
+            "port": 5432
+        },
+        "pid": 441860
+    }
+]

@@ -1,0 +1,21 @@
+{
+    "name": "fab/pot",
+    "autoload": {
+        "psr-4": {
+            "Fab\\Pot\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Fabien Potencier",
+            "email": "fabien@symfony.com"
+        }
+    ],
+    "require": {},
+    "extra": {
+        "public-dir": "foobar",
+        "symfony": {
+            "require": "5.3.*"
+        }
+    }
+}
