@@ -74,8 +74,9 @@ func (updater *Updater) CheckForNewVersion(currentVersion string) {
 			updater.silence()
 			return
 		}
-		fmt.Fprintf(updater.Output, "\n<warning>INFO</> A new version is available (<info>%s</>, currently running <info>%s</>).", newVersionFound, currentVersion)
-		fmt.Fprintf(updater.Output, "\n     <info>Consider upgrading soon</>\n\n")
+		fmt.Fprintf(updater.Output, "\n<warning>INFO</> A new version is available (<info>%s</>, currently running <info>%s</>).\n\n", newVersionFound, currentVersion)
+		fmt.Fprintf(updater.Output, "     <info>Consider upgrading soon by downloading the new version:</> <href=https://github.com/symfony-cli/symfony-cli/releases>https://github.com/symfony-cli/symfony-cli/releases</>\n")
+		fmt.Fprintf(updater.Output, "     And then, replace the current binary by the new one.\n\n")
 	}
 }
 
