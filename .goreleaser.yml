@@ -49,6 +49,7 @@ snapshot:
 
 universal_binaries:
   - replace: true
+    name_template: symfony
 
 release:
   footer: |
