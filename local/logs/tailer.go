@@ -120,7 +120,7 @@ func (tailer *Tailer) Watch(pidFile *pid.PidFile) error {
 			if err := inotify.Watch(dir, watcherChan, inotify.Create); err != nil {
 				return errors.Wrap(err, "unable to watch the applog directory")
 			}
-			go func() {
+			go func(applog string) {
 				for {
 					e := <-watcherChan
 					if e.Path() != applog {
@@ -141,7 +141,7 @@ func (tailer *Tailer) Watch(pidFile *pid.PidFile) error {
 						}
 					}()
 				}
-			}()
+			}(applog)
 			watcherChan <- logFileEvent(applog)
 		}
 	}
