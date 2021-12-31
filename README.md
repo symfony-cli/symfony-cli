@@ -17,6 +17,8 @@ To install Symfony CLI, please download the [appropriate version](https://github
 unarchive the files, and move the binary somewhere under your path. To upgrade, download the latest version
 and replace the binary by the new one.
 
+On MacOS, you can use homebrew: `brew install symfony-cli/tap/symfony-cli`
+
 Security Issues
 ---------------
 
