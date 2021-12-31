@@ -1,6 +1,6 @@
 before:
-    hooks:
-        - go mod download
+  hooks:
+    - go mod download
 
 changelog:
   sort: desc
@@ -12,25 +12,25 @@ changelog:
 
 builds:
   - env:
-        - CGO_ENABLED=0
+      - CGO_ENABLED=0
     goos:
-        - linux
-        - windows
-        - darwin
+      - linux
+      - windows
+      - darwin
     goarch:
-        - 386
-        - amd64
-        - arm64
+      - 386
+      - amd64
+      - arm64
     ignore:
-        - goos: windows
-          goarch: arm64
-        - goos: darwin
-          goarch: 386
+      - goos: windows
+        goarch: arm64
+      - goos: darwin
+        goarch: 386
     main: ./cmd
     binary: symfony
     ldflags: -s -w -X 'main.channel={{ if index .Env "AUTOUPDATE_CHANNEL" }}{{ .Env.AUTOUPDATE_CHANNEL }}{{ else }}dev{{ end }}' -X 'main.buildDate={{ .Date }}' -X 'main.version={{ .Version }}'
     flags:
-        - -trimpath
+      - -trimpath
 
 archives:
   - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
@@ -42,14 +42,71 @@ archives:
       - LICENSE
 
 checksum:
-    name_template: 'checksums.txt'
+  name_template: 'checksums.txt'
 
 snapshot:
-    name_template: "next"
+  name_template: "next"
 
 universal_binaries:
-    - replace: true
+  - replace: true
 
 release:
   footer: |
     **Full Changelog**: https://github.com/symfony-cli/symfony-cli/compare/{{ .PreviousTag }}...{{ .Tag }}
+
+brews:
+  - tap:
+      owner: symfony-cli
+      name: homebrew-tap
+    commit_author:
+      name: Fabien Potencier
+      email: fabien@symfony.com
+    folder: Formula
+    goarm: "7"
+    homepage: https://symfony.com
+    description: Helps Symfony developers manage projects, from local code to remote infrastructure
+    license: AGPL-3.0
+    test: |
+      system "#{bin}/symfony version"
+    dependencies:
+    - name: git
+      type: optional
+    install: |-
+      bin.install "symfony"
+
+rigs:
+  - rig:
+      owner: symfony-cli
+      name: fish-food
+    commit_author:
+      name: Fabien Potencier
+      email: fabien@symfony.com
+    homepage: https://symfony.com
+    description: Helps Symfony developers manage projects, from local code to remote infrastructure
+    license: AGPL-3.0
+
+scoop:
+  bucket:
+    owner: symfony-cli
+    name: scoop-bucket
+  commit_author:
+      name: Fabien Potencier
+      email: fabien@symfony.com
+  homepage: https://symfony.com
+  description: Helps Symfony developers manage projects, from local code to remote infrastructure
+  license: AGPL-3.0
+
+nfpms:
+  - file_name_template: '{{ .ConventionalFileName }}'
+    id: packages
+    homepage: https://symfony.com
+    description: Helps Symfony developers manage projects, from local code to remote infrastructure
+    maintainer: Fabien Potencier <fabien@symfony.com>
+    license: AGPL-3.0
+    vendor: Symfony
+    formats:
+    - apk
+    - deb
+    - rpm
+    recommends:
+    - git
