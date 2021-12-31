@@ -36,11 +36,6 @@ var localVariableExposeFromTunnelCmd = &console.Command{
 		}
 
 		terminal.Eprintln("Exposing tunnel service environment variables")
-
-		if err := tunnel.Expose(true); err != nil {
-			return err
-		}
-
-		return nil
+		return tunnel.Expose(true)
 	},
 }
