@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
+	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/util"
 )
 
@@ -51,10 +52,16 @@ type Updater struct {
 // CheckForNewVersion does a simple check once (within the Updater.Timeout
 // timeframe) for new version available and display a warning if
 // a new version is found.
-func (updater *Updater) CheckForNewVersion(currentVersion string) {
+func (updater *Updater) CheckForNewVersion(currentVersionStr string) {
 	if util.IsGoRun() {
 		return
 	}
+
+	currentVersion, err := version.NewVersion(currentVersionStr)
+	if err != nil {
+		return
+	}
+
 	newVersionCh := make(chan *version.Version)
 	go func() {
 		version := updater.check(currentVersion, true)
@@ -74,9 +81,9 @@ func (updater *Updater) CheckForNewVersion(currentVersion string) {
 			updater.silence()
 			return
 		}
-		fmt.Fprintf(updater.Output, "\n<warning>INFO</> A new version is available (<info>%s</>, currently running <info>%s</>).\n\n", newVersionFound, currentVersion)
-		fmt.Fprintf(updater.Output, "     <info>Consider upgrading soon by downloading the new version:</> <href=https://github.com/symfony-cli/symfony-cli/releases>https://github.com/symfony-cli/symfony-cli/releases</>\n")
-		fmt.Fprintf(updater.Output, "     And then, replace the current binary by the new one.\n\n")
+		fmt.Fprintf(updater.Output, "\n<error> INFO </> <info>A new Symfony CLI version is available</> (<info>%s</>, currently running <info>%s</>).\n\n", newVersionFound, currentVersion)
+		fmt.Fprintf(updater.Output, "       Upgrade soon by downloading the new version at <href=https://github.com/symfony-cli/symfony-cli/releases>https://github.com/symfony-cli/symfony-cli/releases</>\n")
+		fmt.Fprintf(updater.Output, "       And replace the current binary (<info>%s</>) by the new one.\n\n", console.CurrentBinaryName())
 	}
 }
 
@@ -87,7 +94,7 @@ func (updater *Updater) silence() {
 	}
 }
 
-func (updater *Updater) check(currentVersion string, enableCache bool) *version.Version {
+func (updater *Updater) check(currentVersion *version.Version, enableCache bool) *version.Version {
 	if err := updater.createCacheDir(); err != nil {
 		fmt.Fprintf(updater.Output, "<comment>Disabling update check: %q</>\n", err)
 		return nil
@@ -163,12 +170,16 @@ func (updater *Updater) check(currentVersion string, enableCache bool) *version.
 		updater.logger.Err(err).Msg("")
 		return nil
 	}
-	version, err := version.NewVersion(manifest.Name)
+
+	latestVersion, err := version.NewVersion(manifest.Name)
 	if err != nil {
 		updater.logger.Err(err).Msg("")
 		return nil
 	}
-	return version
+	if latestVersion.GreaterThan(currentVersion) {
+		return latestVersion
+	}
+	return nil
 }
 
 func (updater *Updater) createCacheDir() error {
