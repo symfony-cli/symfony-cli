@@ -72,7 +72,7 @@ brews:
     - name: git
       type: optional
     install: |-
-      bin.install "symfony"
+      bin.install "symfony-cli"
 
 rigs:
   - rig:
