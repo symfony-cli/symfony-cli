@@ -17,10 +17,10 @@ require (
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/viper v1.10.1
 	github.com/stoicperlman/fls v0.0.0-20171222144224-f073b7a01081
-	github.com/symfony-cli/cert v0.0.0-20211113153733-d7a4dc6cf68a
-	github.com/symfony-cli/console v0.0.0-20211113152427-c2f714b3b346
-	github.com/symfony-cli/phpstore v0.0.0-20211113150303-69c3eba68cdb
-	github.com/symfony-cli/terminal v0.0.0-20211202104800-1338cabeb341
+	github.com/symfony-cli/cert v1.0.0
+	github.com/symfony-cli/console v1.0.0
+	github.com/symfony-cli/phpstore v1.0.0
+	github.com/symfony-cli/terminal v1.0.0
 	github.com/syncthing/notify v0.0.0-20210616190510-c6b7342338d2
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
