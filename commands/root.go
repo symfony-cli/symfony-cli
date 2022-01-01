@@ -79,7 +79,6 @@ func CommonCommands() []*console.Command {
 		localServerStatusCmd,
 		localServerStopCmd,
 		localVariableExposeFromTunnelCmd,
-		nextCmd,
 		projectLocalMailCatcherOpenCmd,
 		projectLocalRabbitMQManagementOpenCmd,
 		projectLocalOpenCmd,

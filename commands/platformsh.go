@@ -89,28 +89,6 @@ func NewPlatformShCLI() (*platformshCLI, error) {
 	return p, nil
 }
 
-var nextCmd = &console.Command{
-	Category: "self",
-	Name:     "use-next",
-	Aliases:  []*console.Alias{{Name: "use-next"}},
-	Usage:    "Use the next version of SymfonyCloud",
-	Hidden:   console.Hide,
-	Action: func(c *console.Context) error {
-		file, err := os.Create(filepath.Join(util.GetHomeDir(), ".use-next"))
-		if err != nil {
-			return err
-		}
-		file.Close()
-		home, err := homedir.Dir()
-		if err != nil {
-			return err
-		}
-		installPlatformPhar(home)
-		terminal.Println("<info>You're now all set to use the next version of SymfonyCloud!</>")
-		return nil
-	},
-}
-
 var platformshInstallCLICmd = &console.Command{
 	Category: "self",
 	Name:     "install-platform-sh-cli",
