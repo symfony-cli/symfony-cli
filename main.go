@@ -19,7 +19,7 @@
 
 package main
 
-//go:generate go run ../local/platformsh/platformsh_config_generator/main.go
+//go:generate go run local/platformsh/platformsh_config_generator/main.go
 
 import (
 	"fmt"
@@ -28,7 +28,7 @@ import (
 	"time"
 
 	"github.com/symfony-cli/console"
-	"github.com/symfony-cli/symfony-cli/cmd/commands"
+	"github.com/symfony-cli/symfony-cli/commands"
 	"github.com/symfony-cli/symfony-cli/local/php"
 	"github.com/symfony-cli/terminal"
 )

@@ -28,7 +28,7 @@ jobs:
                 if: startsWith(github.ref, 'refs/tags/v')
             -
                 name: Prepare
-                run: go generate ./cmd/
+                run: go generate ./
             -
                 name: Test
                 run: go test -v ./...

@@ -26,7 +26,7 @@ builds:
         goarch: arm64
       - goos: darwin
         goarch: 386
-    main: ./cmd
+    main: ./
     binary: symfony
     ldflags: -s -w -X 'main.channel={{ if index .Env "AUTOUPDATE_CHANNEL" }}{{ .Env.AUTOUPDATE_CHANNEL }}{{ else }}dev{{ end }}' -X 'main.buildDate={{ .Date }}' -X 'main.version={{ .Version }}'
     flags:

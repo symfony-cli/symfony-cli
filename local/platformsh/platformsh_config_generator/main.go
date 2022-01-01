@@ -96,7 +96,7 @@ func main() {
 	if err := outputTemplate.Execute(&buf, data); err != nil {
 		panic(err)
 	}
-	f, err := os.Create("../local/platformsh/platformsh_config.go")
+	f, err := os.Create("local/platformsh/platformsh_config.go")
 	if err != nil {
 		panic(err)
 	}
