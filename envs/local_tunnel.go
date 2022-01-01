@@ -36,6 +36,15 @@ import (
 	"github.com/symfony-cli/symfony-cli/util"
 )
 
+type pshtunnel struct {
+	EnvironmentID string                 `json:"environmentId"`
+	AppName       string                 `json:"appName"`
+	ProjectID     string                 `json:"projectId"`
+	Relationship  string                 `json:"relationship"`
+	LocalPort     int                    `json:"localPort"`
+	Service       map[string]interface{} `json:"service"`
+}
+
 func (l *Local) relationshipsFromTunnel() Relationships {
 	projectRoot := util.RepositoryRootDir(l.Dir)
 	envID, err := util.PotentialCurrentEnvironmentID(projectRoot)
@@ -65,19 +74,19 @@ func (l *Local) relationshipsFromTunnel() Relationships {
 		}
 		return nil
 	}
-	var tunnel []struct {
-		EnvironmentID string                 `json:"environmentId"`
-		AppName       string                 `json:"appName"`
-		ProjectID     string                 `json:"projectId"`
-		Relationship  string                 `json:"relationship"`
-		LocalPort     int                    `json:"localPort"`
-		Service       map[string]interface{} `json:"service"`
-	}
-	if err := json.Unmarshal(data, &tunnel); err != nil {
-		if l.Debug {
-			fmt.Fprintf(os.Stderr, "ERROR: unable to unmarshal tunnel data: %s\n", err)
+	var tunnels []pshtunnel
+	if err := json.Unmarshal(data, &tunnels); err != nil {
+		// For some reasons, psh sometimes dump the tunnel file as a map
+		var alttunnels map[string]pshtunnel
+		if err := json.Unmarshal(data, &alttunnels); err != nil {
+			if l.Debug {
+				fmt.Fprintf(os.Stderr, "ERROR: unable to unmarshal tunnel data: %s: %s\n", tunnelFile, err)
+			}
+			return nil
 		}
-		return nil
+		for _, config := range alttunnels {
+			tunnels = append(tunnels, config)
+		}
 	}
 	gitConfig := util.GetProjectConfig(projectRoot, l.Debug)
 	if gitConfig == nil {
@@ -87,7 +96,7 @@ func (l *Local) relationshipsFromTunnel() Relationships {
 		return nil
 	}
 	rels := make(Relationships)
-	for _, config := range tunnel {
+	for _, config := range tunnels {
 		if config.ProjectID == gitConfig.ID && config.EnvironmentID == envID && config.AppName == app.Name {
 			config.Service["port"] = strconv.Itoa(config.LocalPort)
 			config.Service["host"] = "127.0.0.1"
@@ -132,6 +141,9 @@ func (t *Tunnel) Expose(expose bool) error {
 	}
 
 	if expose {
+		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+			return err
+		}
 		file, err := os.Create(path + "-expose")
 		if err != nil {
 			return err
