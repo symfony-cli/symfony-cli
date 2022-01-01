@@ -129,9 +129,10 @@ func (tailer *Tailer) Watch(pidFile *pid.PidFile) error {
 		if len(applogs) == 0 {
 			applogs = findApplicationLogFiles(pidFile.Dir)
 		}
-		watcherChan := make(chan inotify.EventInfo, 1)
 
 		for _, applog := range applogs {
+			watcherChan := make(chan inotify.EventInfo, 1)
+
 			dir := filepath.Dir(applog)
 			if err := os.MkdirAll(dir, 0755); err != nil {
 				return err
