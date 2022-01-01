@@ -1,7 +1,9 @@
 package platformsh
 
+import "strings"
+
 func IsPhpExtensionAvailable(ext, phpVersion string) bool {
-	versions, ok := availablePHPExts[ext]
+	versions, ok := availablePHPExts[strings.ToLower(ext)]
 	if !ok {
 		return false
 	}
