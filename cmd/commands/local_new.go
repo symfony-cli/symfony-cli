@@ -139,7 +139,7 @@ var localNewCmd = &console.Command{
 			if err := runComposer(dir, []string{"require", "webapp"}, c.Bool("debug")); err != nil {
 				return err
 			}
-			buf, err := git.AddAndCommit(dir, "Add webapp packages", c.Bool("debug"))
+			buf, err := git.AddAndCommit(dir, []string{"."}, "Add webapp packages", c.Bool("debug"))
 			if err != nil {
 				fmt.Print(buf.String())
 				return err
@@ -150,7 +150,7 @@ var localNewCmd = &console.Command{
 			if err := runComposer(dir, []string{"require", "platformsh"}, c.Bool("debug")); err != nil {
 				return err
 			}
-			buf, err := git.AddAndCommit(dir, "Add more packages", c.Bool("debug"))
+			buf, err := git.AddAndCommit(dir, []string{"."}, "Add more packages", c.Bool("debug"))
 			if err != nil {
 				fmt.Print(buf.String())
 				return err
@@ -198,7 +198,7 @@ func initCloud(c *console.Context, s *terminal.Spinner, minorPHPVersion, dir str
 		return err
 	}
 
-	buf, err := git.AddAndCommit(dir, "Add Platform.sh configuration", c.Bool("debug"))
+	buf, err := git.AddAndCommit(dir, []string{"."}, "Add Platform.sh configuration", c.Bool("debug"))
 	if err != nil {
 		fmt.Print(buf.String())
 	}
@@ -243,7 +243,7 @@ func initProjectGit(c *console.Context, s *terminal.Spinner, dir string) error {
 		fmt.Print(buf.String())
 		return err
 	}
-	buf, err := git.AddAndCommit(dir, "Add initial set of files", c.Bool("debug"))
+	buf, err := git.AddAndCommit(dir, []string{"."}, "Add initial set of files", c.Bool("debug"))
 	if err != nil {
 		fmt.Print(buf.String())
 	}
