@@ -102,7 +102,7 @@ var platformshInstallCLICmd = &console.Command{
 
 func (p *platformshCLI) parseCommands(home, dir string) error {
 	// Cache commands list based on PHAR checksum
-	cacheDir := filepath.Join(home, ".platformsh", ".symfony", "cache")
+	cacheDir := filepath.Join(os.TempDir(), ".symfony", "platformsh", "cache")
 	if _, err := os.Stat(cacheDir); err != nil {
 		if err := os.MkdirAll(cacheDir, 0755); err != nil {
 			return err
@@ -143,7 +143,7 @@ func (p *platformshCLI) parseCommands(home, dir string) error {
 }
 
 func installPlatformPhar(home string) error {
-	cacheDir := filepath.Join(home, ".platformsh", ".symfony", "cache")
+	cacheDir := filepath.Join(os.TempDir(), ".symfony", "platformsh", "cache")
 	if _, err := os.Stat(cacheDir); err != nil {
 		if err := os.MkdirAll(cacheDir, 0755); err != nil {
 			return err
@@ -304,7 +304,9 @@ func (p *platformshCLI) proxyPSHCmd(command pshcommand) console.ActionFunc {
 		return func(c *console.Context) error {
 			args := os.Args[1:]
 			for i := range args {
-				args[i] = strings.Replace(args[i], c.Command.UserName, command.Name, 1)
+				for _, name := range c.Command.Names() {
+					args[i] = strings.Replace(args[i], name, command.Name, 1)
+				}
 			}
 			e := p.executor(args)
 			return console.Exit("", e.Execute(false))
