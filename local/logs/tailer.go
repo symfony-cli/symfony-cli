@@ -133,6 +133,13 @@ func (tailer *Tailer) Watch(pidFile *pid.PidFile) error {
 		for _, applog := range applogs {
 			watcherChan := make(chan inotify.EventInfo, 1)
 
+			// Convert relative paths to absolute paths
+			absAppLog, err := filepath.Abs(applog)
+			if err != nil {
+				return errors.Wrapf(err, "unable to get absolute path for %s", applog)
+			}
+			applog = absAppLog
+
 			dir := filepath.Dir(applog)
 			if err := os.MkdirAll(dir, 0755); err != nil {
 				return err
@@ -140,6 +147,25 @@ func (tailer *Tailer) Watch(pidFile *pid.PidFile) error {
 			if err := inotify.Watch(dir, watcherChan, inotify.Create); err != nil {
 				return errors.Wrap(err, "unable to watch the applog directory")
 			}
+
+			// Evaluate possible symlinks in the applog path, this is needed because
+			// inotify will notify us on source path, and not the symlink path.
+			if _, err := os.Stat(applog); err == nil {
+				realAppLog, err := filepath.EvalSymlinks(applog)
+				if err != nil {
+					return errors.Wrapf(err, "unable to evaluate symlinks for %s", applog)
+				}
+				applog = realAppLog
+			} else if errors.Is(err, os.ErrNotExist) {
+				realDir, err := filepath.EvalSymlinks(dir)
+				if err != nil {
+					return errors.Wrapf(err, "unable to evaluate symlinks for %s", dir)
+				}
+				applog = filepath.Join(realDir, filepath.Base(applog))
+			} else {
+				return errors.Wrapf(err, "unable to evaluate symlinks for %s", applog)
+			}
+
 			go func(applog string) {
 				for {
 					e := <-watcherChan
