@@ -29,6 +29,7 @@ type Executor struct {
 	SkipNbArgs int
 	Stdout     io.Writer
 	Stderr     io.Writer
+	Stdin      io.Reader
 	Paths      []string
 	ExtraEnv   []string
 
@@ -299,9 +300,12 @@ func (e *Executor) Execute(loadDotEnv bool) int {
 	if e.Stderr == nil {
 		e.Stderr = os.Stderr
 	}
+	if e.Stdin == nil {
+		e.Stdin = os.Stdin
+	}
 	cmd.Stdout = e.Stdout
 	cmd.Stderr = e.Stderr
-	cmd.Stdin = os.Stdin
+	cmd.Stdin = e.Stdin
 	if e.Dir != "" {
 		cmd.Dir = e.Dir
 	}
