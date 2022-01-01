@@ -4,7 +4,7 @@ before:
 
 changelog:
   sort: desc
-  use: git
+  use: github
   filters:
     exclude:
     - Merge branch
