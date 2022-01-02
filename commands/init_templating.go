@@ -176,6 +176,9 @@ func getTemplates(rootDirectory, chosenTemplateName string, minorPHPVersion stri
 			return nil, errors.Wrap(err, "could not update configuration templates")
 		}
 	} else {
+		if err := os.MkdirAll(filepath.Dir(directory), 0755); err != nil {
+			return nil, errors.Wrapf(err, "unable to create directory for %s", directory)
+		}
 		terminal.Logger.Info().Msg("Initial configuration templates fetch")
 		if err := git.Clone(templatesGitRepository, directory); err != nil {
 			return nil, errors.Wrap(err, "could not fetch configuration templates")
