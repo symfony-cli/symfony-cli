@@ -19,7 +19,7 @@
 
 package main
 
-//go:generate go run local/platformsh/platformsh_config_generator/main.go
+//go:generate go run ./local/platformsh/generator/...
 
 import (
 	"fmt"
@@ -95,7 +95,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
-	cmds = append(cmds, psh.PSHCommands()...)
+	cmds = append(cmds, psh.Commands...)
 	console.HelpPrinter = psh.WrapHelpPrinter()
 	app := &console.Application{
 		Name:          "Symfony CLI",
