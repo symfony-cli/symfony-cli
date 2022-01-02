@@ -85,7 +85,7 @@ var localPhpListCmd = &console.Command{
 
 		terminal.Println("")
 		terminal.Println("To control the version used in a directory, create a <comment>.php-version</> file that contains the version number (e.g. 7.2 or 7.2.15).")
-		terminal.Println("If you're using SymfonyCloud, the version can also be specified in the <comment>.symfony.cloud.yaml</> file.")
+		terminal.Println("If you're using Platform.sh, the version can also be specified in the <comment>.platform.app.yaml</> file.")
 
 		return nil
 	},

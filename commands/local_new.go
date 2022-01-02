@@ -66,7 +66,7 @@ var localNewCmd = &console.Command{
 		&console.BoolFlag{Name: "webapp", Usage: "Add the webapp pack to get a fully configured web poject"},
 		&console.BoolFlag{Name: "book", Usage: "Clone the Symfony 5: The Fast Track book project"},
 		&console.BoolFlag{Name: "no-git", Usage: "Do not initialize Git"},
-		&console.BoolFlag{Name: "cloud", Usage: "Initialize SymfonyCloud"},
+		&console.BoolFlag{Name: "cloud", Usage: "Initialize Platform.sh"},
 		&console.StringSliceFlag{Name: "service", Usage: "Configure some services", Hidden: true},
 		&console.BoolFlag{Name: "debug", Usage: "Display commands output"},
 		&console.StringFlag{Name: "php", Usage: "PHP version to use"},

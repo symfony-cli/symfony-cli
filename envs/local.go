@@ -85,7 +85,7 @@ func (l *Local) Local() bool {
 	return true
 }
 
-// Relationships returns envs from SymfonyCloud relationships or a local Docker setup
+// Relationships returns envs from Platform.sh relationships or a local Docker setup
 func (l *Local) Relationships() Relationships {
 	// we need to call it in all cases so that l.DockerEnv is set correctly
 	dockerRel := l.RelationshipsFromDocker()

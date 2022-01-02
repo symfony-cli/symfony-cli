@@ -160,7 +160,7 @@ func (e *Executor) Config(loadDotEnv bool) error {
 	}
 
 	vars := make(map[string]string)
-	// env defined by SymfonyCloud services/tunnels or docker-compose services
+	// env defined by Platform.sh services/tunnels or docker-compose services
 	if env, err := envs.GetEnv(e.scriptDir, terminal.IsDebug()); err == nil {
 		for k, v := range envs.AsMap(env) {
 			vars[k] = v
