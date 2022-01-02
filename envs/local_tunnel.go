@@ -155,7 +155,7 @@ func (t *Tunnel) Expose(expose bool) error {
 	return nil
 }
 
-// Path returns the path to the SymfonyCloud local tunnel state file
+// Path returns the path to the Platform.sh local tunnel state file
 func (t *Tunnel) computePath() (string, error) {
 	if t.path != "" {
 		return t.path, nil

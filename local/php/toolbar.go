@@ -66,7 +66,7 @@ func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.Rea
 	if env["SYMFONY_TUNNEL"] != "" {
 		tunnel = fmt.Sprintf(`<span class="sf-toolbar-status sf-toolbar-status-green">Up (%s)</span>`, env["SYMFONY_TUNNEL"])
 		if env["SYMFONY_TUNNEL_ENV"] != "" {
-			envVars = `<span class="sf-toolbar-status sf-toolbar-status-green">from SymfonyCloud</span>`
+			envVars = `<span class="sf-toolbar-status sf-toolbar-status-green">from Platform.sh</span>`
 			logoBg = "sf-toolbar-status-green"
 		} else {
 			logoBg = "sf-toolbar-status-yellow"

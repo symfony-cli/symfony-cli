@@ -113,7 +113,7 @@ func (b *Book) Checkout(step string) error {
 	printBanner("<comment>[WEB]</> Stopping the Local Web Server", b.Debug)
 	executeCommand([]string{"symfony", "server:stop"}, b.Debug, true, nil)
 
-	printBanner("<comment>[WEB]</> Stopping the SymfonyCloud tunnel", b.Debug)
+	printBanner("<comment>[WEB]</> Stopping the Platform.sh tunnel", b.Debug)
 	if err := executeCommand([]string{"symfony", "tunnel:stop"}, b.Debug, true, nil); err != nil {
 		return err
 	}

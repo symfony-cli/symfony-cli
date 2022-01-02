@@ -255,7 +255,7 @@ func (p *Server) serveFastCGI(env map[string]string, w http.ResponseWriter, r *h
 func (p *Server) writeResponse(w http.ResponseWriter, r *http.Request, env map[string]string, resp *http.Response) error {
 	defer resp.Body.Close()
 	if env["SYMFONY_TUNNEL"] != "" && env["SYMFONY_TUNNEL_ENV"] == "" {
-		p.logger.Warn().Msg("Tunnel to SymfonyCloud open but environment variables not exposed")
+		p.logger.Warn().Msg("Tunnel to Platform.sh open but environment variables not exposed")
 	}
 	bodyModified := false
 	if r.Method == http.MethodGet && r.Header.Get("x-requested-with") == "XMLHttpRequest" {
