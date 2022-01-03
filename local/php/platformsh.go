@@ -30,7 +30,7 @@ func InstallPlatformPhar(home string) error {
 		}
 	}
 
-	spinner := terminal.NewSpinner(terminal.Stdout)
+	spinner := terminal.NewSpinner(terminal.Stderr)
 	spinner.PrefixText = "Download additional CLI tools..."
 	spinner.Start()
 	defer spinner.Stop()
