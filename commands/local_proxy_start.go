@@ -126,7 +126,7 @@ var localProxyStartCmd = &console.Command{
 			config.Save()
 		}
 
-		spinner := terminal.NewSpinner(terminal.Stdout)
+		spinner := terminal.NewSpinner(terminal.Stderr)
 		spinner.Start()
 		defer spinner.Stop()
 

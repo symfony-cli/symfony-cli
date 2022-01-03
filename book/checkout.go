@@ -71,7 +71,7 @@ func (b *Book) Checkout(step string) error {
 	}
 
 	if !b.Debug {
-		s := terminal.NewSpinner(terminal.Stdout)
+		s := terminal.NewSpinner(terminal.Stderr)
 		s.Start()
 		defer s.Stop()
 	}

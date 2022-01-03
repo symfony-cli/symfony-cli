@@ -36,7 +36,7 @@ var localPhpListCmd = &console.Command{
 	Name:     "php:list",
 	Usage:    "List locally available PHP versions",
 	Action: func(c *console.Context) error {
-		s := terminal.NewSpinner(terminal.Stdout)
+		s := terminal.NewSpinner(terminal.Stderr)
 		s.Start()
 		defer s.Stop()
 

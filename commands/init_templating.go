@@ -160,7 +160,7 @@ func isValidFilePath(toTest string) bool {
 func getTemplates(rootDirectory, chosenTemplateName string, minorPHPVersion string) (map[string]*template.Template, error) {
 	var foundTemplate *configTemplate
 
-	s := terminal.NewSpinner(terminal.Stdout)
+	s := terminal.NewSpinner(terminal.Stderr)
 	s.Start()
 	defer func() {
 		s.Stop()

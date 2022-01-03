@@ -133,7 +133,7 @@ var localNewCmd = &console.Command{
 			return console.Exit("The --service flag cannot be used without --cloud", 1)
 		}
 
-		s := terminal.NewSpinner(terminal.Stdout)
+		s := terminal.NewSpinner(terminal.Stderr)
 		s.Start()
 		defer s.Stop()
 
