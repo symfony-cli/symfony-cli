@@ -96,7 +96,6 @@ func main() {
 		os.Exit(1)
 	}
 	cmds = append(cmds, psh.Commands...)
-	console.HelpPrinter = psh.WrapHelpPrinter()
 	app := &console.Application{
 		Name:          "Symfony CLI",
 		Usage:         "Symfony CLI helps developers manage projects, from local code to remote infrastructure",

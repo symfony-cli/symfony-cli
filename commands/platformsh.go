@@ -21,7 +21,6 @@ package commands
 
 import (
 	_ "embed"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -79,27 +78,10 @@ func (p *platformshCLI) PSHMainCommands() []*console.Command {
 	return mainCmds
 }
 
-func (p *platformshCLI) WrapHelpPrinter() func(w io.Writer, templ string, data interface{}) {
-	currentHelpPrinter := console.HelpPrinter
-	return func(w io.Writer, templ string, data interface{}) {
-		switch cmd := data.(type) {
-		case *console.Command:
-			if strings.HasPrefix(cmd.Category, "cloud") {
-				p.proxyPSHCmdHelp(w, cmd)
-			} else {
-				currentHelpPrinter(w, templ, data)
-			}
-		default:
-			currentHelpPrinter(w, templ, data)
-		}
-	}
-}
-
 func (p *platformshCLI) proxyPSHCmd(commandName string) console.ActionFunc {
 	return func(commandName string) console.ActionFunc {
 		return func(c *console.Context) error {
-			// the Platform.sh CLI is always available on the containers
-			// thanks to the configurator
+			// the Platform.sh CLI is always available on the containers thanks to the configurator
 			if !util.InCloud() {
 				home, err := homedir.Dir()
 				if err != nil {
@@ -120,11 +102,6 @@ func (p *platformshCLI) proxyPSHCmd(commandName string) console.ActionFunc {
 			return console.Exit("", e.Execute(false))
 		}
 	}(commandName)
-}
-
-func (p *platformshCLI) proxyPSHCmdHelp(w io.Writer, command *console.Command) {
-	e := p.executor([]string{strings.TrimPrefix(command.FullName(), "cloud:"), "--help", "--ansi"})
-	e.Execute(false)
 }
 
 func (p *platformshCLI) executor(args []string) *php.Executor {
