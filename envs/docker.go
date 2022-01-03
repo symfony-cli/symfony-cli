@@ -452,9 +452,17 @@ func (l *Local) getComposeProjectName() string {
 		return project
 	}
 
+	composeDir := l.getComposeDir()
+	if composeDir == "" {
+		if l.Debug {
+			fmt.Fprintln(os.Stderr, "ERROR: unable to find a compose directory for the current directory")
+		}
+		return ""
+	}
+
 	// COMPOSE_PROJECT_NAME can be set in a .env file
-	if _, err := os.Stat(filepath.Join(l.Dir, ".env")); err == nil {
-		if contents, err := ioutil.ReadFile(filepath.Join(l.Dir, ".env")); err == nil {
+	if _, err := os.Stat(filepath.Join(composeDir, ".env")); err == nil {
+		if contents, err := ioutil.ReadFile(filepath.Join(composeDir, ".env")); err == nil {
 			for _, line := range bytes.Split(contents, []byte("\n")) {
 				if bytes.HasPrefix(line, []byte("COMPOSE_PROJECT_NAME=")) {
 					return string(line[len("COMPOSE_PROJECT_NAME="):])
@@ -463,20 +471,24 @@ func (l *Local) getComposeProjectName() string {
 		}
 	}
 
+	return filepath.Base(composeDir)
+}
+
+func (l *Local) getComposeDir() string {
 	// https://docs.docker.com/compose/reference/envvars/#compose_file
 	if os.Getenv("COMPOSE_FILE") != "" {
-		return filepath.Base(l.Dir)
+		return l.Dir
 	}
 
 	// look for the first dir up with a docker-composer.ya?ml file (in case of a multi-project)
 	dir := l.Dir
 	for {
 		if _, err := os.Stat(filepath.Join(dir, "docker-compose.yaml")); err == nil {
-			return filepath.Base(dir)
+			return dir
 		}
 		// both .yml and .yaml are supported by Docker composer
 		if _, err := os.Stat(filepath.Join(dir, "docker-compose.yml")); err == nil {
-			return filepath.Base(dir)
+			return dir
 		}
 		upDir := filepath.Dir(dir)
 		if upDir == dir || upDir == "." {
