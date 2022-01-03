@@ -30,6 +30,18 @@ jobs:
                 name: Prepare
                 run: go generate ./
             -
+                name: Check Git status
+                id: git
+                run: |
+                    RESULT=$(git status --untracked-files=no --porcelain)
+                    echo "::set-output name=gitstatus::$RESULT"
+            -
+                name: Check if go prepare updated generated Go code
+                if: steps.git.outputs.gitstatus != ''
+                run: |
+                    echo "go generate changed some Go generate code, run generate locally and make a Pull Request with the changes"
+                    exit 1
+            -
                 name: Test
                 run: go test -v ./...
             -
