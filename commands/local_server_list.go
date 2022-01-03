@@ -20,7 +20,10 @@
 package commands
 
 import (
+	"fmt"
 	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
@@ -44,7 +47,11 @@ var localServerListCmd = &console.Command{
 func printConfiguredServers() error {
 	table := tablewriter.NewWriter(terminal.Stdout)
 	table.SetAutoFormatHeaders(false)
-	table.SetHeader([]string{terminal.Format("<header>Directory</>"), terminal.Format("<header>Port</>"), terminal.Format("<header>Domains</>")})
+	table.SetHeader([]string{
+		terminal.Format("<header>Directory</>"),
+		terminal.Format("<header>Port</>"),
+		terminal.Format("<header>Domains</>"),
+		terminal.Format("<header>Links</>")})
 
 	proxyProjects, err := proxy.ToConfiguredProjects()
 	if err != nil {
@@ -65,23 +72,23 @@ func printConfiguredServers() error {
 	sort.Strings(projectDirs)
 	for _, dir := range projectDirs {
 		project := projects[dir]
-		domain := ""
-		if len(project.Domains) > 0 {
-			domain = terminal.Formatf("<href=%s://%s>%s</>", project.Scheme, project.Domains[0], project.Domains[0])
-		}
+		var links []string
+		var domains []string
+
 		port := "Not running"
 		if project.Port > 0 {
-			port = terminal.Formatf("<href=%s://127.0.0.1:%d>%d</>", project.Scheme, project.Port, project.Port)
+			port = strconv.Itoa(project.Port)
 		}
-		table.Append([]string{dir, port, domain})
-		if len(project.Domains) > 1 {
-			for i, domain := range project.Domains {
-				if i == 0 {
-					continue
-				}
-				table.Append([]string{"", "", terminal.Formatf("<href=%s://%s>%s</>", project.Scheme, domain, domain)})
+
+		links = append(links, fmt.Sprintf("%s://127.0.0.1:%d", project.Scheme, project.Port))
+
+		if len(project.Domains) > 0 {
+			for _, domain := range project.Domains {
+				domains = append(domains, domain)
+				links = append(links, fmt.Sprintf("%s://%s", project.Scheme, domain))
 			}
 		}
+		table.Append([]string{dir, port, strings.Join(domains, ",\xc2\xa0"), strings.Join(links, ",\xc2\xa0")})
 	}
 	table.Render()
 	return nil
