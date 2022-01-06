@@ -146,6 +146,12 @@ var localNewCmd = &console.Command{
 			return err
 		}
 
+		if "" != c.String("php") && !c.Bool("cloud") {
+			if err := createPhpVersionFile(c.String("php"), dir); err != nil {
+				return err
+			}
+		}
+
 		if !c.Bool("no-git") {
 			if _, err := exec.LookPath("git"); err == nil {
 				if err := initProjectGit(c, s, dir); err != nil {
@@ -370,4 +376,20 @@ func forcePHPVersion(v, dir string) (string, error) {
 	}
 	os.Setenv("FORCED_PHP_VERSION", v)
 	return strings.Join(strings.Split(v, ".")[0:2], "."), nil
+}
+
+func createPhpVersionFile(v, dir string) error {
+	file := filepath.Join(dir, ".php-version")
+	f, err := os.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return errors.Wrapf(err, "unable to create %s", file)
+	}
+	if _, err = f.WriteString(v + "\n"); err != nil {
+		f.Close()
+		return errors.Wrapf(err, "unable to write %s", file)
+	}
+	if err = f.Close(); err != nil {
+		return errors.Wrapf(err, "unable to close %s", file)
+	}
+	return nil
 }
