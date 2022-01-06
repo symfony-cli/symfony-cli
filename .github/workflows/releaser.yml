@@ -39,7 +39,7 @@ jobs:
                 name: Check if go prepare updated generated Go code
                 if: steps.git.outputs.gitstatus != ''
                 run: |
-                    echo "go generate changed some Go generate code, run generate locally and make a Pull Request with the changes"
+                    echo "\"go generate\" changed some Go generated code, run \"go generate ./\" locally and make a Pull Request with the changes"
                     exit 1
             -
                 name: Test
