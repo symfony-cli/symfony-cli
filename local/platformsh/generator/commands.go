@@ -178,7 +178,7 @@ func parseCommands(home string) (string, error) {
 		}
 		hide := ""
 		if command.Hidden {
-			hide = "		Hidden:   console.Hide,"
+			hide = "\n\t\tHidden:   console.Hide,"
 		}
 		definitionAsString += fmt.Sprintf(`	{
 		Category: "%s",

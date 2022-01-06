@@ -30,12 +30,14 @@ var Commands = []*console.Command{
 	{
 		Category: "cloud",
 		Name:     "_completion",
-		Usage:    "BASH completion hook.",		Hidden:   console.Hide,
+		Usage:    "BASH completion hook.",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud",
 		Name:     "bot",
-		Usage:    "The Platform.sh Bot",		Hidden:   console.Hide,
+		Usage:    "The Platform.sh Bot",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud",
@@ -61,7 +63,8 @@ var Commands = []*console.Command{
 	{
 		Category: "cloud",
 		Name:     "legacy-migrate",
-		Usage:    "Migrate from the legacy file structure",		Hidden:   console.Hide,
+		Usage:    "Migrate from the legacy file structure",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud",
@@ -76,12 +79,14 @@ var Commands = []*console.Command{
 	{
 		Category: "cloud",
 		Name:     "welcome",
-		Usage:    "Welcome to Platform.sh",		Hidden:   console.Hide,
+		Usage:    "Welcome to Platform.sh",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud",
 		Name:     "winky",
-		Usage:    "",		Hidden:   console.Hide,
+		Usage:    "",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud:activity",
@@ -125,7 +130,8 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "api:curl", Hidden: true},
 		},
-		Usage:    "Run an authenticated cURL request on the Platform.sh API",		Hidden:   console.Hide,
+		Usage:    "Run an authenticated cURL request on the Platform.sh API",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud:app",
@@ -187,7 +193,8 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "auth:token", Hidden: true},
 		},
-		Usage:    "Obtain an OAuth 2 access token for requests to Platform.sh APIs",		Hidden:   console.Hide,
+		Usage:    "Obtain an OAuth 2 access token for requests to Platform.sh APIs",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud:backup",
@@ -391,7 +398,8 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "environment:curl", Hidden: true},
 		},
-		Usage:    "Run an authenticated cURL request on an environment's API",		Hidden:   console.Hide,
+		Usage:    "Run an authenticated cURL request on an environment's API",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud:environment",
@@ -523,7 +531,8 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "environment:set-remote", Hidden: true},
 		},
-		Usage:    "Set the remote environment to map to a branch",		Hidden:   console.Hide,
+		Usage:    "Set the remote environment to map to a branch",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud:environment",
@@ -661,7 +670,8 @@ var Commands = []*console.Command{
 			{Name: "cloud:clean"},
 			{Name: "clean", Hidden: true},
 		},
-		Usage:    "Remove old project builds",		Hidden:   console.Hide,
+		Usage:    "Remove old project builds",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud:local",
@@ -739,7 +749,8 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "organization:curl", Hidden: true},
 		},
-		Usage:    "Run an authenticated cURL request on an organization's API",		Hidden:   console.Hide,
+		Usage:    "Run an authenticated cURL request on an organization's API",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud:organization",
@@ -837,7 +848,8 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "project:curl", Hidden: true},
 		},
-		Usage:    "Run an authenticated cURL request on a project's API",		Hidden:   console.Hide,
+		Usage:    "Run an authenticated cURL request on a project's API",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud:project",
@@ -931,7 +943,8 @@ var Commands = []*console.Command{
 			{Name: "cloud:local:install"},
 			{Name: "local:install", Hidden: true},
 		},
-		Usage:    "Install or update CLI configuration files",		Hidden:   console.Hide,
+		Usage:    "Install or update CLI configuration files",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud:self",
@@ -939,7 +952,8 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "self:stats", Hidden: true},
 		},
-		Usage:    "View stats on GitHub package downloads",		Hidden:   console.Hide,
+		Usage:    "View stats on GitHub package downloads",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud:self",
@@ -951,7 +965,8 @@ var Commands = []*console.Command{
 			{Name: "cloud:update"},
 			{Name: "update", Hidden: true},
 		},
-		Usage:    "Update the CLI to the latest version",		Hidden:   console.Hide,
+		Usage:    "Update the CLI to the latest version",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud:service",
@@ -1019,7 +1034,8 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "session:switch", Hidden: true},
 		},
-		Usage:    "<fg=white;bg=red>[ BETA ]</> Switch between sessions",		Hidden:   console.Hide,
+		Usage:    "<fg=white;bg=red>[ BETA ]</> Switch between sessions",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud:source-operation",
@@ -1027,7 +1043,8 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "source-operation:run", Hidden: true},
 		},
-		Usage:    "<fg=white;bg=red>[ BETA ]</> Run a source operation",		Hidden:   console.Hide,
+		Usage:    "<fg=white;bg=red>[ BETA ]</> Run a source operation",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud:ssh-cert",
@@ -1035,7 +1052,8 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "ssh-cert:info", Hidden: true},
 		},
-		Usage:    "Display information about the current SSH certificate",		Hidden:   console.Hide,
+		Usage:    "Display information about the current SSH certificate",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud:ssh-cert",
