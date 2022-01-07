@@ -52,7 +52,7 @@ import (
 var localServerStartCmd = &console.Command{
 	Category: "local",
 	Name:     "server:start",
-	Aliases:  []*console.Alias{{Name: "serve"}, {Name: "server:start"}},
+	Aliases:  []*console.Alias{{Name: "server:start"}, {Name: "serve"}},
 	Usage:    "Run a local web server",
 	Flags: []console.Flag{
 		dirFlag,
