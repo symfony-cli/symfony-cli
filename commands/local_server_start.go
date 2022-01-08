@@ -30,7 +30,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -47,6 +46,7 @@ import (
 	"github.com/symfony-cli/symfony-cli/reexec"
 	"github.com/symfony-cli/symfony-cli/util"
 	"github.com/symfony-cli/terminal"
+	"golang.org/x/sync/errgroup"
 )
 
 var localServerStartCmd = &console.Command{
@@ -275,10 +275,6 @@ var localServerStartCmd = &console.Command{
 			if err := pidFile.Write(os.Getpid(), port, scheme); err != nil {
 				return err
 			}
-			defer func() {
-				pidFile.Remove()
-				terminal.Eprintln("Shut down, bye!")
-			}()
 
 			reexec.NotifyForeground("listening")
 			ui.Success(msg)
@@ -345,9 +341,31 @@ var localServerStartCmd = &console.Command{
 		case err := <-errChan:
 			return err
 		case <-shutdownCh:
-			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-			defer cancel()
-			p.HTTP.Stop(ctx)
+			terminal.Eprintln("")
+			terminal.Eprintln("Shutting down!")
+			pids := pid.AllWorkers(projectDir)
+			var g errgroup.Group
+			running := 0
+			for _, p := range pids {
+				terminal.Eprintf("Stopping <comment>%s</>", p.ShortName())
+				if p.IsRunning() {
+					running++
+					g.Go(p.Stop)
+					terminal.Eprintln("")
+				} else {
+					terminal.Eprintln(": <comment>not running</>")
+				}
+			}
+			if err := g.Wait(); err != nil {
+				return err
+			}
+			terminal.Eprintln("Stopping <comment>Web Server</>")
+			if err := pidFile.Remove(); err != nil {
+				running++
+				return err
+			}
+			terminal.Eprintln("")
+			ui.Success(fmt.Sprintf("Stopped %d process(es) successfully", running))
 		}
 		return nil
 	},

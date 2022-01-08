@@ -20,7 +20,6 @@
 package http
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	"net"
@@ -37,7 +36,6 @@ import (
 	"github.com/symfony-cli/cert"
 	"github.com/symfony-cli/symfony-cli/local/html"
 	"github.com/symfony-cli/symfony-cli/local/process"
-	"golang.org/x/sync/errgroup"
 )
 
 // ServerCallback serves non-static HTTP resources
@@ -123,24 +121,6 @@ func (s *Server) Start(errChan chan error) (int, error) {
 	}()
 
 	return port, nil
-}
-
-// Stop stops the server
-func (s *Server) Stop(ctx context.Context) error {
-	var g errgroup.Group
-	g.Go(func() error {
-		if s.httpsserver != nil {
-			return errors.WithStack(s.httpsserver.Shutdown(ctx))
-		}
-		return nil
-	})
-	g.Go(func() error {
-		if s.httpserver != nil {
-			return errors.WithStack(s.httpserver.Shutdown(ctx))
-		}
-		return nil
-	})
-	return g.Wait()
 }
 
 // ProxyHandler wraps the regular handler to log the HTTP messages
