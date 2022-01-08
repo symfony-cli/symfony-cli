@@ -73,8 +73,6 @@ var localServerStartCmd = &console.Command{
 			Usage: "Certificate path (p12 format)",
 		},
 		&console.BoolFlag{Name: "no-tls", Usage: "Use HTTP instead of HTTPS"},
-		// FIXME: force-php-discovery to be removed in 2.0
-		&console.BoolFlag{Name: "force-php-discovery", Usage: "Force PHP discovery", Hidden: true},
 	},
 	Action: func(c *console.Context) error {
 		ui := terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin)
