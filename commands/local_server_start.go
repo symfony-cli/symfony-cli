@@ -89,6 +89,15 @@ var localServerStartCmd = &console.Command{
 
 		homeDir := util.GetHomeDir()
 
+		shutdownCh := make(chan bool, 1)
+		go func() {
+			sigsCh := make(chan os.Signal, 1)
+			signal.Notify(sigsCh, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
+			<-sigsCh
+			signal.Stop(sigsCh)
+			shutdownCh <- true
+		}()
+
 		if c.Bool("daemon") && !reexec.IsChild() {
 			varDir := filepath.Join(homeDir, "var")
 			if err := os.MkdirAll(varDir, 0755); err != nil {
@@ -328,14 +337,6 @@ var localServerStartCmd = &console.Command{
 		if reexec.IsChild() {
 			terminal.RemapOutput(lw, lw).SetDecorated(true)
 		}
-		shutdownCh := make(chan bool, 1)
-		go func() {
-			sigsCh := make(chan os.Signal, 1)
-			signal.Notify(sigsCh, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
-			<-sigsCh
-			signal.Stop(sigsCh)
-			shutdownCh <- true
-		}()
 
 		select {
 		case err := <-errChan:
