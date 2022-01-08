@@ -13,26 +13,31 @@ on your local machine. It provides:
 Installation
 ------------
 
-### Binaries
-
-To install Symfony CLI, please download the [appropriate version](https://github.com/symfony-cli/symfony-cli/releases),
-unarchive the files, and move the binary somewhere under your path.
-
-Downloading a binary is quick and simple, but upgrading is manual: download the latest version
-and replace the binary by the new one.
-
-To automatically get updates when available, see below.
-
 ### Linux
 
-You can download the `.deb`, `.rpm`, and `.apk` packages from the
-[release page](https://github.com/symfony-cli/symfony-cli/releases).
+Depending on your Linux distribution, use the Symfony `apt` repository:
+
+    echo 'deb [trusted=yes] https://repo.symfony.com/apt/ /' | sudo tee /etc/apt/sources.list.d/symfony-cli.list
+    sudo apt update
+    sudo apt install symfony-cli
+
+Or the Symfony `yum` repository:
+
+    echo '[symfony-cli]
+    name=Symfony CLI
+    baseurl=https://repo.symfony.com/yum/
+    enabled=1
+    gpgcheck=0' | sudo tee /etc/yum.repos.d/symfony-cli.repo
+    sudo yum install symfony-cli
+
+You can also download the `.deb`, `.rpm`, and `.apk` packages directly from the
+[release page][7].
 
 You can also use GoFish (see below).
 
 ### macOS
 
-Use homebrew to install and get automatic updates:
+Use homebrew:
 
     brew install symfony-cli/tap/symfony-cli
 
@@ -47,15 +52,24 @@ You can also use GoFish (see below).
 
 ### GoFish
 
-On Linux and Windows, you ocan use GoFish:
+On Linux and Windows, you can use GoFish:
 
     gofish rig add https://github.com/symfony-cli/fish-food
     gofish install github.com/symfony-cli/fish-food/symfony-cli
 
+### Binaries
+
+You can also download Symfony CLI binaries from the [release page][7],
+
+Unarchive the files, and move the binary somewhere under your path.
+
+Downloading a binary is quick and simple, but upgrading is manual: download the latest version
+and replace the binary by the new one.
+
 Security Issues
 ---------------
 
-If you discover a security vulnerability, please follow our [disclosure procedure][7].
+If you discover a security vulnerability, please follow our [disclosure procedure][8].
 
 [1]: https://symfony.com/download
 [2]: https://symfony.com/doc/current/setup.html#creating-symfony-applications
@@ -63,4 +77,5 @@ If you discover a security vulnerability, please follow our [disclosure procedur
 [4]: https://symfony.com/doc/current/setup/symfony_server.html#enabling-tls
 [5]: https://symfony.com/doc/current/setup.html#security-checker
 [6]: https://symfony.com/cloud
-[7]: https://symfony.com/security
+[7]: https://github.com/symfony-cli/symfony-cli/releases/latest
+[8]: https://symfony.com/security
