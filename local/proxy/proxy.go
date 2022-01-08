@@ -75,6 +75,9 @@ func tlsToLocalWebServer(proxy *goproxy.ProxyHttpServer, tlsConfig *tls.Config, 
 	return &goproxy.ConnectAction{
 		Action: goproxy.ConnectHijack,
 		Hijack: func(req *http.Request, proxyClient net.Conn, ctx *goproxy.ProxyCtx) {
+			ctx.Logf("Hijacking CONNECT")
+			proxyClient.Write([]byte("HTTP/1.0 200 OK\r\n\r\n"))
+
 			proxyClientTls := tls.Server(proxyClient, tlsConfig)
 			if err := proxyClientTls.Handshake(); err != nil {
 				defer proxyClient.Close()
