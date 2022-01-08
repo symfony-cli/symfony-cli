@@ -30,7 +30,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -47,6 +46,7 @@ import (
 	"github.com/symfony-cli/symfony-cli/reexec"
 	"github.com/symfony-cli/symfony-cli/util"
 	"github.com/symfony-cli/terminal"
+	"golang.org/x/sync/errgroup"
 )
 
 var localServerStartCmd = &console.Command{
@@ -86,8 +86,20 @@ var localServerStartCmd = &console.Command{
 			ui.Warning("The local web server is already running")
 			return errors.WithStack(printWebServerStatus(projectDir))
 		}
+		if err := cleanupWebServerFiles(projectDir, pidFile); err != nil {
+			return err
+		}
 
 		homeDir := util.GetHomeDir()
+
+		shutdownCh := make(chan bool, 1)
+		go func() {
+			sigsCh := make(chan os.Signal, 1)
+			signal.Notify(sigsCh, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
+			<-sigsCh
+			signal.Stop(sigsCh)
+			shutdownCh <- true
+		}()
 
 		if c.Bool("daemon") && !reexec.IsChild() {
 			varDir := filepath.Join(homeDir, "var")
@@ -275,10 +287,6 @@ var localServerStartCmd = &console.Command{
 			if err := pidFile.Write(os.Getpid(), port, scheme); err != nil {
 				return err
 			}
-			defer func() {
-				pidFile.Remove()
-				terminal.Eprintln("Shut down, bye!")
-			}()
 
 			reexec.NotifyForeground("listening")
 			ui.Success(msg)
@@ -332,23 +340,36 @@ var localServerStartCmd = &console.Command{
 		if reexec.IsChild() {
 			terminal.RemapOutput(lw, lw).SetDecorated(true)
 		}
-		shutdownCh := make(chan bool, 1)
-		go func() {
-			sigsCh := make(chan os.Signal, 1)
-			signal.Notify(sigsCh, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
-			<-sigsCh
-			signal.Stop(sigsCh)
-			shutdownCh <- true
-		}()
 
 		select {
 		case err := <-errChan:
 			return err
 		case <-shutdownCh:
-			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-			defer cancel()
-			p.HTTP.Stop(ctx)
+			terminal.Eprintln("")
+			terminal.Eprintln("Shutting down!")
+			if err := cleanupWebServerFiles(projectDir, pidFile); err != nil {
+				return err
+			}
+			terminal.Eprintln("")
+			ui.Success("Stopped all processes successfully")
 		}
 		return nil
 	},
+}
+
+func cleanupWebServerFiles(projectDir string, pidFile *pid.PidFile) error {
+	pids := pid.AllWorkers(projectDir)
+	var g errgroup.Group
+	for _, p := range pids {
+		if p.IsRunning() {
+			g.Go(p.Stop)
+		}
+	}
+	if err := g.Wait(); err != nil {
+		return err
+	}
+	if err := pidFile.Remove(); err != nil {
+		return err
+	}
+	return nil
 }
