@@ -13,11 +13,44 @@ on your local machine. It provides:
 Installation
 ------------
 
+### Binaries
+
 To install Symfony CLI, please download the [appropriate version](https://github.com/symfony-cli/symfony-cli/releases),
-unarchive the files, and move the binary somewhere under your path. To upgrade, download the latest version
+unarchive the files, and move the binary somewhere under your path.
+
+Downloading a binary is quick and simple, but upgrading is manual: download the latest version
 and replace the binary by the new one.
 
-On macOS, you can use homebrew: `brew install symfony-cli/tap/symfony-cli`
+To automatically get updates when available, see below.
+
+### Linux
+
+You can download the `.deb`, `.rpm`, and `.apk` packages from the
+[release page](https://github.com/symfony-cli/symfony-cli/releases).
+
+You can also use GoFish (see below).
+
+### macOS
+
+Use homebrew to install and get automatic updates:
+
+    brew install symfony-cli/tap/symfony-cli
+
+### Windows
+
+Use Scoop:
+
+    scoop bucket add symfony-cli https://github.com/symfony-cli/scoop-bucket.git
+    scoop install symfony-cli
+
+You can also use GoFish (see below).
+
+### GoFish
+
+On Linux and Windows, you ocan use GoFish:
+
+    gofish rig add https://github.com/symfony-cli/fish-food
+    gofish install github.com/symfony-cli/fish-food/symfony-cli
 
 Security Issues
 ---------------
