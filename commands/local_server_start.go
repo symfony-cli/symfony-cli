@@ -86,6 +86,9 @@ var localServerStartCmd = &console.Command{
 			ui.Warning("The local web server is already running")
 			return errors.WithStack(printWebServerStatus(projectDir))
 		}
+		if err := cleanupWebServerFiles(projectDir, pidFile); err != nil {
+			return err
+		}
 
 		homeDir := util.GetHomeDir()
 
@@ -344,30 +347,29 @@ var localServerStartCmd = &console.Command{
 		case <-shutdownCh:
 			terminal.Eprintln("")
 			terminal.Eprintln("Shutting down!")
-			pids := pid.AllWorkers(projectDir)
-			var g errgroup.Group
-			running := 0
-			for _, p := range pids {
-				terminal.Eprintf("Stopping <comment>%s</>", p.ShortName())
-				if p.IsRunning() {
-					running++
-					g.Go(p.Stop)
-					terminal.Eprintln("")
-				} else {
-					terminal.Eprintln(": <comment>not running</>")
-				}
-			}
-			if err := g.Wait(); err != nil {
-				return err
-			}
-			terminal.Eprintln("Stopping <comment>Web Server</>")
-			if err := pidFile.Remove(); err != nil {
-				running++
+			if err := cleanupWebServerFiles(projectDir, pidFile); err != nil {
 				return err
 			}
 			terminal.Eprintln("")
-			ui.Success(fmt.Sprintf("Stopped %d process(es) successfully", running))
+			ui.Success("Stopped all processes successfully")
 		}
 		return nil
 	},
+}
+
+func cleanupWebServerFiles(projectDir string, pidFile *pid.PidFile) error {
+	pids := pid.AllWorkers(projectDir)
+	var g errgroup.Group
+	for _, p := range pids {
+		if p.IsRunning() {
+			g.Go(p.Stop)
+		}
+	}
+	if err := g.Wait(); err != nil {
+		return err
+	}
+	if err := pidFile.Remove(); err != nil {
+		return err
+	}
+	return nil
 }
