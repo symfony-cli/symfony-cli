@@ -101,7 +101,8 @@ func (updater *Updater) CheckForNewVersion(currentVersionStr string) {
 			return
 		}
 		fmt.Fprintf(updater.Output, "\n<error> INFO </> <info>A new Symfony CLI version is available</> (<info>%s</>, currently running <info>%s</>).\n\n", newVersionFound, currentVersion)
-		fmt.Fprintf(updater.Output, "       Upgrade soon by downloading the new version at <href=https://github.com/symfony-cli/symfony-cli/releases>https://github.com/symfony-cli/symfony-cli/releases</>\n")
+		fmt.Fprintf(updater.Output, "       If you installed the Symfony CLI via a package manager, updates are going to be automatic.\n")
+		fmt.Fprintf(updater.Output, "       If not, upgrade by downloading the new version at <href=https://github.com/symfony-cli/symfony-cli/releases>https://github.com/symfony-cli/symfony-cli/releases</>\n")
 		fmt.Fprintf(updater.Output, "       And replace the current binary (<info>%s</>) by the new one.\n\n", console.CurrentBinaryName())
 	}
 }
