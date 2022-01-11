@@ -777,8 +777,8 @@ github.com/symfony-cli/cert v1.0.0 h1:agWQnBizO8iMfkrP1WKPyz3owKtouCZZlGQYepvfYg
 github.com/symfony-cli/cert v1.0.0/go.mod h1:g4WrLT6EQsEPmA19xh5Jv9Jnpg5EvtFqArJf2AG2S+w=
 github.com/symfony-cli/console v1.0.1 h1:xbBpDXrT/I0SvMF8B5yqh9avVz3wkpk7zxPhsMHmcLM=
 github.com/symfony-cli/console v1.0.1/go.mod h1:z2dLSNdPW3rWdSxj8DlZocMtMYN5EF6OeIYjVioXVqE=
-github.com/symfony-cli/phpstore v1.0.1 h1:f+T3b6BcU4cP2+AfJbgIuTVG6y/skb+C51GpjsC0odk=
-github.com/symfony-cli/phpstore v1.0.1/go.mod h1:Pug4pGst4b5DcGUwYz2DB1LjltohPgvE4OusDe1z2Xg=
+github.com/symfony-cli/phpstore v1.0.2 h1:aRu0srZzQe4acKhHmJcqqbJjbdv9yADFa/aXAD8MW5Q=
+github.com/symfony-cli/phpstore v1.0.2/go.mod h1:Pug4pGst4b5DcGUwYz2DB1LjltohPgvE4OusDe1z2Xg=
 github.com/symfony-cli/terminal v0.0.0-20211113151828-3b1d22f17f52/go.mod h1:+OxxnU05wyRHKYyQkTzTaCSSxmmIBcvAHLcQ099odj4=
 github.com/symfony-cli/terminal v1.0.2 h1:SHNf3nDNYHNIHapcsSukmk1tG2XE4UASak4m5OTiyw8=
 github.com/symfony-cli/terminal v1.0.2/go.mod h1:+OxxnU05wyRHKYyQkTzTaCSSxmmIBcvAHLcQ099odj4=
