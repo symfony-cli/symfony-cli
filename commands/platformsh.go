@@ -105,13 +105,17 @@ func (p *platformshCLI) proxyPSHCmd(commandName string) console.ActionFunc {
 }
 
 func (p *platformshCLI) executor(args []string) *php.Executor {
+	env := []string{
+		"PLATFORMSH_CLI_APPLICATION_NAME=Platform.sh CLI for Symfony",
+		"PLATFORMSH_CLI_APPLICATION_EXECUTABLE=symfony cloud:",
+	}
+	if util.InCloud() {
+		env = append(env, "PLATFORMSH_CLI_UPDATES_CHECK=0")
+	}
 	e := &php.Executor{
-		BinName: "php",
-		Args:    append([]string{"php", p.path}, args...),
-		ExtraEnv: []string{
-			"PLATFORMSH_CLI_APPLICATION_NAME=Platform.sh CLI for Symfony",
-			"PLATFORMSH_CLI_APPLICATION_EXECUTABLE=symfony cloud:",
-		},
+		BinName:  "php",
+		Args:     append([]string{"php", p.path}, args...),
+		ExtraEnv: env,
 	}
 	e.Paths = append([]string{filepath.Dir(p.path)}, e.Paths...)
 	return e
