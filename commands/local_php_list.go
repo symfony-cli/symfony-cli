@@ -25,6 +25,7 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/phpstore"
 	"github.com/symfony-cli/symfony-cli/util"
@@ -45,7 +46,10 @@ var localPhpListCmd = &console.Command{
 			return errors.Wrapf(err, "unable to determine current dir")
 		}
 		homeDir := util.GetHomeDir()
-		phpStore := phpstore.New(homeDir, true, terminal.Logger.Debug().Msgf)
+		logger := zerolog.New(zerolog.ConsoleWriter{Out: terminal.Stderr}).With().Timestamp().Logger()
+		phpStore := phpstore.New(homeDir, true, func(msg string, a ...interface{}) {
+			logger.Debug().Msgf(msg, a...)
+		})
 
 		currentPHPPath := ""
 		v, source, warning, _ := phpStore.BestVersionForDir(wd)
