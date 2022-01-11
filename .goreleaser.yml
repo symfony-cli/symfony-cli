@@ -65,7 +65,7 @@ brews:
     folder: Formula
     goarm: "7"
     homepage: https://symfony.com
-    description: Helps Symfony developers manage projects, from local code to remote infrastructure
+    description: Symfony CLI helps Symfony developers manage projects, from local code to remote infrastructure
     license: AGPL-3.0
     test: |
       system "#{bin}/symfony version"
@@ -83,7 +83,7 @@ rigs:
       name: Fabien Potencier
       email: fabien@symfony.com
     homepage: https://symfony.com
-    description: Helps Symfony developers manage projects, from local code to remote infrastructure
+    description: Symfony CLI helps Symfony developers manage projects, from local code to remote infrastructure
     license: AGPL-3.0
 
 scoop:
@@ -94,14 +94,14 @@ scoop:
       name: Fabien Potencier
       email: fabien@symfony.com
   homepage: https://symfony.com
-  description: Helps Symfony developers manage projects, from local code to remote infrastructure
+  description: Symfony CLI helps Symfony developers manage projects, from local code to remote infrastructure
   license: AGPL-3.0
 
 nfpms:
   - file_name_template: '{{ .ConventionalFileName }}'
     id: packages
     homepage: https://symfony.com
-    description: Helps Symfony developers manage projects, from local code to remote infrastructure
+    description: Symfony CLI helps Symfony developers manage projects, from local code to remote infrastructure
     maintainer: Fabien Potencier <fabien@symfony.com>
     license: AGPL-3.0
     vendor: Symfony
