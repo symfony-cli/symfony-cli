@@ -86,17 +86,6 @@ rigs:
     description: Symfony CLI helps Symfony developers manage projects, from local code to remote infrastructure
     license: AGPL-3.0
 
-scoop:
-  bucket:
-    owner: symfony-cli
-    name: scoop-bucket
-  commit_author:
-      name: Fabien Potencier
-      email: fabien@symfony.com
-  homepage: https://symfony.com
-  description: Symfony CLI helps Symfony developers manage projects, from local code to remote infrastructure
-  license: AGPL-3.0
-
 nfpms:
   - file_name_template: '{{ .ConventionalFileName }}'
     id: packages
