@@ -61,7 +61,7 @@ var localNewCmd = &console.Command{
 			Name:  "version",
 			Usage: `The version of the Symfony skeleton (a version or one of "lts", "stable", "next", or "previous")`,
 		},
-		&console.BoolFlag{Name: "full", Usage: "Use github.com/symfony/website-skeleton"},
+		&console.BoolFlag{Name: "full", Usage: "Use github.com/symfony/website-skeleton (deprecated, use --webapp instead)"},
 		&console.BoolFlag{Name: "demo", Usage: "Use github.com/symfony/demo"},
 		&console.BoolFlag{Name: "webapp", Usage: "Add the webapp pack to get a fully configured web poject"},
 		&console.BoolFlag{Name: "book", Usage: "Clone the Symfony 5: The Fast Track book project"},
@@ -296,6 +296,7 @@ func createProjectWithComposer(c *console.Context, dir, version string) error {
 	if r := os.Getenv("SYMFONY_REPO"); r != "" {
 		repo = r
 	} else if c.Bool("full") {
+		terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin).Warning("The --full flag is deprecated, use --webapp instead.")
 		repo = "symfony/website-skeleton"
 	} else if c.Bool("demo") {
 		repo = "symfony/symfony-demo"
