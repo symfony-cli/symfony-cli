@@ -216,7 +216,7 @@ var availableServices = []*service{
 		Type: "redis",
 		Versions: serviceVersions{
 			Deprecated: []string{"2.8", "3.0"},
-			Supported:  []string{"3.2", "4.0", "5.0", "6.0"},
+			Supported:  []string{"3.2", "4.0", "5.0", "6.0", "6.2"},
 		},
 	},
 	{
