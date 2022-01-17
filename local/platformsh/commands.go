@@ -745,11 +745,29 @@ var Commands = []*console.Command{
 	},
 	{
 		Category: "cloud:organization",
+		Name:     "create",
+		Aliases:  []*console.Alias{
+			{Name: "organization:create", Hidden: true},
+		},
+		Usage:    "<fg=white;bg=red>[ BETA ]</> Create a new organization",
+		Hidden:   console.Hide,
+	},
+	{
+		Category: "cloud:organization",
 		Name:     "curl",
 		Aliases:  []*console.Alias{
 			{Name: "organization:curl", Hidden: true},
 		},
 		Usage:    "Run an authenticated cURL request on an organization's API",
+		Hidden:   console.Hide,
+	},
+	{
+		Category: "cloud:organization",
+		Name:     "delete",
+		Aliases:  []*console.Alias{
+			{Name: "organization:delete", Hidden: true},
+		},
+		Usage:    "<fg=white;bg=red>[ ALPHA ]</> Delete an organization",
 		Hidden:   console.Hide,
 	},
 	{
