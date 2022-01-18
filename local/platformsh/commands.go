@@ -44,9 +44,7 @@ var Commands = []*console.Command{
 		Name:     "clear-cache",
 		Aliases:  []*console.Alias{
 			{Name: "cloud:clearcache"},
-			{Name: "clearcache", Hidden: true},
 			{Name: "cloud:cc"},
-			{Name: "cc", Hidden: true},
 		},
 		Usage:    "Clear the CLI cache",
 	},
@@ -957,31 +955,17 @@ var Commands = []*console.Command{
 		Category: "cloud:self",
 		Name:     "install",
 		Aliases:  []*console.Alias{
-			{Name: "self:install", Hidden: true},
 			{Name: "cloud:local:install"},
-			{Name: "local:install", Hidden: true},
 		},
 		Usage:    "Install or update CLI configuration files",
 		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud:self",
-		Name:     "stats",
-		Aliases:  []*console.Alias{
-			{Name: "self:stats", Hidden: true},
-		},
-		Usage:    "View stats on GitHub package downloads",
-		Hidden:   console.Hide,
-	},
-	{
-		Category: "cloud:self",
 		Name:     "update",
 		Aliases:  []*console.Alias{
-			{Name: "self:update", Hidden: true},
 			{Name: "cloud:self-update"},
-			{Name: "self-update", Hidden: true},
 			{Name: "cloud:update"},
-			{Name: "update", Hidden: true},
 		},
 		Usage:    "Update the CLI to the latest version",
 		Hidden:   console.Hide,

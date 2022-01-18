@@ -138,6 +138,9 @@ func parseCommands(home string) (string, error) {
 		if command.Name == "list" || command.Name == "help" {
 			continue
 		}
+		if command.Name == "self:stats" {
+			continue
+		}
 		if strings.HasPrefix(command.Name, "self:") {
 			command.Hidden = true
 		}
@@ -155,13 +158,15 @@ func parseCommands(home string) (string, error) {
 		}
 		name := strings.TrimPrefix("cloud:"+command.Name, namespace+":")
 		aliases := []string{}
-		if namespace != "cloud" {
+		if namespace != "cloud" && !strings.HasPrefix(command.Name, "self:") {
 			aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", command.Name))
 		}
 		for _, usage := range command.Usage {
 			if allCommandNames[usage] {
 				aliases = append(aliases, fmt.Sprintf("{Name: \"cloud:%s\"}", usage))
-				aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", usage))
+				if namespace != "cloud" && !strings.HasPrefix(command.Name, "self:") {
+					aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", usage))
+				}
 			}
 		}
 		if command.Name == "environment:push" {
