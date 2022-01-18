@@ -3,6 +3,7 @@ module github.com/symfony-cli/symfony-cli
 require (
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/elazarl/goproxy v0.0.0-20211114080932-d06c3be7c11b
+	github.com/fabpot/local-php-security-checker v1.2.0
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/hashicorp/go-version v1.3.0
 	github.com/hashicorp/golang-lru v0.5.4
@@ -72,6 +73,7 @@ require (
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	howett.net/plist v1.0.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.0.0-20210415151418-c5206de65a78 // indirect
 )
