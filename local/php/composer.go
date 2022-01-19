@@ -55,13 +55,14 @@ func (c ComposerResult) ExitCode() int {
 	return c.code
 }
 
-func Composer(dir string, args []string, stdout, stderr, logger io.Writer) ComposerResult {
+func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer) ComposerResult {
 	e := &Executor{
 		Dir:        dir,
 		BinName:    "php",
 		Stdout:     stdout,
 		Stderr:     stderr,
 		SkipNbArgs: -1,
+		ExtraEnv:   env,
 	}
 
 	composerBin := "composer1"
