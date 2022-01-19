@@ -28,7 +28,7 @@ import (
 var BookCheckReqsCmd = &console.Command{
 	Category: "book",
 	Name:     "check-requirements",
-	Usage:    `Check that you have all the pre-requisites locally to code while reading the "Symfony 5: The Fast Track" book`,
+	Usage:    `Check that you have all the pre-requisites locally to code while reading the "Symfony: The Fast Track" book`,
 	Aliases:  []*console.Alias{{Name: "book:check"}},
 	Action: func(c *console.Context) error {
 		ui := terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin)

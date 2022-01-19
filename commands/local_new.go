@@ -64,7 +64,7 @@ var localNewCmd = &console.Command{
 		&console.BoolFlag{Name: "full", Usage: "Use github.com/symfony/website-skeleton (deprecated, use --webapp instead)"},
 		&console.BoolFlag{Name: "demo", Usage: "Use github.com/symfony/demo"},
 		&console.BoolFlag{Name: "webapp", Usage: "Add the webapp pack to get a fully configured web project"},
-		&console.BoolFlag{Name: "book", Usage: "Clone the Symfony 5: The Fast Track book project"},
+		&console.BoolFlag{Name: "book", Usage: "Clone the Symfony: The Fast Track book project"},
 		&console.BoolFlag{Name: "no-git", Usage: "Do not initialize Git"},
 		&console.BoolFlag{Name: "cloud", Usage: "Initialize Platform.sh"},
 		&console.StringSliceFlag{Name: "service", Usage: "Configure some services", Hidden: true},
@@ -124,7 +124,7 @@ var localNewCmd = &console.Command{
 			return console.Exit("The --version flag is not supported for the Symfony Demo", 1)
 		}
 		if symfonyVersion == "" && c.Bool("book") {
-			return console.Exit("The --version flag is required for the Symfony 5 book", 1)
+			return console.Exit("The --version flag is required for the Symfony book", 1)
 		}
 		if c.Bool("webapp") && c.Bool("no-git") {
 			return console.Exit("The --webapp flag cannot be used with --no-git", 1)

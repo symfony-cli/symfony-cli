@@ -28,7 +28,7 @@ import (
 var BookCheckoutCmd = &console.Command{
 	Category: "book",
 	Name:     "checkout",
-	Usage:    `Check out a step of the "Symfony 5: The Fast Track" book repository`,
+	Usage:    `Check out a step of the "Symfony: The Fast Track" book repository`,
 	Flags: []console.Flag{
 		dirFlag,
 		&console.BoolFlag{Name: "debug", Usage: "Display commands output"},
