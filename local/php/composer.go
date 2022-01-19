@@ -64,15 +64,6 @@ func Composer(dir string, args []string, stdout, stderr, logger io.Writer) Compo
 		SkipNbArgs: -1,
 	}
 
-	// try to move the "old" bin/composer.phar to the new location
-	oldpath := filepath.Join(filepath.Join(util.GetHomeDir(), "bin"), "composer.phar")
-	newpath := filepath.Join(filepath.Join(util.GetHomeDir(), "composer"), "composer.phar")
-	if _, err := os.Stat(oldpath); err == nil {
-		if err := os.MkdirAll(filepath.Dir(newpath), 0755); err == nil {
-			os.Rename(oldpath, newpath)
-		}
-	}
-
 	composerBin := "composer1"
 	if composerVersion() == 2 {
 		composerBin = "composer2"
