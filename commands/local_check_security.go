@@ -75,7 +75,7 @@ a specific "composer.lock" file.`,
 		if os.Getenv("GITHUB_WORKSPACE") != "" {
 			// Ran inside a Github action, export vulns
 			output, _ := security.Format(vulns, "raw_json")
-			terminal.Printf("::set-output name=vulns::%s", output)
+			terminal.Eprintf("::set-output name=vulns::%s", output)
 		}
 
 		if vulns.Count() > 0 {
