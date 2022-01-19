@@ -65,6 +65,7 @@ var localNewCmd = &console.Command{
 		&console.BoolFlag{Name: "demo", Usage: "Use github.com/symfony/demo"},
 		&console.BoolFlag{Name: "webapp", Usage: "Add the webapp pack to get a fully configured web project"},
 		&console.BoolFlag{Name: "book", Usage: "Clone the Symfony: The Fast Track book project"},
+		&console.BoolFlag{Name: "docker", Usage: "Enable Docker support"},
 		&console.BoolFlag{Name: "no-git", Usage: "Do not initialize Git"},
 		&console.BoolFlag{Name: "cloud", Usage: "Initialize Platform.sh"},
 		&console.StringSliceFlag{Name: "service", Usage: "Configure some services", Hidden: true},
@@ -161,7 +162,7 @@ var localNewCmd = &console.Command{
 		}
 
 		if c.Bool("webapp") {
-			if err := runComposer(dir, []string{"require", "webapp"}, c.Bool("debug")); err != nil {
+			if err := runComposer(c, dir, []string{"require", "webapp"}, c.Bool("debug")); err != nil {
 				return err
 			}
 			buf, err := git.AddAndCommit(dir, []string{"."}, "Add webapp packages", c.Bool("debug"))
@@ -172,7 +173,7 @@ var localNewCmd = &console.Command{
 		}
 
 		if c.Bool("cloud") {
-			if err := runComposer(dir, []string{"require", "platformsh"}, c.Bool("debug")); err != nil {
+			if err := runComposer(c, dir, []string{"require", "platformsh"}, c.Bool("debug")); err != nil {
 				return err
 			}
 			buf, err := git.AddAndCommit(dir, []string{"."}, "Add more packages", c.Bool("debug"))
@@ -306,10 +307,10 @@ func createProjectWithComposer(c *console.Context, dir, version string) error {
 		version = version + ".*"
 	}
 
-	return runComposer("", []string{"create-project", repo, dir, version}, c.Bool("debug"))
+	return runComposer(c, "", []string{"create-project", repo, dir, version}, c.Bool("debug"))
 }
 
-func runComposer(dir string, args []string, debug bool) error {
+func runComposer(c *console.Context, dir string, args []string, debug bool) error {
 	var (
 		buf bytes.Buffer
 		out io.Writer = &buf
@@ -321,8 +322,12 @@ func runComposer(dir string, args []string, debug bool) error {
 	} else {
 		args = append(args, "--no-interaction")
 	}
+	env := []string{}
+	if c.Bool("docker") {
+		env = append(env, "SYMFONY_DOCKER=1")
+	}
 
-	if err := php.Composer(dir, args, out, err, os.Stderr); err.ExitCode() != 0 {
+	if err := php.Composer(dir, args, env, out, err, os.Stderr); err.ExitCode() != 0 {
 		terminal.Println(buf.String())
 		terminal.Logger.Debug().Msg(buf.String())
 		return err
