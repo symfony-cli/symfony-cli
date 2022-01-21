@@ -94,8 +94,9 @@ func (p *platformshCLI) proxyPSHCmd(commandName string) console.ActionFunc {
 
 			args := os.Args[1:]
 			for i := range args {
-				for _, name := range c.Command.Names() {
-					args[i] = strings.Replace(args[i], name, commandName, 1)
+				if args[i] == c.Command.UserName {
+					args[i] = commandName
+					break
 				}
 			}
 			e := p.executor(args)
