@@ -932,6 +932,16 @@ var Commands = []*console.Command{
 		Usage:    "List files in the project repository",
 	},
 	{
+		Category: "cloud:repo",
+		Name:     "read",
+		Aliases:  []*console.Alias{
+			{Name: "repo:read", Hidden: true},
+			{Name: "cloud:read"},
+			{Name: "read", Hidden: true},
+		},
+		Usage:    "Read a directory or file in the project repository",
+	},
+	{
 		Category: "cloud:route",
 		Name:     "get",
 		Aliases:  []*console.Alias{
