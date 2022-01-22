@@ -27,6 +27,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -74,6 +75,7 @@ func createRequiredFilesProject(rootDirectory, projectSlug, templateName string,
 			phpExts = append(phpExts, v...)
 		}
 	}
+	sort.Strings(phpExts)
 	serviceDiskSizes := map[string]string{
 		"postgresql": "1024",
 	}
