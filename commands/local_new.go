@@ -327,7 +327,7 @@ func runComposer(c *console.Context, dir string, args []string, debug bool) erro
 		env = append(env, "SYMFONY_DOCKER=1")
 	}
 
-	if err := php.Composer(dir, args, env, out, err, os.Stderr); err.ExitCode() != 0 {
+	if err := php.Composer(dir, args, env, out, err, os.Stderr, terminal.Logger); err.ExitCode() != 0 {
 		terminal.Println(buf.String())
 		terminal.Logger.Debug().Msg(buf.String())
 		return err

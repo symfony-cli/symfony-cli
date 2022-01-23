@@ -27,6 +27,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/commands"
 	"github.com/symfony-cli/symfony-cli/local/php"
@@ -73,7 +74,7 @@ func main() {
 	}
 	// called via "symfony composer"?
 	if len(args) >= 2 && args[1] == "composer" {
-		res := php.Composer("", args[2:], []string{}, os.Stdout, os.Stderr, ioutil.Discard)
+		res := php.Composer("", args[2:], []string{}, os.Stdout, os.Stderr, ioutil.Discard, zerolog.Nop())
 		terminal.Eprintln(res.Error())
 		os.Exit(res.ExitCode())
 	}

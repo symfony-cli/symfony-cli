@@ -33,8 +33,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/symfony-cli/symfony-cli/util"
-	"github.com/symfony-cli/terminal"
 )
 
 const DefaultComposerVersion = 2
@@ -56,7 +56,7 @@ func (c ComposerResult) ExitCode() int {
 	return c.code
 }
 
-func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer) ComposerResult {
+func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, debugLogger zerolog.Logger) ComposerResult {
 	e := &Executor{
 		Dir:        dir,
 		BinName:    "php",
@@ -64,16 +64,15 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer) 
 		Stderr:     stderr,
 		SkipNbArgs: -1,
 		ExtraEnv:   env,
-		Logger:     terminal.Logger,
+		Logger:     debugLogger,
 	}
-
 	composerBin := "composer1"
 	if composerVersion() == 2 {
 		composerBin = "composer2"
 	}
 	path, err := e.findComposer(composerBin)
 	if err != nil || !isComposerPHPScript(path) {
-		fmt.Println("  WARNING: Unable to find Composer, downloading one. It is recommended to install Composer yourself at https://getcomposer.org/download/")
+		fmt.Fprintln(logger, "  WARNING: Unable to find Composer, downloading one. It is recommended to install Composer yourself at https://getcomposer.org/download/")
 		// we don't store it under bin/ to avoid it being found by findComposer as we want to only use it as a fallback
 		binDir := filepath.Join(util.GetHomeDir(), "composer")
 		if path, err = downloadComposer(binDir); err != nil {
