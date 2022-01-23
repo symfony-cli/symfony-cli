@@ -62,9 +62,12 @@ func printWebServerStatus(projectDir string) error {
 		terminal.Printfln("    Listening on <href=%s://127.0.0.1:%d>%s://127.0.0.1:%d</>", pidFile.Scheme, pidFile.Port, pidFile.Scheme, pidFile.Port)
 		homeDir := util.GetHomeDir()
 		phpStore := phpstore.New(homeDir, true, nil)
-		version, _, _, err := phpStore.BestVersionForDir(projectDir)
+		version, source, warning, err := phpStore.BestVersionForDir(projectDir)
 		if err == nil {
-			terminal.Printfln("    The Web server is using <info>%s %s</>", version.ServerTypeName(), version.Version)
+			terminal.Printfln("    The Web server is using <info>%s %s</> (from %s)", version.ServerTypeName(), version.Version, source)
+			if warning != "" {
+				terminal.Printfln("    <warning>WARNING</> %s", warning)
+			}
 		}
 		terminal.Println()
 		terminal.Println("<info>Local Domains</>")

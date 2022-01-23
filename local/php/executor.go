@@ -35,6 +35,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rs/xid"
+	"github.com/rs/zerolog"
 	"github.com/symfony-cli/phpstore"
 	"github.com/symfony-cli/symfony-cli/envs"
 	"github.com/symfony-cli/symfony-cli/util"
@@ -51,6 +52,7 @@ type Executor struct {
 	Stdin      io.Reader
 	Paths      []string
 	ExtraEnv   []string
+	Logger     zerolog.Logger
 
 	environ   []string
 	iniDir    string
@@ -76,13 +78,14 @@ func GetBinaryNames() []string {
 
 func (e *Executor) lookupPHP(cliDir string, forceReload bool) (*phpstore.Version, string, bool, error) {
 	phpStore := phpstore.New(cliDir, forceReload, nil)
-	v, _, warning, err := phpStore.BestVersionForDir(e.scriptDir)
+	v, source, warning, err := phpStore.BestVersionForDir(e.scriptDir)
 	if warning != "" {
 		terminal.Eprintfln("<warning>WARNING</> %s", warning)
 	}
 	if err != nil {
 		return nil, "", true, err
 	}
+	e.Logger.Debug().Str("source", "PHP").Msgf("Using PHP version %s (from %s)", v.Version, source)
 	path := v.PHPPath
 	phpiniArgs := true
 	if e.BinName == "php-fpm" {
