@@ -34,6 +34,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/symfony-cli/util"
+	"github.com/symfony-cli/terminal"
 )
 
 const DefaultComposerVersion = 2
@@ -63,6 +64,7 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer) 
 		Stderr:     stderr,
 		SkipNbArgs: -1,
 		ExtraEnv:   env,
+		Logger:     terminal.Logger,
 	}
 
 	composerBin := "composer1"
