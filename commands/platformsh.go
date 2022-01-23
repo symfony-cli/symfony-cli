@@ -20,12 +20,15 @@
 package commands
 
 import (
+	"bytes"
 	_ "embed"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
+	"github.com/rs/zerolog"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/php"
 	"github.com/symfony-cli/symfony-cli/local/platformsh"
@@ -120,4 +123,28 @@ func (p *platformshCLI) executor(args []string) *php.Executor {
 	}
 	e.Paths = append([]string{filepath.Dir(p.path)}, e.Paths...)
 	return e
+}
+
+func (p *platformshCLI) RunInteractive(logger zerolog.Logger, projectDir string, args []string, debug bool, stdin io.Reader) (bytes.Buffer, bool) {
+	var buf bytes.Buffer
+
+	e := p.executor(args)
+	if projectDir != "" {
+		e.Dir = projectDir
+	}
+	if debug {
+		e.Stdout = io.MultiWriter(&buf, os.Stdout)
+		e.Stderr = io.MultiWriter(&buf, os.Stderr)
+	} else {
+		e.Stdout = &buf
+		e.Stderr = &buf
+	}
+	if stdin != nil {
+		e.Stdin = stdin
+	}
+	logger.Debug().Str("cmd", strings.Join(e.Args, " ")).Msg("Executing Platform.sh CLI command interactively")
+	if ret := e.Execute(false); ret != 0 {
+		return buf, false
+	}
+	return buf, true
 }

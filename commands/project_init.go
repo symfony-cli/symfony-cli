@@ -31,7 +31,6 @@ import (
 	"github.com/symfony-cli/terminal"
 )
 
-// initCmd represents the init command
 var projectInitCmd = &console.Command{
 	Category: "project",
 	Name:     "init",
