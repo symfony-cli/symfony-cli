@@ -62,7 +62,7 @@ var projectLocalOpenCmd = &console.Command{
 		url := fmt.Sprintf("%s://127.0.0.1:%d", pidFile.Scheme, pidFile.Port)
 		webPath := c.String("webPath")
 		if webPath != "" {
-			url = fmt.Sprintf("%s/%s", url, webPath)
+			url = fmt.Sprintf("%s%s", url, webPath)
 		}
 		abstractOpenCmd(url)
 		return nil
