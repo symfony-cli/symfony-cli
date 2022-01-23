@@ -45,6 +45,10 @@ var projectLocalOpenCmd = &console.Command{
 	Usage:    "Open the local project in a browser",
 	Flags: []console.Flag{
 		dirFlag,
+		&console.StringFlag{
+			Name:  "webPath",
+			Usage: "Default path which the project should open on",
+		},
 	},
 	Action: func(c *console.Context) error {
 		projectDir, err := getProjectDir(c.String("dir"))
@@ -55,7 +59,12 @@ var projectLocalOpenCmd = &console.Command{
 		if !pidFile.IsRunning() {
 			return console.Exit("Local web server is down.", 1)
 		}
-		abstractOpenCmd(fmt.Sprintf("%s://127.0.0.1:%d", pidFile.Scheme, pidFile.Port))
+		url := fmt.Sprintf("%s://127.0.0.1:%d", pidFile.Scheme, pidFile.Port)
+		webPath := c.String("webPath")
+		if webPath != "" {
+			url = fmt.Sprintf("%s/%s", url, webPath)
+		}
+		abstractOpenCmd(url)
 		return nil
 	},
 }
