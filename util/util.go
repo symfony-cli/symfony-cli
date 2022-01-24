@@ -20,10 +20,9 @@
 package util
 
 import (
+	"os"
 	"os/user"
 	"path/filepath"
-
-	"github.com/mitchellh/go-homedir"
 )
 
 func GetHomeDir() string {
@@ -39,7 +38,7 @@ func getUserHomeDir() string {
 		return "/tmp/" + u.Username
 	}
 
-	if homeDir, err := homedir.Dir(); err == nil {
+	if homeDir, err := os.UserHomeDir(); err == nil {
 		return homeDir
 	}
 

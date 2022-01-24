@@ -30,7 +30,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/symfony-cli/inotify"
 	"github.com/symfony-cli/symfony-cli/local/projects"
@@ -269,7 +268,7 @@ func (p *PidFile) Stop() error {
 
 func ToConfiguredProjects() (map[string]*projects.ConfiguredProject, error) {
 	ps := make(map[string]*projects.ConfiguredProject)
-	userHomeDir, err := homedir.Dir()
+	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		userHomeDir = ""
 	}

@@ -25,7 +25,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/php"
 	"github.com/symfony-cli/symfony-cli/local/platformsh"
@@ -39,7 +38,7 @@ type platformshCLI struct {
 }
 
 func NewPlatformShCLI() (*platformshCLI, error) {
-	home, err := homedir.Dir()
+	home, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +82,7 @@ func (p *platformshCLI) proxyPSHCmd(commandName string) console.ActionFunc {
 		return func(c *console.Context) error {
 			// the Platform.sh CLI is always available on the containers thanks to the configurator
 			if !util.InCloud() {
-				home, err := homedir.Dir()
+				home, err := os.UserHomeDir()
 				if err != nil {
 					return err
 				}

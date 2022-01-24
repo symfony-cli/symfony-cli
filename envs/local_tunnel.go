@@ -30,7 +30,6 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	"github.com/symfony-cli/symfony-cli/util"
@@ -62,7 +61,7 @@ func (l *Local) relationshipsFromTunnel() Relationships {
 		return nil
 	}
 
-	userHomeDir, err := homedir.Dir()
+	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		userHomeDir = ""
 	}

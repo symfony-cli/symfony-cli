@@ -33,7 +33,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/rs/zerolog"
 	"github.com/symfony-cli/cert"
 	"github.com/symfony-cli/symfony-cli/local/pid"
@@ -45,9 +44,7 @@ func (s *ProxySuite) TestProxy(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(ca.LoadCA(), IsNil)
 
-	homedir.Reset()
 	os.Setenv("HOME", "testdata")
-	defer homedir.Reset()
 	defer os.RemoveAll("testdata/.symfony5")
 
 	p := New(&Config{

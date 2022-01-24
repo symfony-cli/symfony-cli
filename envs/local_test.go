@@ -23,7 +23,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/mitchellh/go-homedir"
 	. "gopkg.in/check.v1"
 )
 
@@ -54,9 +53,7 @@ func (s *LocalSuite) TestTunnelFilePath(c *C) {
 func (s *LocalSuite) TestRelationships(c *C) {
 	os.Rename("testdata/project/git", "testdata/project/.git")
 	defer os.Rename("testdata/project/.git", "testdata/project/git")
-	homedir.Reset()
 	os.Setenv("HOME", "testdata/project")
-	defer homedir.Reset()
 	l := &Local{Dir: "testdata/project"}
 	c.Assert(extractRelationshipsEnvs(l), DeepEquals, Envs{
 		"SECURITY_SERVER_HOST":   "127.0.0.1",

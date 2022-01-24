@@ -31,7 +31,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mitchellh/go-homedir"
 	. "gopkg.in/check.v1"
 )
 
@@ -120,9 +119,7 @@ func (s *ExecutorSuite) TestForwardExitCode(c *C) {
 	home, err := filepath.Abs("testdata/executor")
 	c.Assert(err, IsNil)
 
-	homedir.Reset()
 	os.Setenv("HOME", home)
-	defer homedir.Reset()
 
 	oldwd, _ := os.Getwd()
 	defer os.Chdir(oldwd)
@@ -139,9 +136,7 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 	home, err := filepath.Abs("testdata/executor")
 	c.Assert(err, IsNil)
 
-	homedir.Reset()
 	os.Setenv("HOME", home)
-	defer homedir.Reset()
 
 	oldwd, _ := os.Getwd()
 	defer os.Chdir(oldwd)
