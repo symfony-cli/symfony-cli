@@ -145,7 +145,7 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 		fmt.Fprintf(os.Stderr, `found Docker container "%s" for project "%s" (image "%s")`+"\n", container.Labels["com.docker.compose.service"], container.Labels["com.docker.compose.project"], container.Image)
 	}
 
-	if v, ok := container.Labels["com.symfony.server.service-ignore"]; ok && v == "True" {
+	if v, _ := strconv.ParseBool(container.Labels["com.symfony.server.service-ignore"]); v {
 		if l.Debug {
 			fmt.Fprintln(os.Stderr, "  skipping as com.symfony.server.service-ignore is true")
 		}
