@@ -21,6 +21,7 @@ package commands
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/skratchdot/open-golang/open"
 	"github.com/symfony-cli/console"
@@ -46,7 +47,7 @@ var projectLocalOpenCmd = &console.Command{
 	Flags: []console.Flag{
 		dirFlag,
 		&console.StringFlag{
-			Name:  "webPath",
+			Name:  "path",
 			Usage: "Default path which the project should open on",
 		},
 	},
@@ -59,12 +60,11 @@ var projectLocalOpenCmd = &console.Command{
 		if !pidFile.IsRunning() {
 			return console.Exit("Local web server is down.", 1)
 		}
-		url := fmt.Sprintf("%s://127.0.0.1:%d", pidFile.Scheme, pidFile.Port)
-		webPath := c.String("webPath")
-		if webPath != "" {
-			url = fmt.Sprintf("%s%s", url, webPath)
-		}
-		abstractOpenCmd(url)
+		abstractOpenCmd(fmt.Sprintf("%s://127.0.0.1:%d/%s",
+			pidFile.Scheme,
+			pidFile.Port,
+			strings.TrimLeft(c.String("path"), "/"),
+		))
 		return nil
 	},
 }
