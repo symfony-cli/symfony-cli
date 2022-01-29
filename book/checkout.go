@@ -135,15 +135,6 @@ func (b *Book) Checkout(step string) error {
 		return err
 	}
 
-	printBanner("<comment>[WEB]</> Installing PHPUnit (might take some time)", b.Debug)
-	if _, err := os.Stat(filepath.Join(b.Dir, "bin", "phpunit")); err == nil {
-		if err := executeCommand([]string{"symfony", "php", filepath.Join("bin", "phpunit"), "install"}, b.Debug, false, nil); err != nil {
-			return err
-		}
-	} else {
-		terminal.Println("Skipped for this step")
-	}
-
 	printBanner("<comment>[WEB]</> Adding .env.local", b.Debug)
 	if emptyFile, err = os.Create(filepath.Join(b.Dir, ".env.local")); err != nil {
 		return err
