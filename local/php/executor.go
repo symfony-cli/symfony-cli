@@ -189,9 +189,15 @@ func (e *Executor) Config(loadDotEnv bool) error {
 	}
 
 	cliDir := util.GetHomeDir()
-	v, path, phpiniArgs, err := e.lookupPHP(cliDir, false)
-	if err != nil {
-		return err
+	var v *phpstore.Version
+	var path string
+	var phpiniArgs bool
+	var err error
+	if v, path, phpiniArgs, err = e.lookupPHP(cliDir, false); err != nil {
+		// try again after reloading PHP versions
+		if v, path, phpiniArgs, err = e.lookupPHP(cliDir, true); err != nil {
+			return err
+		}
 	}
 	e.environ = append(e.environ, fmt.Sprintf("PHP_BINARY=%s", v.PHPPath))
 	e.environ = append(e.environ, fmt.Sprintf("PHP_PATH=%s", v.PHPPath))
