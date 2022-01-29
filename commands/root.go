@@ -38,10 +38,9 @@ var (
 	psh     *platformshCLI
 	pshOnce sync.Once
 
-	dirFlag = &console.StringFlag{
-		Name:  "dir",
-		Usage: "Project directory",
-	}
+	dirFlag         = &console.StringFlag{Name: "dir", Usage: "Project directory"}
+	projectFlag     = &console.StringFlag{Name: "project", Aliases: []string{"p"}, Usage: "The project ID or URL"}
+	environmentFlag = &console.StringFlag{Name: "environment", Aliases: []string{"e"}, Usage: "The environment ID"}
 )
 
 func CommonCommands() []*console.Command {
@@ -60,6 +59,7 @@ func CommonCommands() []*console.Command {
 		phpWrapper,
 		bookCheckReqsCmd,
 		bookCheckoutCmd,
+		cloudEnvDebugCmd,
 		localNewCmd,
 		localPhpListCmd,
 		localPhpRefreshCmd,
