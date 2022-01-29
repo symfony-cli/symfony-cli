@@ -747,8 +747,7 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "organization:create", Hidden: true},
 		},
-		Usage:    "<fg=white;bg=red>[ BETA ]</> Create a new organization",
-		Hidden:   console.Hide,
+		Usage:    "Create a new organization",
 	},
 	{
 		Category: "cloud:organization",
@@ -765,8 +764,7 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "organization:delete", Hidden: true},
 		},
-		Usage:    "<fg=white;bg=red>[ ALPHA ]</> Delete an organization",
-		Hidden:   console.Hide,
+		Usage:    "Delete an organization",
 	},
 	{
 		Category: "cloud:organization",
