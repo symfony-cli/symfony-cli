@@ -25,7 +25,7 @@ import (
 	"github.com/symfony-cli/terminal"
 )
 
-var BookCheckReqsCmd = &console.Command{
+var bookCheckReqsCmd = &console.Command{
 	Category: "book",
 	Name:     "check-requirements",
 	Usage:    `Check that you have all the pre-requisites locally to code while reading the "Symfony: The Fast Track" book`,

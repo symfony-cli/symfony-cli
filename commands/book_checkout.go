@@ -25,7 +25,7 @@ import (
 	"github.com/symfony-cli/terminal"
 )
 
-var BookCheckoutCmd = &console.Command{
+var bookCheckoutCmd = &console.Command{
 	Category: "book",
 	Name:     "checkout",
 	Usage:    `Check out a step of the "Symfony: The Fast Track" book repository`,
