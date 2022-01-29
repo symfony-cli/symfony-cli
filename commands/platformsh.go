@@ -54,7 +54,10 @@ func NewPlatformShCLI() (*platformshCLI, error) {
 		command.Args = []*console.Arg{
 			{Name: "anything", Slice: true, Optional: true},
 		}
-		command.FlagParsing = console.FlagParsingSkipped
+		command.Flags = append(command.Flags,
+			&console.BoolFlag{Name: "no", Aliases: []string{"n"}},
+			&console.BoolFlag{Name: "yes", Aliases: []string{"y"}},
+		)
 		p.Commands = append(p.Commands, command)
 	}
 	return p, nil
