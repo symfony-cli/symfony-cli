@@ -53,7 +53,7 @@ var localVariableExposeFromTunnelCmd = &console.Command{
 		tunnel := envs.Tunnel{Project: project}
 
 		if c.Bool("off") {
-			terminal.Eprintln("Stop exposing tunnel service environment variables ")
+			terminal.Eprintln("Stop exposing tunnel service environment variables")
 			return tunnel.Expose(false)
 		}
 

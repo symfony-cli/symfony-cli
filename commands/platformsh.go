@@ -58,6 +58,10 @@ func NewPlatformShCLI() (*platformshCLI, error) {
 			&console.BoolFlag{Name: "no", Aliases: []string{"n"}},
 			&console.BoolFlag{Name: "yes", Aliases: []string{"y"}},
 		)
+		if _, ok := platformshBeforeHooks[command.FullName()]; !ok {
+			// do not parse flags if we don't have hooks
+			command.FlagParsing = console.FlagParsingSkipped
+		}
 		p.Commands = append(p.Commands, command)
 	}
 	return p, nil
@@ -95,6 +99,12 @@ func (p *platformshCLI) proxyPSHCmd(commandName string) console.ActionFunc {
 				}
 				if err := php.InstallPlatformPhar(home); err != nil {
 					return console.Exit(err.Error(), 1)
+				}
+			}
+
+			if hook, ok := platformshBeforeHooks[commandName]; ok {
+				if err := hook(c); err != nil {
+					return err
 				}
 			}
 
