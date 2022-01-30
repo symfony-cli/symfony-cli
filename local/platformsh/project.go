@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package util
+package platformsh
 
 import (
 	goerr "errors"
@@ -36,20 +36,46 @@ var (
 	ErrNoGitBranchMatching            = goerr.New("current git branch name doesn't match any Platform.sh environments")
 )
 
+type Project struct {
+	ID  string
+	App string
+	Env string
+}
+
+func ProjectFromDir(dir string, debug bool) (*Project, error) {
+	projectRoot, projectID := guessProjectRoot(dir, debug)
+	if projectID == "" {
+		return nil, errors.New("unable to get project root")
+	}
+	envID, err := potentialCurrentEnvironmentID(projectRoot)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get current env")
+	}
+	app := GuessSelectedAppByDirectory(dir, FindLocalApplications(projectRoot))
+	if app == nil {
+		return nil, errors.New("unable to get current application")
+	}
+	return &Project{
+		ID:  projectID,
+		App: app.Name,
+		Env: envID,
+	}, nil
+}
+
 func GetProjectRoot(debug bool) (string, error) {
 	currentDir, err := os.Getwd()
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
 
-	if projectRoot, _ := GuessProjectRoot(currentDir, debug); projectRoot != "" {
+	if projectRoot, _ := guessProjectRoot(currentDir, debug); projectRoot != "" {
 		return projectRoot, nil
 	}
 
 	return "", errors.WithStack(ErrProjectRootNotFoundNoGitRemote)
 }
 
-func PotentialCurrentEnvironmentID(cwd string) (string, error) {
+func potentialCurrentEnvironmentID(cwd string) (string, error) {
 	for _, potentialEnvironment := range guessCloudBranch(cwd) {
 		return potentialEnvironment, nil
 	}
@@ -57,7 +83,7 @@ func PotentialCurrentEnvironmentID(cwd string) (string, error) {
 	return "", errors.New("no known git upstream, branch or environment name")
 }
 
-func RepositoryRootDir(currentDir string) string {
+func repositoryRootDir(currentDir string) string {
 	for {
 		f, err := os.Stat(filepath.Join(currentDir, ".git"))
 		if err == nil && f.IsDir() {
@@ -74,29 +100,25 @@ func RepositoryRootDir(currentDir string) string {
 	return ""
 }
 
-func GuessProjectRoot(currentDir string, debug bool) (string, *gitInfo) {
-	rootDir := RepositoryRootDir(currentDir)
+func guessProjectRoot(currentDir string, debug bool) (string, string) {
+	rootDir := repositoryRootDir(currentDir)
 	if rootDir == "" {
-		return "", nil
+		return "", ""
 	}
-	config := GetProjectConfig(rootDir, debug)
-	if config == nil {
-		return "", nil
+	config := getProjectConfig(rootDir, debug)
+	if config == "" {
+		return "", ""
 	}
 	return rootDir, config
 }
 
-type gitInfo struct {
-	ID string
-}
-
-func GetProjectConfig(projectRoot string, debug bool) *gitInfo {
+func getProjectConfig(projectRoot string, debug bool) string {
 	contents, err := ioutil.ReadFile(filepath.Join(projectRoot, ".platform", "local", "project.yaml"))
 	if err != nil {
 		if debug {
 			fmt.Fprintf(os.Stderr, "WARNING: unable to find Platform.sh config file: %s\n", err)
 		}
-		return nil
+		return ""
 	}
 	var config struct {
 		ID string `yaml:"id"`
@@ -105,11 +127,9 @@ func GetProjectConfig(projectRoot string, debug bool) *gitInfo {
 		if debug {
 			fmt.Fprintf(os.Stderr, "ERROR: unable to decode Platform.sh config file: %s\n", err)
 		}
-		return nil
+		return ""
 	}
-	return &gitInfo{
-		ID: config.ID,
-	}
+	return config.ID
 }
 
 func guessCloudBranch(cwd string) []string {

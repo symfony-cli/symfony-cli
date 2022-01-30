@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 
 	"github.com/mitchellh/go-homedir"
+	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	. "gopkg.in/check.v1"
 )
 
@@ -46,9 +47,12 @@ func (s *LocalSuite) TestTunnelFilePath(c *C) {
 	defer func() {
 		os.Rename("testdata/project/.git", "testdata/project/git")
 	}()
-	tunnel := Tunnel{Dir: l.Dir}
-	tunnelPath, _ := tunnel.computePath()
-	c.Assert(filepath.Base(tunnelPath), Equals, "ism4mega7wpx6-toto--security.json")
+	project, err := platformsh.ProjectFromDir(l.Dir, false)
+	if err != nil {
+		panic(err)
+	}
+	tunnel := Tunnel{Project: project}
+	c.Assert(filepath.Base(tunnel.path()), Equals, "ism4mega7wpx6-toto--security-expose.json")
 }
 
 func (s *LocalSuite) TestRelationships(c *C) {

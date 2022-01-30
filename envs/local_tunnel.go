@@ -31,7 +31,6 @@ import (
 	"strconv"
 
 	"github.com/mitchellh/go-homedir"
-	"github.com/pkg/errors"
 	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	"github.com/symfony-cli/symfony-cli/util"
 )
@@ -46,18 +45,10 @@ type pshtunnel struct {
 }
 
 func (l *Local) relationshipsFromTunnel() Relationships {
-	projectRoot := util.RepositoryRootDir(l.Dir)
-	envID, err := util.PotentialCurrentEnvironmentID(projectRoot)
+	project, err := platformsh.ProjectFromDir(l.Dir, l.Debug)
 	if err != nil {
 		if l.Debug {
-			fmt.Fprintf(os.Stderr, "WARNING: unable to find the env: %s\n", err)
-		}
-		return nil
-	}
-	app := platformsh.GuessSelectedAppByDirectory(l.Dir, platformsh.FindLocalApplications(projectRoot))
-	if app == nil {
-		if l.Debug {
-			fmt.Fprintf(os.Stderr, "WARNING: unable to find the app: %s\n", err)
+			fmt.Fprintf(os.Stderr, "WARNING: unable to detect Platform.sh project: %s\n", err)
 		}
 		return nil
 	}
@@ -88,16 +79,9 @@ func (l *Local) relationshipsFromTunnel() Relationships {
 			tunnels = append(tunnels, config)
 		}
 	}
-	gitConfig := util.GetProjectConfig(projectRoot, l.Debug)
-	if gitConfig == nil {
-		if l.Debug {
-			fmt.Fprintf(os.Stderr, "WARNING: unable to read Git config: %s\n", err)
-		}
-		return nil
-	}
 	rels := make(Relationships)
 	for _, config := range tunnels {
-		if config.ProjectID == gitConfig.ID && config.EnvironmentID == envID && config.AppName == app.Name {
+		if config.ProjectID == project.ID && config.EnvironmentID == project.Env && config.AppName == project.App {
 			config.Service["port"] = strconv.Itoa(config.LocalPort)
 			config.Service["host"] = "127.0.0.1"
 			config.Service["ip"] = "127.0.0.1"
@@ -106,7 +90,7 @@ func (l *Local) relationshipsFromTunnel() Relationships {
 	}
 
 	if len(rels) > 0 {
-		l.Tunnel = envID
+		l.Tunnel = project.Env
 		l.TunnelEnv = true
 		return rels
 	}
@@ -117,83 +101,54 @@ func (l *Local) relationshipsFromTunnel() Relationships {
 var pathCleaningRegex = regexp.MustCompile("[^a-zA-Z0-9-\\.]+")
 
 type Tunnel struct {
-	Dir    string
-	Worker string
-	Debug  bool
-	path   string
+	Project *platformsh.Project
+	Worker  string
+	Debug   bool
 }
 
 func (t *Tunnel) IsExposed() bool {
-	path, err := t.computePath()
-	if err != nil {
-		return false
-	}
-	if _, err := os.Stat(path + "-expose"); err != nil {
+	if _, err := os.Stat(t.path()); err != nil {
 		return false
 	}
 	return true
 }
 
 func (t *Tunnel) Expose(expose bool) error {
-	path, err := t.computePath()
-	if err != nil {
-		return err
-	}
-
+	path := t.path()
 	if expose {
 		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 			return err
 		}
-		file, err := os.Create(path + "-expose")
+		file, err := os.Create(path)
 		if err != nil {
 			return err
 		}
 		return file.Close()
 	}
 
-	os.Remove(path + "-expose")
+	os.Remove(path)
 	return nil
 }
 
 // Path returns the path to the Platform.sh local tunnel state file
-func (t *Tunnel) computePath() (string, error) {
-	if t.path != "" {
-		return t.path, nil
-	}
-	projectRoot, projectInfo := util.GuessProjectRoot(t.Dir, t.Debug)
-	if projectInfo == nil {
-		return "", errors.New("unable to get project root")
-	}
-	envID, err := util.PotentialCurrentEnvironmentID(projectRoot)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to get current env")
-	}
-	app := platformsh.GuessSelectedAppByDirectory(t.Dir, platformsh.FindLocalApplications(projectRoot))
-	if app == nil {
-		return "", errors.New("unable to get current application")
-	}
-	t.path = getControlFileName(filepath.Join(util.GetHomeDir(), "tunnels"), projectInfo.ID, envID, app.Name, t.Worker)
-	return t.path, nil
-}
-
-func getControlFileName(dir, projectID, envID, appName, workerName string) string {
+func (t *Tunnel) path() string {
 	var filename bytes.Buffer
 
-	filename.WriteString(projectID)
+	filename.WriteString(t.Project.ID)
 	filename.WriteRune('-')
-	filename.WriteString(envID)
+	filename.WriteString(t.Project.Env)
 
-	if appName != "" {
+	if t.Project.App != "" {
 		filename.WriteString("--")
-		filename.WriteString(appName)
+		filename.WriteString(t.Project.App)
 	}
 
-	if workerName != "" {
+	if t.Worker != "" {
 		filename.WriteString("--")
-		filename.WriteString(workerName)
+		filename.WriteString(t.Worker)
 	}
 
-	filename.WriteString(".json")
+	filename.WriteString("-expose.json")
 
-	return filepath.Join(dir, pathCleaningRegex.ReplaceAllString(path.Clean(filename.String()), "-"))
+	return filepath.Join(filepath.Join(util.GetHomeDir(), "tunnels"), pathCleaningRegex.ReplaceAllString(path.Clean(filename.String()), "-"))
 }
