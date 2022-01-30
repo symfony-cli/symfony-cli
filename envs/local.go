@@ -90,7 +90,7 @@ func (l *Local) Relationships() Relationships {
 	// we need to call it in all cases so that l.DockerEnv is set correctly
 	dockerRel := l.RelationshipsFromDocker()
 
-	project, err := util.PlatformshProjectFromDir(l.Dir, l.Debug)
+	project, err := platformsh.ProjectFromDir(l.Dir, l.Debug)
 	if err != nil {
 		if l.Debug {
 			fmt.Fprint(os.Stderr, "ERROR: unable to get Platform.sh project information\n")
@@ -149,7 +149,7 @@ func (l *Local) Language() string {
 	if language != "" {
 		return language
 	}
-	projectRoot, err := util.GetProjectRoot(l.Debug)
+	projectRoot, err := platformsh.GetProjectRoot(l.Debug)
 	if err != nil {
 		if l.Debug {
 			fmt.Fprint(os.Stderr, "ERROR: unable to get project root\n")

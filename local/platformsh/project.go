@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package util
+package platformsh
 
 import (
 	goerr "errors"
@@ -28,7 +28,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/symfony-cli/git"
-	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	"gopkg.in/yaml.v2"
 )
 
@@ -37,13 +36,13 @@ var (
 	ErrNoGitBranchMatching            = goerr.New("current git branch name doesn't match any Platform.sh environments")
 )
 
-type PlatformshProject struct {
+type Project struct {
 	ID  string
 	App string
 	Env string
 }
 
-func PlatformshProjectFromDir(dir string, debug bool) (*PlatformshProject, error) {
+func ProjectFromDir(dir string, debug bool) (*Project, error) {
 	projectRoot, projectID := guessProjectRoot(dir, debug)
 	if projectID == "" {
 		return nil, errors.New("unable to get project root")
@@ -52,11 +51,11 @@ func PlatformshProjectFromDir(dir string, debug bool) (*PlatformshProject, error
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get current env")
 	}
-	app := platformsh.GuessSelectedAppByDirectory(dir, platformsh.FindLocalApplications(projectRoot))
+	app := GuessSelectedAppByDirectory(dir, FindLocalApplications(projectRoot))
 	if app == nil {
 		return nil, errors.New("unable to get current application")
 	}
-	return &PlatformshProject{
+	return &Project{
 		ID:  projectID,
 		App: app.Name,
 		Env: envID,

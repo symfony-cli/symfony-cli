@@ -31,6 +31,7 @@ import (
 	"strconv"
 
 	"github.com/mitchellh/go-homedir"
+	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	"github.com/symfony-cli/symfony-cli/util"
 )
 
@@ -44,7 +45,7 @@ type pshtunnel struct {
 }
 
 func (l *Local) relationshipsFromTunnel() Relationships {
-	project, err := util.PlatformshProjectFromDir(l.Dir, l.Debug)
+	project, err := platformsh.ProjectFromDir(l.Dir, l.Debug)
 	if err != nil {
 		if l.Debug {
 			fmt.Fprintf(os.Stderr, "WARNING: unable to detect Platform.sh project: %s\n", err)
@@ -100,7 +101,7 @@ func (l *Local) relationshipsFromTunnel() Relationships {
 var pathCleaningRegex = regexp.MustCompile("[^a-zA-Z0-9-\\.]+")
 
 type Tunnel struct {
-	Project *util.PlatformshProject
+	Project *platformsh.Project
 	Worker  string
 	Debug   bool
 }
