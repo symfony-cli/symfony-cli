@@ -24,6 +24,7 @@ import (
 
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/envs"
+	"github.com/symfony-cli/symfony-cli/util"
 	"github.com/symfony-cli/terminal"
 )
 
@@ -45,9 +46,11 @@ var localVariableExposeFromTunnelCmd = &console.Command{
 			}
 		}
 
-		tunnel := envs.Tunnel{
-			Dir: dir,
+		project, err := util.PlatformshProjectFromDir(dir, false)
+		if err != nil {
+			return err
 		}
+		tunnel := envs.Tunnel{Project: project}
 
 		if c.Bool("off") {
 			terminal.Eprintln("Stop exposing tunnel service environment variables ")

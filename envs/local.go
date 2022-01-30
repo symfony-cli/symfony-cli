@@ -90,7 +90,17 @@ func (l *Local) Relationships() Relationships {
 	// we need to call it in all cases so that l.DockerEnv is set correctly
 	dockerRel := l.RelationshipsFromDocker()
 
-	tunnel := Tunnel{Dir: l.Dir, Debug: l.Debug}
+	project, err := util.PlatformshProjectFromDir(l.Dir, l.Debug)
+	if err != nil {
+		if l.Debug {
+			fmt.Fprint(os.Stderr, "ERROR: unable to get Platform.sh project information\n")
+		}
+		return dockerRel
+	}
+	tunnel := Tunnel{
+		Project: project,
+		Debug:   l.Debug,
+	}
 	if !tunnel.IsExposed() {
 		return dockerRel
 	}
