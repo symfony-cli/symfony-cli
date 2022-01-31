@@ -369,7 +369,10 @@ func forcePHPVersion(v, dir string) (string, error) {
 	store := phpstore.New(util.GetHomeDir(), true, nil)
 	if v == "" {
 		minor, _, _, err := store.BestVersionForDir(dir)
-		return strings.Join(strings.Split(minor.Version, ".")[0:2], "."), err
+		if err != nil {
+			return "", err
+		}
+		return strings.Join(strings.Split(minor.Version, ".")[0:2], "."), nil
 	}
 	if _, err := version.NewVersion(v); err != nil {
 		return "", errors.Errorf("unable to parse PHP version \"%s\"", v)
