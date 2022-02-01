@@ -8,7 +8,7 @@ import (
 )
 
 var platformshBeforeHooks = map[string]console.BeforeFunc{
-	"tunnel:close": func(c *console.Context) error {
+	"cloud:tunnel:close": func(c *console.Context) error {
 		terminal.Eprintln("Stop exposing tunnel service environment variables")
 
 		app := c.String("app")

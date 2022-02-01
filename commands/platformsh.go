@@ -102,7 +102,7 @@ func (p *platformshCLI) proxyPSHCmd(commandName string) console.ActionFunc {
 				}
 			}
 
-			if hook, ok := platformshBeforeHooks[commandName]; ok {
+			if hook, ok := platformshBeforeHooks["cloud:"+commandName]; ok && !console.IsHelp(c) {
 				if err := hook(c); err != nil {
 					return err
 				}
