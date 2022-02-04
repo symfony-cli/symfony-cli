@@ -138,8 +138,8 @@ var availableServices = []*service{
 	{
 		Type: "elasticsearch",
 		Versions: serviceVersions{
-			Deprecated: []string{"0.9", "1.4", "1.7", "2.4", "5.2", "5.4", "6.5", "6.8", "7.2", "7.5", "7.7"},
-			Supported:  []string{"7.9", "7.10"},
+			Deprecated: []string{"0.9", "1.4", "1.7", "2.4", "5.2", "5.4", "6.5", "6.8", "7.2", "7.5", "7.7", "7.9"},
+			Supported:  []string{"7.10"},
 		},
 	},
 	{
@@ -189,6 +189,13 @@ var availableServices = []*service{
 		Versions: serviceVersions{
 			Deprecated: []string{},
 			Supported:  []string{"1.0"},
+		},
+	},
+	{
+		Type: "opensearch",
+		Versions: serviceVersions{
+			Deprecated: []string{},
+			Supported:  []string{"1.2"},
 		},
 	},
 	{
