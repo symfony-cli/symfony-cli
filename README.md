@@ -15,10 +15,30 @@ Installation
 
 Read the installation instructions on [symfony.com][7].
 
+Signature Verification
+----------------------
+
+Symfony binaries are signed using [cosign][8], which is part of [sigstore][9].
+Signatures can be verified as follows (OS and architecture omitted for clarity):
+
+```console
+$ COSIGN_EXPERIMENTAL=1 cosign verify-blob --signature symfony-cli.sig symfony-cli
+tlog entry verified with uuid: "2b7ca2bfb7ee09114a15d60761c2a0a8c97f07cc20c02e635a92ba137a08a6de" index: 1261963
+Verified OK
+```
+
+The above uses the (currently experimental) [keyless signing][10] method.
+Alternatively, one can verify the signature by also providing the certificate:
+
+```console
+$ cosign verify-blob --cert symfony-cli.pem --signature symfony-cli.sig symfony-cli
+Verified OK
+```
+
 Security Issues
 ---------------
 
-If you discover a security vulnerability, please follow our [disclosure procedure][8].
+If you discover a security vulnerability, please follow our [disclosure procedure][11].
 
 [1]: https://symfony.com/download
 [2]: https://symfony.com/doc/current/setup.html#creating-symfony-applications
@@ -27,4 +47,7 @@ If you discover a security vulnerability, please follow our [disclosure procedur
 [5]: https://symfony.com/doc/current/setup.html#security-checker
 [6]: https://symfony.com/cloud
 [7]: https://symfony.com/download
-[8]: https://symfony.com/security
+[8]: https://github.com/SigStore/cosign
+[9]: https://www.sigstore.dev/
+[10]: https://github.com/sigstore/cosign/blob/main/KEYLESS.md
+[11]: https://symfony.com/security
