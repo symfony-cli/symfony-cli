@@ -79,6 +79,7 @@ brews:
   - tap:
       owner: symfony-cli
       name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     commit_author:
       name: Fabien Potencier
       email: fabien@symfony.com
@@ -99,6 +100,7 @@ rigs:
   - rig:
       owner: symfony-cli
       name: fish-food
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     commit_author:
       name: Fabien Potencier
       email: fabien@symfony.com
