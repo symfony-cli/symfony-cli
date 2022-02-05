@@ -41,6 +41,7 @@ type PidFile struct {
 	Dir        string   `json:"dir"`
 	Watched    []string `json:"watch"`
 	Pid        int      `json:"pid"`
+	Host       string   `json:"host"`
 	Port       int      `json:"port"`
 	Scheme     string   `json:"scheme"`
 	Args       []string `json:"args"`

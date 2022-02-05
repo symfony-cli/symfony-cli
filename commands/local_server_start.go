@@ -29,6 +29,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/pkg/errors"
@@ -146,12 +147,18 @@ var localServerStartCmd = &console.Command{
 				ui.Warning(fmt.Sprintf(`run "%s server:ca:install" first if you want to run the web server with TLS support, or use "--no-tls" to avoid this warning`, c.App.HelpName))
 				config.NoTLS = true
 			} else {
-				p12 := filepath.Join(homeDir, "certs", "default.p12")
+				hosts := []string{"localhost", "127.0.0.1", "::1"}
+				name := "default"
+				if c.String("host") != "" {
+					hosts = []string{c.String("host")}
+					name = strings.ReplaceAll(".", "_", c.String("host"))
+				}
+				p12 := filepath.Join(homeDir, "certs", name+".p12")
 				if _, err := os.Stat(p12); os.IsNotExist(err) {
 					if err := ca.LoadCA(); err != nil {
 						return errors.Wrap(err, "Failed to generate a default certificate for localhost.")
 					}
-					err := ca.MakeCert(p12, []string{"localhost", "127.0.0.1", "::1"})
+					err := ca.MakeCert(p12, hosts)
 					if err != nil {
 						return errors.Wrap(err, "Failed to generate a default certificate for localhost.")
 					}

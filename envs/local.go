@@ -184,7 +184,7 @@ func (l *Local) webServer() Envs {
 	}
 
 	port := fmt.Sprintf("%d", pidFile.Port)
-	host := fmt.Sprintf("127.0.0.1:%s", port)
+	host := fmt.Sprintf("%s:%s", pidFile.Host, port)
 
 	if proxyConf, err := proxy.Load(util.GetHomeDir()); err == nil {
 		for _, domain := range proxyConf.GetDomains(l.Dir) {
