@@ -29,17 +29,21 @@ import (
 // CreateListener creates a listener on a port
 // Pass a prefered port (will increment by 1 if port is not available)
 // or pass 0 to auto-find any available port
-func CreateListener(preferedPort int) (net.Listener, int, error) {
+func CreateListener(host string, preferedPort int) (net.Listener, int, error) {
 	var ln net.Listener
 	var err error
 	port := preferedPort
 	max := 50
+	defaultHost := host
+	if defaultHost == "" {
+		defaultHost = "127.0.0.1"
+	}
 	for {
-		// we really want to test availability on 127.0.0.1
-		ln, err = net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(port))
-		if err == nil {
+		// test availability on the "default" host first
+		ln, err = net.Listen("tcp", defaultHost+":"+strconv.Itoa(port))
+		if err == nil && host == "" {
 			ln.Close()
-			// but then, we want to listen to as many local IP's as possible
+			// but then, we want to listen to as many local IP's as possible if no specific host has been given
 			ln, err = net.Listen("tcp", ":"+strconv.Itoa(port))
 			if err == nil {
 				break

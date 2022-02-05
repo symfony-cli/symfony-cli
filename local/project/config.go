@@ -36,6 +36,7 @@ type Config struct {
 	ProjectDir   string
 	DocumentRoot string `yaml:"document_root"`
 	Passthru     string `yaml:"passthru"`
+	Host         string `yaml:"host"`
 	PreferedPort int    `yaml:"prefered_port"`
 	PKCS12       string `yaml:"p12"`
 	Logger       zerolog.Logger
@@ -83,6 +84,9 @@ func NewConfigFromContext(c *console.Context, projectDir string) (*Config, *File
 	}
 	if c.IsSet("passthru") {
 		config.Passthru = c.String("passthru")
+	}
+	if c.IsSet("host") {
+		config.Host = c.String("host")
 	}
 	if c.IsSet("port") {
 		config.PreferedPort = c.Int("port")

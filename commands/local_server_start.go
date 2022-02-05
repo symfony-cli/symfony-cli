@@ -62,6 +62,7 @@ var localServerStartCmd = &console.Command{
 		&console.BoolFlag{Name: "allow-http", Usage: "Prevent auto-redirection from HTTP to HTTPS"},
 		&console.StringFlag{Name: "document-root", Usage: "Project document root (auto-configured by default)"},
 		&console.StringFlag{Name: "passthru", Usage: "Project passthru index (auto-configured by default)"},
+		&console.StringFlag{Name: "host", Usage: "HTTP host"},
 		&console.IntFlag{Name: "port", DefaultValue: 8000, Usage: "Preferred HTTP port"},
 		&console.BoolFlag{Name: "daemon", Aliases: []string{"d"}, Usage: "Run the server in the background"},
 		&console.BoolFlag{Name: "no-humanize", Usage: "Do not format JSON logs"},

@@ -45,6 +45,7 @@ type ServerCallback func(w http.ResponseWriter, r *http.Request, env map[string]
 type Server struct {
 	DocumentRoot string
 	Callback     ServerCallback
+	Host         string
 	PreferedPort int
 	PKCS12       string
 	AllowHTTP    bool
@@ -59,7 +60,7 @@ type Server struct {
 
 // Start starts the server
 func (s *Server) Start(errChan chan error) (int, error) {
-	ln, port, err := process.CreateListener(s.PreferedPort)
+	ln, port, err := process.CreateListener(s.Host, s.PreferedPort)
 	if err != nil {
 		return port, errors.WithStack(err)
 	}
