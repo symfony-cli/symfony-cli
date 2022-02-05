@@ -49,11 +49,14 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+var localWebServerProdWarningMsg = "The local web server is optimized for local development and MUST never be used in a production setup."
+
 var localServerStartCmd = &console.Command{
-	Category: "local",
-	Name:     "server:start",
-	Aliases:  []*console.Alias{{Name: "server:start"}, {Name: "serve"}},
-	Usage:    "Run a local web server",
+	Category:    "local",
+	Name:        "server:start",
+	Aliases:     []*console.Alias{{Name: "server:start"}, {Name: "serve"}},
+	Usage:       "Run a local web server",
+	Description: localWebServerProdWarningMsg,
 	Flags: []console.Flag{
 		dirFlag,
 		&console.BoolFlag{Name: "allow-http", Usage: "Prevent auto-redirection from HTTP to HTTPS"},
@@ -280,6 +283,7 @@ var localServerStartCmd = &console.Command{
 			}
 
 			reexec.NotifyForeground("listening")
+			ui.Warning(localWebServerProdWarningMsg)
 			ui.Success(msg)
 		}
 
