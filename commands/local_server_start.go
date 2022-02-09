@@ -65,7 +65,7 @@ var localServerStartCmd = &console.Command{
 		&console.IntFlag{Name: "port", DefaultValue: 8000, Usage: "Preferred HTTP port"},
 		&console.BoolFlag{Name: "daemon", Aliases: []string{"d"}, Usage: "Run the server in the background"},
 		&console.BoolFlag{Name: "no-humanize", Usage: "Do not format JSON logs"},
-		&console.StringFlag{Name: "p12", Usage: "Certificate path (p12 format)"},
+		&console.StringFlag{Name: "p12", Usage: "Name of the file containing the TLS certificate to use in p12 format"},
 		&console.BoolFlag{Name: "no-tls", Usage: "Use HTTP instead of HTTPS"},
 	},
 	Action: func(c *console.Context) error {
@@ -137,12 +137,12 @@ var localServerStartCmd = &console.Command{
 		}
 
 		reexec.NotifyForeground("tls")
-		if !config.NoTLS {
+		if !config.NoTLS && config.PKCS12 == "" {
 			ca, err := cert.NewCA(filepath.Join(homeDir, "certs"))
 			if err != nil {
 				return errors.WithStack(err)
 			} else if !ca.HasCA() {
-				ui.Warning(fmt.Sprintf(`run "%s server:ca:install" first if you want to run the web server with TLS support, or use "--no-tls" to avoid this warning`, c.App.HelpName))
+				ui.Warning(fmt.Sprintf(`run "%s server:ca:install" first if you want to run the web server with TLS support, or use "--p12" or "--no-tls" to avoid this warning`, c.App.HelpName))
 				config.NoTLS = true
 			} else {
 				p12 := filepath.Join(homeDir, "certs", "default.p12")
