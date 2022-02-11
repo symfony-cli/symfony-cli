@@ -241,7 +241,7 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 					return rels
 				}
 			}
-		} else if p.PrivatePort == 8707 {
+		} else if p.PrivatePort == 8707 || p.PrivatePort == 8307 {
 			// Blackfire
 			rels[""] = map[string]interface{}{
 				"host":   host,
