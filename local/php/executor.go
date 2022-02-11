@@ -22,8 +22,6 @@ package php
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
-	"math/rand"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -31,7 +29,6 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/xid"
@@ -247,11 +244,6 @@ func (e *Executor) Config(loadDotEnv bool) error {
 	}
 	e.Paths = append([]string{path}, e.Paths...)
 	if phpiniArgs {
-		wd, _ := os.Getwd()
-		e.iniDir, err = e.generateLocalPhpIniFile(wd, cliDir)
-		if err != nil {
-			return err
-		}
 		// see https://php.net/manual/en/configuration.file.php
 		// if PHP_INI_SCAN_DIR exists, just append our new directory
 		// if not, add the default one (empty string) and then our new directory
@@ -410,27 +402,6 @@ func LookPath(file string) (string, error) {
 	}
 	// found, but not executable, fall back
 	return exec.LookPath(file)
-}
-
-func (e *Executor) generateLocalPhpIniFile(wd, cliDir string) (string, error) {
-	rand.Seed(time.Now().UnixNano())
-	tmpDir := filepath.Join(cliDir, "var", fmt.Sprintf("%s_%d", name(wd), rand.Intn(99999999)))
-	os.RemoveAll(tmpDir)
-	if err := os.MkdirAll(tmpDir, 0755); err != nil {
-		return "", errors.Errorf("unable to create temp dir %s", tmpDir)
-	}
-	ini := GetPHPINISettings(e.scriptDir).Bytes()
-	// don't write an empty ini file as it might be read as a non-valid ini file by PHP (and Composer)
-	if len(ini) > 0 {
-		extraIni := filepath.Join(tmpDir, "1-extra.ini")
-		if err := ioutil.WriteFile(extraIni, ini, 0666); err != nil {
-			os.RemoveAll(tmpDir)
-			return "", errors.Wrapf(err, "unable to create temp file \"%s\"", extraIni)
-		}
-		return tmpDir, nil
-	}
-	os.RemoveAll(tmpDir)
-	return "", nil
 }
 
 // detectScriptDir tries to get the script directory from args

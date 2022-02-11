@@ -260,9 +260,7 @@ func extractRelationshipsEnvs(env Environment) Envs {
 				values[fmt.Sprintf("%sSCHEME", prefix)] = endpoint["scheme"].(string)
 				values[fmt.Sprintf("%sHOST", prefix)] = endpoint["host"].(string)
 				if rel == "blackfire" {
-					// FIXME: That does not work yet as Blackfire does not support it for now
-					// Once fixed, we will be able to remove the ini settings set in local/php/envs.go
-					// values["BLACKFIRE_AGENT_SOCKET"] = values[fmt.Sprintf("%sURL", prefix)]
+					values["BLACKFIRE_AGENT_SOCKET"] = values[fmt.Sprintf("%sURL", prefix)]
 				}
 			} else if rel == "mercure" {
 				values["MERCURE_URL"] = fmt.Sprintf("%s://%s:%s/.well-known/mercure", endpoint["scheme"].(string), endpoint["host"].(string), formatInt(endpoint["port"]))
