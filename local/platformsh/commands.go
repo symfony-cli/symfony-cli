@@ -60,14 +60,6 @@ var Commands = []*console.Command{
 	},
 	{
 		Category: "cloud",
-		Name:     "decode",
-		Usage:    "Decode an encoded string such as PLATFORM_VARIABLES",
-		Flags:    []console.Flag{
-			&console.StringFlag{Name: "property", Aliases: []string{"P"},},
-		},
-	},
-	{
-		Category: "cloud",
 		Name:     "docs",
 		Usage:    "Open the online documentation",
 		Flags:    []console.Flag{
@@ -756,23 +748,6 @@ var Commands = []*console.Command{
 	},
 	{
 		Category: "cloud:environment",
-		Name:     "drush",
-		Aliases:  []*console.Alias{
-			{Name: "environment:drush", Hidden: true},
-			{Name: "cloud:drush"},
-			{Name: "drush", Hidden: true},
-		},
-		Usage:    "Run a drush command on the remote environment",
-		Flags:    []console.Flag{
-			&console.StringFlag{Name: "app", Aliases: []string{"A"},},
-			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
-			&console.StringFlag{Name: "host",},
-			&console.StringFlag{Name: "identity-file", Aliases: []string{"i"},},
-			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
-		},
-	},
-	{
-		Category: "cloud:environment",
 		Name:     "http-access",
 		Aliases:  []*console.Alias{
 			{Name: "environment:http-access", Hidden: true},
@@ -1262,74 +1237,6 @@ var Commands = []*console.Command{
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "host",},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
-		},
-	},
-	{
-		Category: "cloud:local",
-		Name:     "build",
-		Aliases:  []*console.Alias{
-			{Name: "local:build", Hidden: true},
-			{Name: "cloud:build"},
-			{Name: "build", Hidden: true},
-		},
-		Usage:    "Build the current project locally",
-		Flags:    []console.Flag{
-			&console.BoolFlag{Name: "abslinks", Aliases: []string{"a"},},
-			&console.BoolFlag{Name: "clone",},
-			&console.StringFlag{Name: "concurrency",},
-			&console.BoolFlag{Name: "copy", Aliases: []string{"c"},},
-			&console.StringFlag{Name: "destination", Aliases: []string{"d"},},
-			&console.BoolFlag{Name: "lock",},
-			&console.BoolFlag{Name: "no-archive",},
-			&console.BoolFlag{Name: "no-backup",},
-			&console.BoolFlag{Name: "no-build-hooks",},
-			&console.BoolFlag{Name: "no-cache",},
-			&console.BoolFlag{Name: "no-clean",},
-			&console.BoolFlag{Name: "no-deps",},
-			&console.BoolFlag{Name: "run-deploy-hooks",},
-			&console.StringFlag{Name: "source", Aliases: []string{"s"},},
-			&console.BoolFlag{Name: "working-copy",},
-		},
-	},
-	{
-		Category: "cloud:local",
-		Name:     "clean",
-		Aliases:  []*console.Alias{
-			{Name: "local:clean", Hidden: true},
-			{Name: "cloud:clean"},
-			{Name: "clean", Hidden: true},
-		},
-		Usage:    "Remove old project builds",
-		Hidden:   console.Hide,
-		Flags:    []console.Flag{
-			&console.BoolFlag{Name: "include-active",},
-			&console.StringFlag{Name: "keep",},
-			&console.StringFlag{Name: "max-age",},
-		},
-	},
-	{
-		Category: "cloud:local",
-		Name:     "dir",
-		Aliases:  []*console.Alias{
-			{Name: "local:dir", Hidden: true},
-			{Name: "cloud:dir"},
-			{Name: "dir", Hidden: true},
-		},
-		Usage:    "Find the local project root",
-	},
-	{
-		Category: "cloud:local",
-		Name:     "drush-aliases",
-		Aliases:  []*console.Alias{
-			{Name: "local:drush-aliases", Hidden: true},
-			{Name: "cloud:drush-aliases"},
-			{Name: "drush-aliases", Hidden: true},
-		},
-		Usage:    "Find the project's Drush aliases",
-		Flags:    []console.Flag{
-			&console.StringFlag{Name: "group", Aliases: []string{"g"},},
-			&console.BoolFlag{Name: "pipe",},
-			&console.BoolFlag{Name: "recreate", Aliases: []string{"r"},},
 		},
 	},
 	{

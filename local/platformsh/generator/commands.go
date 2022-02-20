@@ -145,15 +145,22 @@ func parseCommands(home string) (string, error) {
 		// FIXME: missing the aliases here
 	}
 
+	excludedCommands := map[string]bool{
+		"list":              true,
+		"help":              true,
+		"self:stats":        true,
+		"decode":            true,
+		"environment:drush": true,
+	}
 	definitionAsString := ""
 	for _, command := range definition.Commands {
 		if strings.Contains(command.Description, "deprecated") || strings.Contains(command.Description, "DEPRECATED") {
 			continue
 		}
-		if command.Name == "list" || command.Name == "help" {
+		if _, ok := excludedCommands[command.Name]; ok {
 			continue
 		}
-		if command.Name == "self:stats" {
+		if strings.HasPrefix(command.Name, "local:") {
 			continue
 		}
 		if strings.HasPrefix(command.Name, "self:") {
