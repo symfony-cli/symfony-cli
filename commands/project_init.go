@@ -74,7 +74,7 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 			slug = "app"
 		}
 
-		cloudServices, err := parseCloudServices(c.StringSlice("service"))
+		cloudServices, err := parseCloudServices(projectDir, c.StringSlice("service"))
 		if err != nil {
 			return err
 		}

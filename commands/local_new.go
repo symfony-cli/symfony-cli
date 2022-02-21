@@ -32,6 +32,7 @@ import (
 	"regexp"
 	"strings"
 
+	compose "github.com/compose-spec/compose-go/cli"
 	"github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
@@ -213,7 +214,7 @@ func isEmpty(dir string) (bool, error) {
 func initCloud(c *console.Context, s *terminal.Spinner, minorPHPVersion, dir string) error {
 	terminal.Println("* Adding Platform.sh configuration")
 
-	cloudServices, err := parseCloudServices(c.StringSlice("service"))
+	cloudServices, err := parseCloudServices(dir, c.StringSlice("service"))
 	if err != nil {
 		return err
 	}
@@ -231,12 +232,22 @@ func initCloud(c *console.Context, s *terminal.Spinner, minorPHPVersion, dir str
 	return err
 }
 
-func parseCloudServices(services []string) ([]*CloudService, error) {
-	// List of "services" we want to configure out of the box (PHP extension, service, docker compose, ...)
-	// For Docker Composer, it's done by Flex right now, but this should probably be moved here instead?
-	// as more generic and can work for more than just Symfony
-	// mailcatcher is not a service and always added in Docker Compose anyway?
+func parseCloudServices(dir string, services []string) ([]*CloudService, error) {
+	// from CLI flag
+	cloudServices, err := parseCLIServices(services)
+	if err != nil {
+		return nil, err
+	}
+
+	// from Docker Compose configuration
+	cloudServices = append(cloudServices, parseDockerComposeServices(dir)...)
+
+	return cloudServices, nil
+}
+
+func parseCLIServices(services []string) ([]*CloudService, error) {
 	var cloudServices []*CloudService
+
 	for _, config := range services {
 		// up to 3 parts -> database:postgresql:13
 		var service *CloudService
@@ -253,13 +264,52 @@ func parseCloudServices(services []string) ([]*CloudService, error) {
 		}
 		cloudServices = append(cloudServices, service)
 	}
-
-	if len(cloudServices) == 0 {
-		// by default, we add PostgreSQL, which is what is used in recipes
-		cloudServices = append(cloudServices, &CloudService{Name: "database", Type: "postgresql", Version: platformsh.ServiceLastVersion("postgresql")})
-	}
-
 	return cloudServices, nil
+}
+
+func parseDockerComposeServices(dir string) []*CloudService {
+	var cloudServices []*CloudService
+
+	options, err := compose.NewProjectOptions(nil, compose.WithWorkingDirectory(dir), compose.WithDefaultConfigPath, compose.WithConfigFileEnv)
+	if err != nil {
+		return nil
+	}
+	project, err := compose.ProjectFromOptions(options)
+	if err != nil {
+		return nil
+	}
+	for _, service := range project.Services {
+		for _, port := range service.Ports {
+			var s *CloudService
+			if port.Target == 3306 {
+				s = &CloudService{Type: "mysql"}
+			} else if port.Target == 5432 {
+				s = &CloudService{Type: "postgresql"}
+			} else if port.Target == 6379 {
+				s = &CloudService{Type: "redis"}
+			} else if port.Target == 11211 {
+				s = &CloudService{Type: "memcached"}
+			} else if port.Target == 5672 {
+				s = &CloudService{Type: "rabbitmq"}
+			} else if port.Target == 9200 {
+				s = &CloudService{Type: "elasticsearch"}
+			} else if port.Target == 27017 {
+				s = &CloudService{Type: "mongodb"}
+			} else if port.Target == 9092 {
+				s = &CloudService{Type: "kafka"}
+			}
+			if s != nil {
+				s.Name = service.Name
+				parts := strings.Split(service.Image, ":")
+				s.Version = regexp.MustCompile(`\d+(\.\d+)?`).FindString(parts[len(parts)-1])
+				if s.Version == "" {
+					s.Version = platformsh.ServiceLastVersion(s.Type)
+				}
+				cloudServices = append(cloudServices, s)
+			}
+		}
+	}
+	return cloudServices
 }
 
 func initProjectGit(c *console.Context, s *terminal.Spinner, dir string) error {
