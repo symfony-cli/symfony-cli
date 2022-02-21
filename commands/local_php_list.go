@@ -46,7 +46,7 @@ var localPhpListCmd = &console.Command{
 			return errors.Wrapf(err, "unable to determine current dir")
 		}
 		homeDir := util.GetHomeDir()
-		logger := zerolog.New(zerolog.ConsoleWriter{Out: terminal.Stderr}).With().Timestamp().Logger()
+		logger := terminal.Logger.Output(zerolog.ConsoleWriter{Out: terminal.Stderr}).With().Timestamp().Logger()
 		phpStore := phpstore.New(homeDir, true, func(msg string, a ...interface{}) {
 			logger.Debug().Msgf(msg, a...)
 		})
