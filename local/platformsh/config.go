@@ -153,7 +153,7 @@ var availableServices = []*service{
 		Type: "kafka",
 		Versions: serviceVersions{
 			Deprecated: []string{},
-			Supported:  []string{"2.1", "2.2", "2.3", "2.4", "2.5"},
+			Supported:  []string{"2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7"},
 		},
 	},
 	{
@@ -195,7 +195,7 @@ var availableServices = []*service{
 		Type: "opensearch",
 		Versions: serviceVersions{
 			Deprecated: []string{},
-			Supported:  []string{"1.2"},
+			Supported:  []string{"1.1", "1.2"},
 		},
 	},
 	{
@@ -216,7 +216,7 @@ var availableServices = []*service{
 		Type: "rabbitmq",
 		Versions: serviceVersions{
 			Deprecated: []string{},
-			Supported:  []string{"3.5", "3.6", "3.7", "3.8"},
+			Supported:  []string{"3.5", "3.6", "3.7", "3.8", "3.9"},
 		},
 	},
 	{
@@ -244,7 +244,7 @@ var availableServices = []*service{
 		Type: "vault-kms",
 		Versions: serviceVersions{
 			Deprecated: []string{},
-			Supported:  []string{"1.6"},
+			Supported:  []string{"1.6", "1.8"},
 		},
 	},
 }
