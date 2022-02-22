@@ -171,18 +171,18 @@ func (b *Book) Checkout(step string) error {
 	}
 
 	printBanner("<comment>[WEB]</> Migrating the database", b.Debug)
-	if _, err := os.Stat(filepath.Join(b.Dir, "src", "Migrations")); err == nil {
+	files, err := filepath.Glob(filepath.Join(b.Dir, "src", "Migrations", "*.php"))
+	hasMigrations := err == nil && len(files) > 0
+	if !hasMigrations {
+		files, err = filepath.Glob(filepath.Join(b.Dir, "migrations", "*.php"))
+		hasMigrations = err == nil && len(files) > 0
+	}
+	if hasMigrations {
 		if err := executeCommand([]string{"symfony", "console", "doctrine:migrations:migrate", "-n"}, b.Debug, false, nil); err != nil {
 			return err
 		}
 	} else {
-		if _, err := os.Stat(filepath.Join(b.Dir, "migrations")); err == nil {
-			if err := executeCommand([]string{"symfony", "console", "doctrine:migrations:migrate", "-n"}, b.Debug, false, nil); err != nil {
-				return err
-			}
-		} else {
-			terminal.Println("Skipped for this step")
-		}
+		terminal.Println("Skipped for this step")
 	}
 
 	printBanner("<comment>[WEB]</> Inserting Fixtures", b.Debug)
