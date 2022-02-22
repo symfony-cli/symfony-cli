@@ -101,8 +101,14 @@ func (b *Book) Checkout(step string) error {
 		terminal.Println("<info>[ OK ]</>")
 	}
 
+	_, err = os.Stat(filepath.Join(b.Dir, "docker-compose.yaml"))
+	hasDocker := err == nil
+	if !hasDocker {
+		_, err = os.Stat(filepath.Join(b.Dir, "docker-compose.yml"))
+		hasDocker = err == nil
+	}
 	printBanner("<comment>[WEB]</> Stopping Docker Containers", b.Debug)
-	if _, err := os.Stat(filepath.Join(b.Dir, "docker-compose.yaml")); err == nil {
+	if hasDocker {
 		if err := executeCommand([]string{"docker-compose", "down", "--remove-orphans"}, b.Debug, false, nil); err != nil {
 			return err
 		}
@@ -145,7 +151,7 @@ func (b *Book) Checkout(step string) error {
 	}
 
 	printBanner("<comment>[WEB]</> Starting Docker Compose", b.Debug)
-	if _, err := os.Stat(filepath.Join(b.Dir, "docker-compose.yaml")); err == nil {
+	if hasDocker {
 		if err := executeCommand([]string{"docker-compose", "up", "-d"}, b.Debug, false, nil); err != nil {
 			return err
 		}

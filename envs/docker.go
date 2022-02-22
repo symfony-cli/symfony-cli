@@ -493,7 +493,7 @@ func (l *Local) getComposeDir() string {
 		upDir := filepath.Dir(dir)
 		if upDir == dir || upDir == "." {
 			if l.Debug {
-				fmt.Fprintln(os.Stderr, "ERROR: unable to find a docker-compose.yaml for the current directory")
+				fmt.Fprintln(os.Stderr, "ERROR: unable to find a docker-compose.yaml or docker-compose.yml for the current directory")
 			}
 			return ""
 		}
