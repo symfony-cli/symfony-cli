@@ -64,3 +64,18 @@ jobs:
                 with:
                     retention-days: 5
                     path: dist
+            -
+                name: Fury Uploads
+                env:
+                    FURY_PUSH_TOKEN: ${{ secrets.FURY_PUSH_TOKEN }}
+                if: startsWith(github.ref, 'refs/tags/v')
+                run: |
+                    URLS=`curl -fsSL "https://api.github.com/repos/symfony-cli/symfony-cli/releases/latest" | jq -r '.assets[] | select(.name | match("(deb|rpm)$")).browser_download_url'`
+                    for URL in $URLS
+                    do
+                        readarray -d "/" -t arr <<< "$URL"
+                        NAME=${arr[-1]}
+                        curl -fsSL $URL > /tmp/$NAME
+                        curl https://$FURY_PUSH_TOKEN@push.fury.io/symfony/ -F package=@/tmp/$NAME
+                        unlink /tmp/$NAME
+                    done
