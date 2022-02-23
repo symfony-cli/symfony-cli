@@ -27,12 +27,12 @@ import (
 )
 
 // CreateListener creates a listener on a port
-// Pass a prefered port (will increment by 1 if port is not available)
+// Pass a preferred port (will increment by 1 if port is not available)
 // or pass 0 to auto-find any available port
-func CreateListener(preferedPort int) (net.Listener, int, error) {
+func CreateListener(preferredPort int) (net.Listener, int, error) {
 	var ln net.Listener
 	var err error
-	port := preferedPort
+	port := preferredPort
 	max := 50
 	for {
 		// we really want to test availability on 127.0.0.1
@@ -45,16 +45,16 @@ func CreateListener(preferedPort int) (net.Listener, int, error) {
 				break
 			}
 		}
-		if preferedPort == 0 {
+		if preferredPort == 0 {
 			return nil, 0, errors.Wrap(err, "unable to find an available port")
 		}
 		max--
 		if max == 0 {
-			return nil, 0, errors.Wrapf(err, "unable to find an available port (from %d to %d)", preferedPort, port)
+			return nil, 0, errors.Wrapf(err, "unable to find an available port (from %d to %d)", preferredPort, port)
 		}
 		port++
 	}
-	if preferedPort == 0 {
+	if preferredPort == 0 {
 		port = ln.Addr().(*net.TCPAddr).Port
 	}
 	return ln, port, nil

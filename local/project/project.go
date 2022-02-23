@@ -54,12 +54,12 @@ func New(c *Config) (*Project, error) {
 		homeDir:    c.HomeDir,
 		projectDir: c.ProjectDir,
 		HTTP: &lhttp.Server{
-			DocumentRoot: documentRoot,
-			PreferedPort: c.PreferedPort,
-			Logger:       c.Logger,
-			PKCS12:       c.PKCS12,
-			AllowHTTP:    c.AllowHTTP,
-			Appversion:   c.AppVersion,
+			DocumentRoot:  documentRoot,
+			PreferredPort: c.PreferredPort,
+			Logger:        c.Logger,
+			PKCS12:        c.PKCS12,
+			AllowHTTP:     c.AllowHTTP,
+			Appversion:    c.AppVersion,
 		},
 	}
 	if err != nil {
