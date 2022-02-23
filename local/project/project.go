@@ -55,6 +55,7 @@ func New(c *Config) (*Project, error) {
 		projectDir: c.ProjectDir,
 		HTTP: &lhttp.Server{
 			DocumentRoot:  documentRoot,
+			Port:          c.Port,
 			PreferredPort: c.PreferredPort,
 			Logger:        c.Logger,
 			PKCS12:        c.PKCS12,
