@@ -32,17 +32,18 @@ import (
 
 // Config is the struct taken by New (should not be used for anything else)
 type Config struct {
-	HomeDir      string
-	ProjectDir   string
-	DocumentRoot string `yaml:"document_root"`
-	Passthru     string `yaml:"passthru"`
-	PreferedPort int    `yaml:"prefered_port"`
-	PKCS12       string `yaml:"p12"`
-	Logger       zerolog.Logger
-	AppVersion   string
-	AllowHTTP    bool `yaml:"allow_http"`
-	NoTLS        bool `yaml:"no_tls"`
-	Daemon       bool `yaml:"daemon"`
+	HomeDir       string
+	ProjectDir    string
+	DocumentRoot  string `yaml:"document_root"`
+	Passthru      string `yaml:"passthru"`
+	Port          int    `yaml:"port"`
+	PreferredPort int    `yaml:"preferred_port"`
+	PKCS12        string `yaml:"p12"`
+	Logger        zerolog.Logger
+	AppVersion    string
+	AllowHTTP     bool `yaml:"allow_http"`
+	NoTLS         bool `yaml:"no_tls"`
+	Daemon        bool `yaml:"daemon"`
 }
 
 type FileConfig struct {
@@ -85,10 +86,10 @@ func NewConfigFromContext(c *console.Context, projectDir string) (*Config, *File
 		config.Passthru = c.String("passthru")
 	}
 	if c.IsSet("port") {
-		config.PreferedPort = c.Int("port")
+		config.Port = c.Int("port")
 	}
-	if config.PreferedPort == 0 {
-		config.PreferedPort = 8000
+	if config.Port == 0 {
+		config.PreferredPort = 8000
 	}
 	if c.IsSet("allow-http") {
 		config.AllowHTTP = c.Bool("allow-http")
