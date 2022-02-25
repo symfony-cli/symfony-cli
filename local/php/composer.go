@@ -132,7 +132,7 @@ func composerVersion() int {
 }
 
 func findComposer(extraBin string) (string, error) {
-	for _, file := range []string{extraBin, "composer.phar", "composer"} {
+	for _, file := range []string{extraBin, "composer", "composer.phar"} {
 		if pharPath, _ := LookPath(file); pharPath != "" {
 			// On Windows, we don't want the .bat, but the real composer phar/PHP file
 			if strings.HasSuffix(pharPath, ".bat") {
