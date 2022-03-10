@@ -198,11 +198,50 @@ func initConfig() {
 }
 
 func getProjectDir(dir string) (string, error) {
+
+	var projDir string
+
 	if dir != "" {
-		if filepath.IsAbs(dir) {
-			return dir, nil
+		// Get Absolute Path
+		absPath, err := getAbsPath(dir)
+		if err != nil {
+			return "", err
 		}
-		return filepath.Abs(dir)
+		projDir = absPath
+
+	} else {
+		// Get Current Working Dir
+		cwd, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+		projDir = cwd
 	}
-	return os.Getwd()
+	// Let us evaluate the symlinks
+	realPath, err := filepath.EvalSymlinks(projDir)
+	if err != nil {
+		return "", err
+	}
+
+	return realPath, nil
+}
+
+// Given any path, find its absolute path
+func getAbsPath(path string) (string, error) {
+
+	var absPath string
+
+	if filepath.IsAbs(path) {
+		// Already absolute path
+		absPath = path
+	} else {
+		// Convert path from relative to absolute
+		newPath, err := filepath.Abs(path)
+		if err != nil {
+			return "", err
+		}
+		absPath = newPath
+	}
+
+	return absPath, nil
 }
