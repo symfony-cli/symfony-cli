@@ -198,11 +198,11 @@ func initConfig() {
 }
 
 func getProjectDir(dir string) (string, error) {
-	if dir != "" {
-		if filepath.IsAbs(dir) {
-			return dir, nil
-		}
-		return filepath.Abs(dir)
+
+	var err error
+	if dir, err = filepath.Abs(dir); err != nil {
+		return "", err
 	}
-	return os.Getwd()
+
+	return filepath.EvalSymlinks(dir)
 }
