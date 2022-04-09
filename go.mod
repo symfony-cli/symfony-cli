@@ -4,7 +4,7 @@ require (
 	github.com/compose-spec/compose-go v1.2.2
 	github.com/docker/docker v20.10.14+incompatible
 	github.com/elazarl/goproxy v0.0.0-20220403042543-a53172b9392e
-	github.com/fabpot/local-php-security-checker v1.2.0
+	github.com/fabpot/local-php-security-checker/v2 v2.0.1
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/hashicorp/go-version v1.4.0
 	github.com/hashicorp/golang-lru v0.5.4

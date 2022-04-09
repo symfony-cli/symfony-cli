@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/fabpot/local-php-security-checker/security"
+	"github.com/fabpot/local-php-security-checker/v2/security"
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/terminal"
@@ -37,21 +37,19 @@ a specific "composer.lock" file.`,
 		&console.BoolFlag{Name: "no-dev", Usage: "Do not check packages listed under require-dev"},
 		&console.BoolFlag{Name: "update-cache", Usage: "Update the cache (other flags are ignored)"},
 		&console.BoolFlag{Name: "disable-exit-code", Usage: "Whether to fail when issues are detected"},
+		&console.StringFlag{Name: "cache-dir", DefaultValue: os.TempDir(), Usage: "Cache directory"},
 	},
 	Action: func(c *console.Context) error {
 		format := c.String("format")
 		path := c.String("dir")
 		advisoryArchiveURL := c.String("archive")
 
-		db, err := security.NewDB(c.Bool("local"), advisoryArchiveURL)
+		db, err := security.NewDB(c.Bool("local"), advisoryArchiveURL, c.String("cache-dir"))
 		if err != nil {
 			return console.Exit(fmt.Sprintf("unable to load the advisory DB: %s", err), 127)
 		}
 
 		if c.Bool("update-cache") {
-			if err := db.Load(advisoryArchiveURL); err != nil {
-				return console.Exit(err.Error(), 127)
-			}
 			return nil
 		}
 
