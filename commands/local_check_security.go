@@ -36,6 +36,7 @@ a specific "composer.lock" file.`,
 		&console.BoolFlag{Name: "local", Usage: "Do not make HTTP calls (needs a valid cache file)"},
 		&console.BoolFlag{Name: "no-dev", Usage: "Do not check packages listed under require-dev"},
 		&console.BoolFlag{Name: "update-cache", Usage: "Update the cache (other flags are ignored)"},
+		&console.BoolFlag{Name: "disable-exit-code", Usage: "Whether to fail when issues are detected"},
 	},
 	Action: func(c *console.Context) error {
 		format := c.String("format")
@@ -78,7 +79,7 @@ a specific "composer.lock" file.`,
 			terminal.Eprintf("::set-output name=vulns::%s", output)
 		}
 
-		if vulns.Count() > 0 {
+		if vulns.Count() > 0 && !c.Bool(("disable-exit-code")) {
 			return console.Exit("", 1)
 		}
 		return nil
