@@ -385,7 +385,7 @@ func runComposer(c *console.Context, dir string, args []string, debug bool) erro
 }
 
 func getSpecialVersion(version string) (string, error) {
-	resp, err := http.Get("https://flex.symfony.com/versions.json")
+	resp, err := http.Get("https://symfony.com/all-versions.json")
 	if err != nil {
 		return "", err
 	}
@@ -401,15 +401,9 @@ func getSpecialVersion(version string) (string, error) {
 		return "", err
 	}
 
-	if version == "dev" {
-		version = "dev-name"
-	}
-
 	v := versions[version].(string)
-	if version == "next" {
+	if version == "next" || version == "dev" {
 		v += ".x@dev"
-	} else if version == "dev-name" {
-		v += "@dev"
 	}
 
 	return v, nil
