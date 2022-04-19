@@ -242,7 +242,7 @@ func (e *Executor) Config(loadDotEnv bool) error {
 			return err
 		}
 	}
-	e.Paths = append([]string{path}, e.Paths...)
+	e.Paths = append([]string{filepath.Dir(path), phpDir}, e.Paths...)
 	if phpiniArgs {
 		// see https://php.net/manual/en/configuration.file.php
 		// if PHP_INI_SCAN_DIR exists, just append our new directory
