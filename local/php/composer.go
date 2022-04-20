@@ -132,6 +132,19 @@ func composerVersion() int {
 }
 
 func findComposer(extraBin string) (string, error) {
+	// Special Support for NixOS. It needs to run before the PATH detection
+	// because NixOS adds a shell wrapper that we can't run via PHP.
+	for _, path := range strings.Split(os.Getenv("buildInputs"), " ") {
+		nixPharPath := filepath.Join(path, "libexec/composer/composer.phar")
+		d, err := os.Stat(nixPharPath)
+		if err != nil {
+			continue
+		}
+		if m := d.Mode(); !m.IsDir() {
+			// Yep!
+			return nixPharPath, nil
+		}
+	}
 	for _, file := range []string{extraBin, "composer", "composer.phar"} {
 		if pharPath, _ := LookPath(file); pharPath != "" {
 			// On Windows, we don't want the .bat, but the real composer phar/PHP file
