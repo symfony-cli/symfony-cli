@@ -19,7 +19,7 @@ require (
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/viper v1.11.0
 	github.com/stoicperlman/fls v0.0.0-20171222144224-f073b7a01081
-	github.com/symfony-cli/cert v1.0.0
+	github.com/symfony-cli/cert v1.0.1
 	github.com/symfony-cli/console v1.0.2
 	github.com/symfony-cli/phpstore v1.0.5
 	github.com/symfony-cli/terminal v1.0.3
@@ -71,10 +71,10 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f // indirect
 	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 // indirect
-	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150 // indirect
+	golang.org/x/sys v0.0.0-20220429233432-b5fbb4746d32 // indirect
 	golang.org/x/term v0.0.0-20220411215600-e5f449aeb171 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	google.golang.org/genproto v0.0.0-20220426171045-31bebdecfb46 // indirect
+	google.golang.org/genproto v0.0.0-20220429170224-98d788798c3e // indirect
 	google.golang.org/grpc v1.46.0 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
