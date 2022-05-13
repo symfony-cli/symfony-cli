@@ -138,8 +138,8 @@ var availableServices = []*service{
 	{
 		Type: "elasticsearch",
 		Versions: serviceVersions{
-			Deprecated: []string{"0.9", "1.4", "1.7", "2.4", "5.2", "5.4", "6.5", "6.8", "7.2", "7.5", "7.7", "7.9"},
-			Supported:  []string{"7.10"},
+			Deprecated: []string{"0.9", "1.4", "1.7", "2.4", "5.2", "5.4", "6.5", "6.8", "7.2", "7.5", "7.7", "7.9", "7.10"},
+			Supported: []string{},
 		},
 	},
 	{
@@ -178,6 +178,13 @@ var availableServices = []*service{
 		},
 	},
 	{
+		Type: "mongodb-enterprise",
+		Versions: serviceVersions{
+			Deprecated: []string{},
+			Supported:  []string{"5.0"},
+		},
+	},
+	{
 		Type: "mysql",
 		Versions: serviceVersions{
 			Deprecated: []string{"5.5"},
@@ -187,8 +194,8 @@ var availableServices = []*service{
 	{
 		Type: "network-storage",
 		Versions: serviceVersions{
-			Deprecated: []string{},
-			Supported:  []string{"1.0"},
+			Deprecated: []string{"1.0"},
+			Supported:  []string{"2.0"},
 		},
 	},
 	{
@@ -223,7 +230,7 @@ var availableServices = []*service{
 		Type: "redis",
 		Versions: serviceVersions{
 			Deprecated: []string{"2.8", "3.0"},
-			Supported:  []string{"3.2", "4.0", "5.0", "6.0", "6.2"},
+			Supported:  []string{"3.2", "4.0", "5.0", "6.0", "6.2", "7.0"},
 		},
 	},
 	{
