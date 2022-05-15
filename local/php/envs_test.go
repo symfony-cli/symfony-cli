@@ -55,7 +55,7 @@ func (s *PHPFPMSuite) TestGenerateEnv(c *C) {
 			uri:      "/?foo=bar",
 			expected: map[string]string{
 				"PATH_INFO":       "/",
-				"REQUEST_URI":     "/",
+				"REQUEST_URI":     "/?foo=bar",
 				"QUERY_STRING":    "foo=bar",
 				"SCRIPT_FILENAME": testdataDir + "/public/index.php",
 				"SCRIPT_NAME":     "/index.php",
@@ -109,7 +109,7 @@ func (s *PHPFPMSuite) TestGenerateEnv(c *C) {
 			passthru: "/index.php",
 			uri:      "/foo",
 			expected: map[string]string{
-				"PATH_INFO":       "",
+				"PATH_INFO":       "/foo",
 				"REQUEST_URI":     "/foo",
 				"QUERY_STRING":    "",
 				"SCRIPT_FILENAME": testdataDir + "/public/index.php",
@@ -153,7 +153,7 @@ func (s *PHPFPMSuite) TestGenerateEnv(c *C) {
 			passthru: "/index.php",
 			uri:      "/unknown.php",
 			expected: map[string]string{
-				"PATH_INFO":       "",
+				"PATH_INFO":       "/unknown.php",
 				"REQUEST_URI":     "/unknown.php",
 				"QUERY_STRING":    "",
 				"SCRIPT_FILENAME": testdataDir + "/public/index.php",
@@ -164,7 +164,7 @@ func (s *PHPFPMSuite) TestGenerateEnv(c *C) {
 			passthru: "/index.php",
 			uri:      "/unknown.php/foo",
 			expected: map[string]string{
-				"PATH_INFO":       "",
+				"PATH_INFO":       "/unknown.php/foo",
 				"REQUEST_URI":     "/unknown.php/foo",
 				"QUERY_STRING":    "",
 				"SCRIPT_FILENAME": testdataDir + "/public/index.php",
@@ -175,7 +175,7 @@ func (s *PHPFPMSuite) TestGenerateEnv(c *C) {
 			passthru: "/index.php",
 			uri:      "/unknown.PHP/foo",
 			expected: map[string]string{
-				"PATH_INFO":       "",
+				"PATH_INFO":       "/unknown.PHP/foo",
 				"REQUEST_URI":     "/unknown.PHP/foo",
 				"QUERY_STRING":    "",
 				"SCRIPT_FILENAME": testdataDir + "/public/index.php",
