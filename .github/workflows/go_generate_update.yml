@@ -1,0 +1,50 @@
+name: Update generated code
+
+on:
+    workflow_dispatch: ~
+    schedule:
+        - cron:  '0 8-18/4 * * 1-5'
+
+jobs:
+    update:
+        name: Update generated code
+        runs-on: ubuntu-latest
+        steps:
+            -
+                name: Checkout
+                uses: actions/checkout@v3
+            -
+                name: Set up Go
+                uses: actions/setup-go@v2
+                with:
+                    go-version: 1.18
+            -   uses: actions/cache@v3
+                with:
+                    path: |
+                        ~/.cache/go-build
+                        ~/go/pkg/mod
+                    key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+                    restore-keys: |
+                        ${{ runner.os }}-go-
+            -
+                name: Prepare
+                run: go generate ./
+            -
+                name: Check Git status
+                id: git
+                run: |
+                    RESULT=$(git status --untracked-files=no --porcelain)
+                    echo "::set-output name=gitstatus::$RESULT"
+            -
+                name: Test
+                if: steps.git.outputs.gitstatus != ''
+                run: go test -v ./...
+            -
+                name: Commit and push the update
+                if: steps.git.outputs.gitstatus != ''
+                run: |
+                    git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                    git config user.name "github-actions[bot]"
+                    git add local/platformsh/commands.go local/platformsh/config.go
+                    git commit -m "chore: Update supported Platform.sh services"
+                    git push
