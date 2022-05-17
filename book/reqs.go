@@ -137,7 +137,9 @@ func CheckRequirements() (bool, error) {
 	}
 
 	// Docker Compose
-	if _, err := exec.LookPath("docker-compose"); err != nil {
+	_, composeBinary := exec.LookPath("docker-compose")
+	composePlugin := exec.Command("docker", "compose").Run()
+	if composeBinary != nil && composePlugin != nil {
 		ready = false
 		terminal.Println("<error>[KO]</> Cannot find Docker Compose, please install it <href=https://docs.docker.com/compose/install/>https://docs.docker.com/compose/install/</>")
 	} else {
