@@ -237,7 +237,7 @@ func tailLogFile(p *pid.PidFile, lines chan *namedLine, follow bool, nblines int
 		terminal.Printfln("<warning>WARNING</> %s log file cannot be tailed: %s", p.String(), err)
 		return
 	}
-	terminal.Printfln("Tailing <info>%s</info> log file (%s)", p.String(), p.LogFile())
+	terminal.Printfln("Following <info>%s</info> log file (%s)", p.String(), p.LogFile())
 	for line := range t.Lines {
 		lines <- &namedLine{name: p.ShortName(), line: line}
 	}
