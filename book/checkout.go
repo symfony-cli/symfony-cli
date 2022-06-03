@@ -109,7 +109,7 @@ func (b *Book) Checkout(step string) error {
 	}
 	printBanner("<comment>[WEB]</> Stopping Docker Containers", b.Debug)
 	if hasDocker {
-		if err := executeCommand([]string{"docker-compose", "down", "--remove-orphans"}, b.Debug, false, nil); err != nil {
+		if err := executeCommand(append(dockerComposeBin(), "down", "--remove-orphans"), b.Debug, false, nil); err != nil {
 			return err
 		}
 	} else {
@@ -152,7 +152,7 @@ func (b *Book) Checkout(step string) error {
 
 	printBanner("<comment>[WEB]</> Starting Docker Compose", b.Debug)
 	if hasDocker {
-		if err := executeCommand([]string{"docker-compose", "up", "-d"}, b.Debug, false, nil); err != nil {
+		if err := executeCommand(append(dockerComposeBin(), "up", "-d"), b.Debug, false, nil); err != nil {
 			return err
 		}
 		printBanner("<comment>[WEB]</> Waiting for the Containers to be ready", b.Debug)
@@ -310,4 +310,11 @@ func executeCommand(args []string, debug, skipErrors bool, env []string) error {
 		terminal.Println("<info>[ OK ]</>")
 	}
 	return nil
+}
+
+func dockerComposeBin() []string {
+	if path, err := exec.LookPath("docker-compose"); err == nil {
+		return []string{path}
+	}
+	return []string{"docker", "compose"}
 }
