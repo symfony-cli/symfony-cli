@@ -24,7 +24,6 @@ import (
 	"context"
 	"os"
 	"os/exec"
-	"syscall"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -72,8 +71,7 @@ func (p *Process) Run(ctx context.Context) (*exec.Cmd, error) {
 
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, p.Env...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{}
-	deathsig(cmd.SysProcAttr)
+	cmd.SysProcAttr = createSysProcAttr()
 	if err := cmd.Start(); err != nil {
 		return nil, errors.WithStack(err)
 	}

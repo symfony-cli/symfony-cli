@@ -107,7 +107,7 @@ func (r *Runner) Run() error {
 	cmdExitChan := make(chan error) // receives command exit status, allow to cmd.Wait() in non-blocking way
 	restartChan := make(chan bool)  // receives requests to restart the command
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Kill, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigChan, os.Kill, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(sigChan)
 
 	if len(r.pidFile.Watched) > 0 {

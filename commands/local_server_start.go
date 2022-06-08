@@ -89,7 +89,7 @@ var localServerStartCmd = &console.Command{
 		shutdownCh := make(chan bool, 1)
 		go func() {
 			sigsCh := make(chan os.Signal, 1)
-			signal.Notify(sigsCh, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
+			signal.Notify(sigsCh, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
 			<-sigsCh
 			signal.Stop(sigsCh)
 			shutdownCh <- true

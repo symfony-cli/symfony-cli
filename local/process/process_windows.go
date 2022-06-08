@@ -20,12 +20,16 @@
 package process
 
 import (
+	"os"
 	"os/exec"
 	"strconv"
 	"syscall"
+
+	"golang.org/x/sys/windows"
 )
 
-func deathsig(sysProcAttr *syscall.SysProcAttr) {
+func createSysProcAttr() *syscall.SysProcAttr {
+	return &windows.SysProcAttr{}
 }
 
 func kill(cmd *exec.Cmd) error {
@@ -33,5 +37,5 @@ func kill(cmd *exec.Cmd) error {
 	if err := c.Run(); err == nil {
 		return nil
 	}
-	return cmd.Process.Signal(syscall.SIGKILL)
+	return cmd.Process.Signal(windows.SIGKILL)
 }

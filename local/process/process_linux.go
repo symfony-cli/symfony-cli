@@ -22,15 +22,19 @@ package process
 import (
 	"os/exec"
 	"syscall"
+
+	"golang.org/x/sys/unix"
 )
 
-func deathsig(sysProcAttr *syscall.SysProcAttr) {
-	// the following helps with killing the main process and its children
-	// see https://medium.com/@felixge/killing-a-child-process-and-all-of-its-children-in-go-54079af94773
-	sysProcAttr.Setpgid = true
-	sysProcAttr.Pdeathsig = syscall.SIGKILL
+func createSysProcAttr() *syscall.SysProcAttr {
+	return &unix.SysProcAttr{
+		// the following helps with killing the main process and its children
+		// see https://medium.com/@felixge/killing-a-child-process-and-all-of-its-children-in-go-54079af94773
+		Setpgid:   true,
+		Pdeathsig: unix.SIGKILL,
+	}
 }
 
 func kill(cmd *exec.Cmd) error {
-	return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+	return unix.Kill(-cmd.Process.Pid, unix.SIGKILL)
 }
