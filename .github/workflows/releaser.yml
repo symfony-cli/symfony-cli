@@ -99,3 +99,21 @@ jobs:
                         curl https://$FURY_PUSH_TOKEN@push.fury.io/symfony/ -F package=@/tmp/$NAME
                         unlink /tmp/$NAME
                     done
+            -
+                name: Install Cloudsmith CLI
+                run: pip install --upgrade cloudsmith-cli
+            -
+                name: Cloudsmith Uploads
+                env:
+                    CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+                if: startsWith(github.ref, 'refs/tags/v')
+                run: |
+                    for filename in dist/*.deb; do
+                        cloudsmith push deb symfony-cli/stable/any-distro/any-version $filename
+                    done
+                    for filename in dist/*.rpm; do
+                        cloudsmith push rpm symfony-cli/stable/any-distro/any-version $filename
+                    done
+                    for filename in dist/*.apk; do
+                        cloudsmith push alpine symfony-cli/stable/any-distro/any-version $filename
+                    done
