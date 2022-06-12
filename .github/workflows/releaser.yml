@@ -115,5 +115,5 @@ jobs:
                         cloudsmith push rpm symfony/stable/any-distro/any-version $filename
                     done
                     for filename in dist/*.apk; do
-                        cloudsmith push alpine symfony/stable/any-distro/any-version $filename
+                        cloudsmith push alpine symfony/stable/alpine/any-version $filename
                     done
