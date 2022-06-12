@@ -109,11 +109,11 @@ jobs:
                 if: startsWith(github.ref, 'refs/tags/v')
                 run: |
                     for filename in dist/*.deb; do
-                        cloudsmith push deb symfony-cli/stable/any-distro/any-version $filename
+                        cloudsmith push deb symfony/stable/any-distro/any-version $filename
                     done
                     for filename in dist/*.rpm; do
-                        cloudsmith push rpm symfony-cli/stable/any-distro/any-version $filename
+                        cloudsmith push rpm symfony/stable/any-distro/any-version $filename
                     done
                     for filename in dist/*.apk; do
-                        cloudsmith push alpine symfony-cli/stable/any-distro/any-version $filename
+                        cloudsmith push alpine symfony/stable/any-distro/any-version $filename
                     done
