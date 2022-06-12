@@ -96,18 +96,6 @@ brews:
     install: |-
       bin.install "symfony"
 
-rigs:
-  - rig:
-      owner: symfony-cli
-      name: fish-food
-      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-    commit_author:
-      name: Fabien Potencier
-      email: fabien@symfony.com
-    homepage: https://symfony.com
-    description: Symfony CLI helps Symfony developers manage projects, from local code to remote infrastructure
-    license: AGPL-3.0
-
 nfpms:
   - file_name_template: '{{ .ConventionalFileName }}'
     id: packages
