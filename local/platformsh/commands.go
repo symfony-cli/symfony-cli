@@ -736,7 +736,7 @@ var Commands = []*console.Command{
 			{Name: "cloud:environment:deactivate"},
 			{Name: "environment:deactivate", Hidden: true},
 		},
-		Usage:    "Delete an environment",
+		Usage:    "Delete one or more environments",
 		Flags:    []console.Flag{
 			&console.BoolFlag{Name: "delete-branch",},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
@@ -747,6 +747,7 @@ var Commands = []*console.Command{
 			&console.BoolFlag{Name: "merged",},
 			&console.BoolFlag{Name: "no-delete-branch",},
 			&console.BoolFlag{Name: "no-wait", Aliases: []string{"W"},},
+			&console.StringFlag{Name: "only-type", Aliases: []string{"t"},},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
 			&console.StringFlag{Name: "type",},
 			&console.BoolFlag{Name: "wait",},
