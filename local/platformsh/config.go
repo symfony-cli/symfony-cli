@@ -146,7 +146,7 @@ var availableServices = []*service{
 		Type: "influxdb",
 		Versions: serviceVersions{
 			Deprecated: []string{},
-			Supported:  []string{"1.2", "1.3", "1.7", "1.8"},
+			Supported:  []string{"1.2", "1.3", "1.7", "1.8", "2.2"},
 		},
 	},
 	{
@@ -160,7 +160,7 @@ var availableServices = []*service{
 		Type: "mariadb",
 		Versions: serviceVersions{
 			Deprecated: []string{"5.5"},
-			Supported:  []string{"10.0", "10.1", "10.2", "10.3", "10.4", "10.5"},
+			Supported:  []string{"10.0", "10.1", "10.2", "10.3", "10.4", "10.5", "10.6"},
 		},
 	},
 	{
@@ -188,7 +188,7 @@ var availableServices = []*service{
 		Type: "mysql",
 		Versions: serviceVersions{
 			Deprecated: []string{"5.5"},
-			Supported:  []string{"10.0", "10.1", "10.2", "10.3", "10.4", "10.5"},
+			Supported:  []string{"10.0", "10.1", "10.2", "10.3", "10.4", "10.5", "10.6"},
 		},
 	},
 	{
@@ -237,7 +237,7 @@ var availableServices = []*service{
 		Type: "solr",
 		Versions: serviceVersions{
 			Deprecated: []string{"3.6", "4.10", "6.3", "6.6", "7.6"},
-			Supported:  []string{"7.7", "8.0", "8.4", "8.6"},
+			Supported:  []string{"7.7", "8.0", "8.4", "8.6", "8.11"},
 		},
 	},
 	{
