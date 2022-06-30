@@ -132,7 +132,7 @@ var availableServices = []*service{
 		Type: "chrome-headless",
 		Versions: serviceVersions{
 			Deprecated: []string{},
-			Supported:  []string{"73", "80", "81", "83", "84", "86", "91"},
+			Supported:  []string{"73", "80", "81", "83", "84", "86", "91", "95"},
 		},
 	},
 	{
