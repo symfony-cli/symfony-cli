@@ -211,7 +211,11 @@ func extractRelationshipsEnvs(env Environment) Envs {
 				values[fmt.Sprintf("%sNAME", prefix)] = endpoint["path"].(string)
 				values[fmt.Sprintf("%sDATABASE", prefix)] = endpoint["path"].(string)
 			} else if rel == "elasticsearch" {
-				values[fmt.Sprintf("%sURL", prefix)] = fmt.Sprintf("%s://%s:%s", endpoint["scheme"].(string), endpoint["host"].(string), formatInt(endpoint["port"]))
+				path, hasPath := endpoint["path"]
+				if !hasPath || path == nil {
+					path = ""
+				}
+				values[fmt.Sprintf("%sURL", prefix)] = fmt.Sprintf("%s://%s:%s%s", endpoint["scheme"].(string), endpoint["host"].(string), formatInt(endpoint["port"]), path)
 				values[fmt.Sprintf("%sHOST", prefix)] = endpoint["host"].(string)
 				values[fmt.Sprintf("%sPORT", prefix)] = formatInt(endpoint["port"])
 				values[fmt.Sprintf("%sSCHEME", prefix)] = endpoint["scheme"].(string)
@@ -317,6 +321,9 @@ func formatServer(endpoint map[string]interface{}) string {
 func formatInt(val interface{}) string {
 	if s, ok := val.(string); ok {
 		return s
+	}
+	if i, ok := val.(int); ok {
+		return strconv.Itoa(i)
 	}
 	return strconv.FormatInt(int64(val.(float64)), 10)
 }
