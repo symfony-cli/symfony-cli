@@ -37,3 +37,60 @@ func (s *ScenvSuite) TestAppID(c *C) {
 	c.Assert(appID("testdata/project_without_composer"), Equals, "")
 	c.Assert(appID("testdata/project_with_borked_composer"), Equals, "")
 }
+
+type fakeEnv struct {
+	Rels Relationships
+}
+
+func (f fakeEnv) Path() string {
+	return "/dev/null"
+}
+
+func (f fakeEnv) Mailer() Envs {
+	return nil
+}
+
+func (f fakeEnv) Language() string {
+	return "php"
+}
+
+func (f fakeEnv) Relationships() Relationships {
+	return f.Rels
+}
+
+func (f fakeEnv) Extra() Envs {
+	return nil
+}
+
+func (f fakeEnv) Local() bool {
+	return true
+}
+
+func (s *ScenvSuite) TestElasticsearchURLEndsWithTrailingSlash(c *C) {
+	env := fakeEnv{
+		Rels: map[string][]map[string]interface{}{
+			"elasticsearch": {
+				map[string]interface{}{
+					"host":   "localhost",
+					"ip":     "localhost",
+					"port":   9200,
+					"path":   "/",
+					"rel":    "elasticsearch",
+					"scheme": "http",
+				},
+			},
+		},
+	}
+
+	rels := extractRelationshipsEnvs(env)
+	c.Assert(rels["ELASTICSEARCH_URL"], Equals, "http://localhost:9200/")
+
+	// We want to stay backward compatible with Platform.sh/SymfonyCloud
+	env.Rels["elasticsearch"][0]["path"] = nil
+	rels = extractRelationshipsEnvs(env)
+	c.Assert(rels["ELASTICSEARCH_URL"], Equals, "http://localhost:9200")
+
+	delete(env.Rels["elasticsearch"][0], "path")
+	rels = extractRelationshipsEnvs(env)
+	c.Assert(rels["ELASTICSEARCH_URL"], Equals, "http://localhost:9200")
+}

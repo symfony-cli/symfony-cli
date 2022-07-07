@@ -375,6 +375,7 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 				"host":   host,
 				"ip":     host,
 				"port":   formatDockerPort(p.PublicPort),
+				"path":   "/",
 				"rel":    "elasticsearch",
 				"scheme": "http",
 			}
