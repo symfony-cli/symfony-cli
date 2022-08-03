@@ -132,18 +132,11 @@ func composerVersion() int {
 }
 
 func findComposer(extraBin string) (string, error) {
-	// Special Support for NixOS. It needs to run before the PATH detection
-	// because NixOS adds a shell wrapper that we can't run via PHP.
-	for _, path := range strings.Split(os.Getenv("buildInputs"), " ") {
-		nixPharPath := filepath.Join(path, "libexec/composer/composer.phar")
-		d, err := os.Stat(nixPharPath)
-		if err != nil {
-			continue
-		}
-		if m := d.Mode(); !m.IsDir() {
-			// Yep!
-			return nixPharPath, nil
-		}
+	// Special support for OS specific things. They need to run before the
+	// PATH detection because most of them adds shell wrappers that we
+	// can't run via PHP.
+	if pharPath := findComposerSystemSpecific(extraBin); pharPath != "" {
+		return pharPath, nil
 	}
 	for _, file := range []string{extraBin, "composer", "composer.phar"} {
 		if pharPath, _ := LookPath(file); pharPath != "" {
