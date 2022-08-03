@@ -108,25 +108,25 @@ var localNewCmd = &console.Command{
 			}
 		}
 
+		symfonyVersion := c.String("version")
+
 		if c.Bool("book") {
+			if symfonyVersion == "" {
+				return console.Exit("The --version flag is required for the Symfony book", 1)
+			}
+
 			book := &book.Book{
 				Dir:         dir,
 				Debug:       c.Bool("debug"),
 				Force:       false,
 				AutoConfirm: true,
 			}
-			if err := book.Clone(c.String("version")); err != nil {
-				return err
-			}
-			return nil
+
+			return book.Clone(symfonyVersion)
 		}
 
-		symfonyVersion := c.String("version")
 		if symfonyVersion != "" && c.Bool("demo") {
 			return console.Exit("The --version flag is not supported for the Symfony Demo", 1)
-		}
-		if symfonyVersion == "" && c.Bool("book") {
-			return console.Exit("The --version flag is required for the Symfony book", 1)
 		}
 		if c.Bool("webapp") && c.Bool("no-git") {
 			return console.Exit("The --webapp flag cannot be used with --no-git", 1)
