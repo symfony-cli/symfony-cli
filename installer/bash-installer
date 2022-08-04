@@ -1,13 +1,28 @@
 #!/usr/bin/env bash
-# Symfony CLI installer.
+# Copyright (c) 2021-present Fabien Potencier <fabien@symfony.com>
+#
+# Symfony CLI installer: this file is part of Symfony CLI project.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
 set -euo pipefail
 
-CLI_LATEST_VERSION_URL="https://get.symfony.com/cli/LATEST"
-CLI_CONFIG_DIR=".symfony"
+CLI_CONFIG_DIR=".symfony5"
 CLI_EXECUTABLE="symfony"
 CLI_TMP_NAME="$CLI_EXECUTABLE-"$(date +"%s")
 CLI_NAME="Symfony CLI"
-CLI_DOWNLOAD_URL_PATTERN="https://github.com/symfony/cli/releases/download/v~latest_version~/symfony_~platform~.gz"
+CLI_DOWNLOAD_URL_PATTERN="https://github.com/symfony-cli/symfony-cli/releases/latest/download/symfony-cli_~platform~.tar.gz"
 
 function output {
     style_start=""
@@ -55,12 +70,6 @@ case $1 in
         shift # past argument
         shift # past value
         ;;
-    --channel=*)
-        channel="${1#*=}"
-        shift # past argument=value
-        CLI_DOWNLOAD_URL_PATTERN="${channel}/v~latest_version~/symfony_~platform~"
-        CLI_LATEST_VERSION_URL="${channel}/LATEST"
-        ;;
     *)
         output "Unknown option $1" "error"
         output "Usage: ${0} [--install-dir=dir]"
@@ -85,11 +94,11 @@ else
     exit 1
 fi
 
-# Check that gzip is installed.
-if command -v gzip >/dev/null 2>&1; then
-    output "  [*] Gzip is installed" "success"
+# Check that tar is installed.
+if command -v tar >/dev/null 2>&1; then
+    output "  [*] Tar is installed" "success"
 else
-    output "  [ ] ERROR: Gzip is required for installation." "error"
+    output "  [ ] ERROR: Tar is required for installation." "error"
     exit 1
 fi
 
@@ -124,6 +133,10 @@ case ${machine} in
         ;;
     i[36]86)
         machine="386"
+        if [ "darwin" = "${kernel}" ]; then
+            output "  [ ] Your architecture (${machine}) is not supported anymore" "error"
+            exit 1
+        fi
         ;;
     x86_64)
         machine="amd64"
@@ -134,47 +147,25 @@ case ${machine} in
         ;;
 esac
 
-platform="${kernel}_${machine}"
-
-if [ "darwin_386" = "${platform}" ]; then
-    output "  [ ] Your architecture (${machine}) is not supported anymore" "error"
-    exit 1
-fi
-
-if [ "darwin_arm64" = "${platform}" ]; then
-    platform="darwin_amd64"
-fi
-
 output "  [*] Your architecture (${machine}) is supported" "success"
+
+if [ "darwin" = "${kernel}" ]; then
+    machine="all"
+fi
+
+platform="${kernel}_${machine}"
 
 # The necessary checks have passed. Start downloading the right version.
 output "\nDownload" "heading"
 
-output "  Finding the latest version (platform: \"${platform}\")...";
-
-case ${downloader} in
-    "curl")
-        latest_version=$(curl --fail "${CLI_LATEST_VERSION_URL}" -s)
-        ;;
-    "wget")
-        latest_version=$(wget -q "${CLI_LATEST_VERSION_URL}" -O - 2>/dev/null)
-        ;;
-esac
-# shellcheck disable=SC2181
-if [ $? != 0 ]; then
-    output "  Failed to download LATEST version file: ${CLI_LATEST_VERSION_URL}" "error"
-    exit 1
-fi
-
-latest_url=${CLI_DOWNLOAD_URL_PATTERN/~latest_version~/${latest_version}}
-latest_url=${latest_url/~platform~/${platform}}
-output "  Downloading version ${latest_version} (${latest_url})...";
+latest_url=${CLI_DOWNLOAD_URL_PATTERN/~platform~/${platform}}
+output "  Downloading ${latest_url}...";
 case $downloader in
     "curl")
-        curl --fail --location "${latest_url}" > "/tmp/${CLI_TMP_NAME}.gz"
+        curl --fail --location "${latest_url}" > "/tmp/${CLI_TMP_NAME}.tar.gz"
         ;;
     "wget")
-        wget -q --show-progress "${latest_url}" -O "/tmp/${CLI_TMP_NAME}.gz"
+        wget -q --show-progress "${latest_url}" -O "/tmp/${CLI_TMP_NAME}.tar.gz"
         ;;
 esac
 
@@ -185,10 +176,8 @@ if [ $? != 0 ]; then
 fi
 
 output "  Uncompress binary..."
-gzip -d "/tmp/${CLI_TMP_NAME}.gz"
-
-output "  Making the binary executable..."
-chmod 755 "/tmp/${CLI_TMP_NAME}"
+tar -xz --directory "/tmp" -f "/tmp/${CLI_TMP_NAME}.tar.gz"
+rm "/tmp/${CLI_TMP_NAME}.tar.gz"
 
 if [ ! -d "${binary_dest}" ]; then
     if ! mkdir -p "${binary_dest}"; then
@@ -202,11 +191,11 @@ else
     output "  Installing the binary into your home directory..."
 fi
 
-if mv "/tmp/${CLI_TMP_NAME}" "${binary_dest}/${CLI_EXECUTABLE}"; then
+if mv "/tmp/${CLI_EXECUTABLE}" "${binary_dest}/${CLI_EXECUTABLE}"; then
     output "  The binary was saved to: ${binary_dest}/${CLI_EXECUTABLE}"
 else
     output "  Failed to move the binary to ${binary_dest}." "error"
-    rm "/tmp/${CLI_TMP_NAME}"
+    rm "/tmp/${CLI_EXECUTABLE}"
     exit 1
 fi
 
@@ -216,7 +205,7 @@ fi
 #    output "  Failed to install the shell auto-completion." "warning"
 #fi
 
-output "\nThe ${CLI_NAME} v${latest_version} was installed successfully!" "success"
+output "\nThe ${CLI_NAME} was installed successfully!" "success"
 
 if [ "${custom_dir}" == "false" ]; then
     output "\nUse it as a local file:" "info"
