@@ -302,8 +302,12 @@ func parseDockerComposeServices(dir string) []*CloudService {
 				s.Name = service.Name
 				parts := strings.Split(service.Image, ":")
 				s.Version = regexp.MustCompile(`\d+(\.\d+)?`).FindString(parts[len(parts)-1])
+				serviceLastVersion := platformsh.ServiceLastVersion(s.Type)
 				if s.Version == "" {
-					s.Version = platformsh.ServiceLastVersion(s.Type)
+					s.Version = serviceLastVersion
+				} else if s.Version > serviceLastVersion {
+					terminal.Printf("Unsupported %s version %s using version %s\n", s.Type, s.Version, serviceLastVersion)
+					s.Version = serviceLastVersion
 				}
 				cloudServices = append(cloudServices, s)
 			}
