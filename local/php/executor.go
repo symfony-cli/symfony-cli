@@ -136,6 +136,33 @@ func (e *Executor) lookupPHP(cliDir string, forceReload bool) (*phpstore.Version
 	return v, path, phpiniArgs, nil
 }
 
+// DetectScriptDir detects the script dir based on the current configuration
+func (e *Executor) DetectScriptDir() (string, error) {
+	if e.scriptDir != "" {
+		return e.scriptDir, nil
+	}
+
+	if e.SkipNbArgs == 0 {
+		e.SkipNbArgs = 1
+	}
+
+	if e.SkipNbArgs < 0 {
+		wd, err := os.Getwd()
+		if err != nil {
+			return "", errors.WithStack(err)
+		}
+		e.scriptDir = wd
+	} else {
+		if len(e.Args) < 1 {
+			return "", errors.New("args cannot be empty")
+		}
+
+		e.scriptDir = detectScriptDir(e.Args[e.SkipNbArgs:])
+	}
+
+	return e.scriptDir, nil
+}
+
 // Config determines the right version of PHP depending on the configuration (+ its configuration)
 func (e *Executor) Config(loadDotEnv bool) error {
 	// reset environment
@@ -144,19 +171,9 @@ func (e *Executor) Config(loadDotEnv bool) error {
 	if len(e.Args) < 1 {
 		return errors.New("args cannot be empty")
 	}
-	if e.scriptDir == "" {
-		if e.SkipNbArgs == 0 {
-			e.SkipNbArgs = 1
-		}
-		if e.SkipNbArgs < 0 {
-			wd, err := os.Getwd()
-			if err != nil {
-				return err
-			}
-			e.scriptDir = wd
-		} else {
-			e.scriptDir = detectScriptDir(e.Args[e.SkipNbArgs:])
-		}
+
+	if _, err := e.DetectScriptDir(); err != nil {
+		return err
 	}
 
 	vars := make(map[string]string)
@@ -269,9 +286,9 @@ func (e *Executor) Config(loadDotEnv bool) error {
 
 // Find composer depending on the configuration
 func (e *Executor) findComposer(extraBin string) (string, error) {
-	if e.Config(false) == nil {
+	if scriptDir, err := e.DetectScriptDir(); err == nil {
 		for _, file := range []string{extraBin, "composer.phar", "composer"} {
-			path := filepath.Join(e.scriptDir, file)
+			path := filepath.Join(scriptDir, file)
 			d, err := os.Stat(path)
 			if err != nil {
 				continue
