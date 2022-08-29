@@ -1464,9 +1464,11 @@ var Commands = []*console.Command{
 		Usage:    "List subscriptions within an organization",
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "count", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.BoolFlag{Name: "no-header",},
 			&console.StringFlag{Name: "org", Aliases: []string{"o"},},
+			&console.StringFlag{Name: "page",},
 		},
 	},
 	{
@@ -1658,14 +1660,14 @@ var Commands = []*console.Command{
 		Usage:    "Get a list of all active projects",
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "columns",},
-			&console.StringFlag{Name: "count",},
+			&console.StringFlag{Name: "count", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
 			&console.BoolFlag{Name: "my",},
 			&console.BoolFlag{Name: "no-header",},
 			&console.StringFlag{Name: "org", Aliases: []string{"o"},},
-			&console.StringFlag{Name: "page", DefaultValue: "1",},
+			&console.StringFlag{Name: "page",},
 			&console.BoolFlag{Name: "pipe",},
 			&console.StringFlag{Name: "refresh",},
 			&console.BoolFlag{Name: "reverse",},
