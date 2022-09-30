@@ -147,7 +147,7 @@ var availableServices = []*service{
 		Type: "influxdb",
 		Versions: serviceVersions{
 			Deprecated: []string{},
-			Supported:  []string{"1.2", "1.3", "1.7", "1.8", "2.2"},
+			Supported:  []string{"1.2", "1.3", "1.7", "1.8", "2.2", "2.3"},
 		},
 	},
 	{
@@ -182,7 +182,7 @@ var availableServices = []*service{
 		Type: "mongodb-enterprise",
 		Versions: serviceVersions{
 			Deprecated: []string{"4.0"},
-			Supported:  []string{"5.0", "4.4", "4.2"},
+			Supported:  []string{"4.2", "4.4", "5.0"},
 		},
 	},
 	{
