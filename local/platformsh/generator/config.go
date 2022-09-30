@@ -12,6 +12,8 @@ import (
 	"sort"
 	"strings"
 	"text/template"
+
+	"github.com/hashicorp/go-version"
 )
 
 type service struct {
@@ -107,16 +109,25 @@ func parseServices() (string, error) {
 	for _, name := range serviceNames {
 		s := services[name]
 		if !s.Runtime {
+			deprecatedVersions, err := sortVersions(s.Versions.Deprecated)
+			if err != nil {
+				return "", err
+			}
+			supportedVersions, err := sortVersions(s.Versions.Supported)
+			if err != nil {
+				return "", err
+			}
+
 			servicesAsString += "\t{\n"
 			servicesAsString += fmt.Sprintf("\t\tType: \"%s\",\n", s.Type)
 			servicesAsString += "\t\tVersions: serviceVersions{\n"
-			if len(s.Versions.Deprecated) > 0 {
-				servicesAsString += fmt.Sprintf("\t\t\tDeprecated: []string{\"%s\"},\n", strings.Join(s.Versions.Deprecated, "\", \""))
+			if len(deprecatedVersions) > 0 {
+				servicesAsString += fmt.Sprintf("\t\t\tDeprecated: []string{\"%s\"},\n", strings.Join(deprecatedVersions, "\", \""))
 			} else {
 				servicesAsString += "\t\t\tDeprecated: []string{},\n"
 			}
-			if len(s.Versions.Supported) > 0 {
-				servicesAsString += fmt.Sprintf("\t\t\tSupported:  []string{\"%s\"},\n", strings.Join(s.Versions.Supported, "\", \""))
+			if len(supportedVersions) > 0 {
+				servicesAsString += fmt.Sprintf("\t\t\tSupported:  []string{\"%s\"},\n", strings.Join(supportedVersions, "\", \""))
 			} else {
 				servicesAsString += "\t\t\tSupported: []string{},\n"
 			}
@@ -210,4 +221,21 @@ func parseLine(line string) (string, []string) {
 		}
 	}
 	return name, versions
+}
+
+func sortVersions(versions []string) ([]string, error) {
+	parsedVersions := make([]*version.Version, len(versions))
+	for i, raw := range versions {
+		v, err := version.NewVersion(raw)
+		if err != nil {
+			return nil, err
+		}
+		parsedVersions[i] = v
+	}
+	sort.Sort(version.Collection(parsedVersions))
+	versionsAsStrings := make([]string, len(versions))
+	for i, version := range parsedVersions {
+		versionsAsStrings[i] = version.Original()
+	}
+	return versionsAsStrings, nil
 }
