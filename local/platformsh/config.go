@@ -146,22 +146,22 @@ var availableServices = []*service{
 	{
 		Type: "influxdb",
 		Versions: serviceVersions{
-			Deprecated: []string{},
-			Supported:  []string{"1.2", "1.3", "1.7", "1.8", "2.2", "2.3"},
+			Deprecated: []string{"1.2", "1.3", "1.7", "1.8", "2.2"},
+			Supported:  []string{"2.3"},
 		},
 	},
 	{
 		Type: "kafka",
 		Versions: serviceVersions{
-			Deprecated: []string{},
-			Supported:  []string{"2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7"},
+			Deprecated: []string{"2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7"},
+			Supported:  []string{"3.2"},
 		},
 	},
 	{
 		Type: "mariadb",
 		Versions: serviceVersions{
-			Deprecated: []string{"5.5"},
-			Supported:  []string{"10.0", "10.1", "10.2", "10.3", "10.4", "10.5", "10.6"},
+			Deprecated: []string{"5.5", "10.0", "10.1", "10.2"},
+			Supported:  []string{"10.3", "10.4", "10.5", "10.6"},
 		},
 	},
 	{
@@ -216,29 +216,29 @@ var availableServices = []*service{
 	{
 		Type: "postgresql",
 		Versions: serviceVersions{
-			Deprecated: []string{"9.3", "9.4", "9.5"},
-			Supported:  []string{"9.6", "10", "11", "12", "13"},
+			Deprecated: []string{"9.3", "9.4", "9.5", "9.6"},
+			Supported:  []string{"10", "11", "12", "13"},
 		},
 	},
 	{
 		Type: "rabbitmq",
 		Versions: serviceVersions{
-			Deprecated: []string{},
-			Supported:  []string{"3.5", "3.6", "3.7", "3.8", "3.9"},
+			Deprecated: []string{"3.5", "3.6", "3.7", "3.8"},
+			Supported:  []string{"3.9"},
 		},
 	},
 	{
 		Type: "redis",
 		Versions: serviceVersions{
-			Deprecated: []string{"2.8", "3.0"},
-			Supported:  []string{"3.2", "4.0", "5.0", "6.0", "6.2", "7.0"},
+			Deprecated: []string{"2.8", "3.0", "3.2", "4.0", "5.0", "6.0"},
+			Supported:  []string{"6.2", "7.0"},
 		},
 	},
 	{
 		Type: "solr",
 		Versions: serviceVersions{
-			Deprecated: []string{"3.6", "4.10", "6.3", "6.6", "7.6"},
-			Supported:  []string{"7.7", "8.0", "8.4", "8.6", "8.11"},
+			Deprecated: []string{"3.6", "4.10", "6.3", "6.6", "7.6", "7.7", "8.0", "8.4", "8.6"},
+			Supported:  []string{"8.11"},
 		},
 	},
 	{
