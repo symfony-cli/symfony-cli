@@ -95,6 +95,9 @@ brews:
       type: optional
     install: |-
       bin.install "symfony"
+    service: |-
+      run ["#{bin}/symfony", "local:proxy:start", "--foreground"]
+      keep_alive true
 
 nfpms:
   - file_name_template: '{{ .ConventionalFileName }}'
