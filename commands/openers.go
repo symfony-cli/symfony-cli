@@ -50,6 +50,10 @@ var projectLocalOpenCmd = &console.Command{
 			Name:  "path",
 			Usage: "Default path which the project should open on",
 		},
+		&console.StringFlag{
+			Name:  "domain",
+			Usage: "Which domain the project should open on (Default: 127.0.0.1)",
+		},
 	},
 	Action: func(c *console.Context) error {
 		projectDir, err := getProjectDir(c.String("dir"))
@@ -60,8 +64,13 @@ var projectLocalOpenCmd = &console.Command{
 		if !pidFile.IsRunning() {
 			return console.Exit("Local web server is down.", 1)
 		}
-		abstractOpenCmd(fmt.Sprintf("%s://127.0.0.1:%d/%s",
+		domain := strings.TrimSpace(c.String("domain"))
+		if domain == "" {
+			domain = "127.0.0.1"
+		}
+		abstractOpenCmd(fmt.Sprintf("%s://%s:%d/%s",
 			pidFile.Scheme,
+			domain,
 			pidFile.Port,
 			strings.TrimLeft(c.String("path"), "/"),
 		))
