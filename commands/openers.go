@@ -27,6 +27,8 @@ import (
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/envs"
 	"github.com/symfony-cli/symfony-cli/local/pid"
+	"github.com/symfony-cli/symfony-cli/local/proxy"
+	"github.com/symfony-cli/symfony-cli/util"
 	"github.com/symfony-cli/terminal"
 )
 
@@ -60,9 +62,16 @@ var projectLocalOpenCmd = &console.Command{
 		if !pidFile.IsRunning() {
 			return console.Exit("Local web server is down.", 1)
 		}
-		abstractOpenCmd(fmt.Sprintf("%s://127.0.0.1:%d/%s",
+		host := fmt.Sprintf("127.0.0.1:%d", pidFile.Port)
+		if proxyConf, err := proxy.Load(util.GetHomeDir()); err == nil {
+			domains := proxyConf.GetDomains(projectDir)
+			if len(domains) > 0 {
+				host = domains[0]
+			}
+		}
+		abstractOpenCmd(fmt.Sprintf("%s://%s/%s",
 			pidFile.Scheme,
-			pidFile.Port,
+			host,
 			strings.TrimLeft(c.String("path"), "/"),
 		))
 		return nil
