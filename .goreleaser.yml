@@ -38,7 +38,7 @@ builds:
       - -trimpath
 
 archives:
-  - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+  -
     format_overrides:
     - goos: windows
       format: zip
