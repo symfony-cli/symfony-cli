@@ -30,6 +30,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/NYTimes/gziphandler"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/soheilhy/cmux"
@@ -58,6 +59,17 @@ type Server struct {
 	serverPort string
 }
 
+var gzipContentTypes = []string{
+	"text/html",
+	"text/plain",
+	"text/csv",
+	"text/javascript",
+	"text/css",
+	"application/json",
+	"application/javascript",
+	"application/vnd.api+json",
+}
+
 // Start starts the server
 func (s *Server) Start(errChan chan error) (int, error) {
 	ln, port, err := process.CreateListener(s.Port, s.PreferredPort)
@@ -66,8 +78,14 @@ func (s *Server) Start(errChan chan error) (int, error) {
 	}
 	s.serverPort = strconv.Itoa(port)
 
+	gzipWrapper, err := gziphandler.GzipHandlerWithOpts(gziphandler.ContentTypes(gzipContentTypes))
+
+	if err != nil {
+		return port, err
+	}
+
 	s.httpserver = &http.Server{
-		Handler: http.HandlerFunc(s.ProxyHandler),
+		Handler: gzipWrapper(http.HandlerFunc(s.ProxyHandler)),
 	}
 	if s.PKCS12 == "" {
 		go func() {
@@ -83,7 +101,7 @@ func (s *Server) Start(errChan chan error) (int, error) {
 	}
 
 	s.httpsserver = &http.Server{
-		Handler: http.HandlerFunc(s.ProxyHandler),
+		Handler: gzipWrapper(http.HandlerFunc(s.ProxyHandler)),
 		TLSConfig: &tls.Config{
 			PreferServerCipherSuites: true,
 			CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
