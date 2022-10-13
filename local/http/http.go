@@ -52,6 +52,7 @@ type Server struct {
 	AllowHTTP     bool
 	Logger        zerolog.Logger
 	Appversion    string
+	UseGzip       bool
 
 	httpserver  *http.Server
 	httpsserver *http.Server
@@ -84,8 +85,16 @@ func (s *Server) Start(errChan chan error) (int, error) {
 		return port, err
 	}
 
+	var proxyHandler http.Handler
+
+	proxyHandler = http.HandlerFunc(s.ProxyHandler)
+
+	if s.UseGzip {
+		proxyHandler = gzipWrapper(proxyHandler)
+	}
+
 	s.httpserver = &http.Server{
-		Handler: gzipWrapper(http.HandlerFunc(s.ProxyHandler)),
+		Handler: proxyHandler,
 	}
 	if s.PKCS12 == "" {
 		go func() {
@@ -101,7 +110,7 @@ func (s *Server) Start(errChan chan error) (int, error) {
 	}
 
 	s.httpsserver = &http.Server{
-		Handler: gzipWrapper(http.HandlerFunc(s.ProxyHandler)),
+		Handler: proxyHandler,
 		TLSConfig: &tls.Config{
 			PreferServerCipherSuites: true,
 			CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
