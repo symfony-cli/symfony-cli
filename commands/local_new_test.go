@@ -20,27 +20,38 @@
 package commands
 
 import (
+	"os"
+	"strconv"
 	"testing"
-	
+
 	"github.com/symfony-cli/symfony-cli/local/platformsh"
 )
 
 func TestParseDockerComposeServices(t *testing.T) {
+	lastVersion := platformsh.ServiceLastVersion("postgresql")
+
+	if n, err := strconv.Atoi(lastVersion); err != nil {
+		t.Error("Could not generate test cases:", err)
+	} else {
+		os.Setenv("POSTGRES_NEXT_VERSION", strconv.Itoa(n+1))
+		defer os.Unsetenv("POSTGRES_NEXT_VERSION")
+	}
+
 	for dir, expected := range map[string]CloudService{
 		"testdata/postgresql/noversion/": {
 			Name:    "database",
 			Type:    "postgresql",
-			Version: platformsh.ServiceLastVersion("postgresql"),
+			Version: lastVersion,
 		},
 		"testdata/postgresql/10/": {
 			Name:    "database",
 			Type:    "postgresql",
 			Version: "10",
 		},
-		"testdata/postgresql/14/": {
+		"testdata/postgresql/next/": {
 			Name:    "database",
 			Type:    "postgresql",
-			Version: platformsh.ServiceLastVersion("postgresql"),
+			Version: lastVersion,
 		},
 	} {
 		result := parseDockerComposeServices(dir)

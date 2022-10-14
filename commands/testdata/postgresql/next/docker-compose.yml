@@ -2,6 +2,6 @@ version: '3'
 
 services:
   database:
-    image: postgres:14-alpine
+    image: postgres:${POSTGRES_NEXT_VERSION}-alpine
     ports:
       - "5432"
