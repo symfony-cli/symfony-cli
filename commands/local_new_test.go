@@ -21,6 +21,8 @@ package commands
 
 import (
 	"testing"
+	
+	"github.com/symfony-cli/symfony-cli/local/platformsh"
 )
 
 func TestParseDockerComposeServices(t *testing.T) {
@@ -28,7 +30,7 @@ func TestParseDockerComposeServices(t *testing.T) {
 		"testdata/postgresql/noversion/": {
 			Name:    "database",
 			Type:    "postgresql",
-			Version: "13",
+			Version: platformsh.ServiceLastVersion("postgresql"),
 		},
 		"testdata/postgresql/10/": {
 			Name:    "database",
@@ -38,7 +40,7 @@ func TestParseDockerComposeServices(t *testing.T) {
 		"testdata/postgresql/14/": {
 			Name:    "database",
 			Type:    "postgresql",
-			Version: "13",
+			Version: platformsh.ServiceLastVersion("postgresql"),
 		},
 	} {
 		result := parseDockerComposeServices(dir)

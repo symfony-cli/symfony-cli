@@ -270,7 +270,7 @@ func parseCLIServices(services []string) ([]*CloudService, error) {
 func parseDockerComposeServices(dir string) []*CloudService {
 	var cloudServices []*CloudService
 
-	options, err := compose.NewProjectOptions(nil, compose.WithWorkingDirectory(dir), compose.WithDefaultConfigPath, compose.WithConfigFileEnv)
+	options, err := compose.NewProjectOptions(nil, compose.WithWorkingDirectory(dir), compose.WithDefaultConfigPath, compose.WithConfigFileEnv, compose.WithEnv(os.Environ()))
 	if err != nil {
 		return nil
 	}
