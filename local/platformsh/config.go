@@ -217,7 +217,7 @@ var availableServices = []*service{
 		Type: "postgresql",
 		Versions: serviceVersions{
 			Deprecated: []string{"9.3", "9.4", "9.5", "9.6"},
-			Supported:  []string{"10", "11", "12", "13", "14"},
+			Supported:  []string{"10", "11", "12", "13"},
 		},
 	},
 	{
