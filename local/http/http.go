@@ -66,9 +66,13 @@ var gzipContentTypes = []string{
 	"text/csv",
 	"text/javascript",
 	"text/css",
+	"text/xml",
 	"application/json",
 	"application/javascript",
 	"application/vnd.api+json",
+	"application/atom+xml",
+	"application/rss+xml",
+	"image/svg+xml",
 }
 
 // Start starts the server
@@ -79,17 +83,17 @@ func (s *Server) Start(errChan chan error) (int, error) {
 	}
 	s.serverPort = strconv.Itoa(port)
 
-	gzipWrapper, err := gziphandler.GzipHandlerWithOpts(gziphandler.ContentTypes(gzipContentTypes))
-
-	if err != nil {
-		return port, err
-	}
-
 	var proxyHandler http.Handler
 
 	proxyHandler = http.HandlerFunc(s.ProxyHandler)
 
 	if s.UseGzip {
+		gzipWrapper, err := gziphandler.GzipHandlerWithOpts(gziphandler.ContentTypes(gzipContentTypes))
+
+		if err != nil {
+			return port, errors.WithStack(err)
+		}
+
 		proxyHandler = gzipWrapper(proxyHandler)
 	}
 
