@@ -19,7 +19,7 @@ jobs:
         steps:
             -
                 name: Checkout
-                uses: actions/checkout@v2
+                uses: actions/checkout@v3
                 with:
                     fetch-depth: 0
 
@@ -33,7 +33,7 @@ jobs:
 
             -
                 name: Set up Go
-                uses: actions/setup-go@v2
+                uses: actions/setup-go@v3
                 with:
                     go-version: 1.19
             -   uses: actions/cache@v3
@@ -56,7 +56,7 @@ jobs:
                 id: git
                 run: |
                     RESULT=$(git status --untracked-files=no --porcelain)
-                    echo "::set-output name=gitstatus::$RESULT"
+                    echo "gitstatus=$RESULT" >> $GITHUB_OUTPUT
             -
                 name: Check if go prepare updated generated Go code
                 if: steps.git.outputs.gitstatus != '' && startsWith(github.ref, 'refs/tags/v')
@@ -72,7 +72,7 @@ jobs:
                 uses: sigstore/cosign-installer@v2.7.0
             -
                 name: Run GoReleaser for snapshot
-                uses: goreleaser/goreleaser-action@v2
+                uses: goreleaser/goreleaser-action@v3
                 # only for PRs and push on branches
                 if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
                 with:
@@ -82,7 +82,7 @@ jobs:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             -
                 name: Run GoReleaser
-                uses: goreleaser/goreleaser-action@v2
+                uses: goreleaser/goreleaser-action@v3
                 # only for tags
                 if: startsWith(github.ref, 'refs/tags/v')
                 with:
@@ -93,7 +93,7 @@ jobs:
                     TAP_GITHUB_TOKEN: ${{ secrets.GH_PAT }}
             -
                 name: Archive binaries
-                uses: actions/upload-artifact@v2
+                uses: actions/upload-artifact@v3
                 with:
                     retention-days: 5
                     path: dist
