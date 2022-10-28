@@ -60,6 +60,7 @@ func New(c *Config) (*Project, error) {
 			Logger:        c.Logger,
 			PKCS12:        c.PKCS12,
 			AllowHTTP:     c.AllowHTTP,
+			UseGzip:       c.UseGzip,
 			Appversion:    c.AppVersion,
 		},
 	}

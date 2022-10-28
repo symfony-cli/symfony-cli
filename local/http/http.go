@@ -30,6 +30,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/NYTimes/gziphandler"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/soheilhy/cmux"
@@ -51,11 +52,27 @@ type Server struct {
 	AllowHTTP     bool
 	Logger        zerolog.Logger
 	Appversion    string
+	UseGzip       bool
 
 	httpserver  *http.Server
 	httpsserver *http.Server
 
 	serverPort string
+}
+
+var gzipContentTypes = []string{
+	"text/html",
+	"text/plain",
+	"text/csv",
+	"text/javascript",
+	"text/css",
+	"text/xml",
+	"application/json",
+	"application/javascript",
+	"application/vnd.api+json",
+	"application/atom+xml",
+	"application/rss+xml",
+	"image/svg+xml",
 }
 
 // Start starts the server
@@ -66,8 +83,22 @@ func (s *Server) Start(errChan chan error) (int, error) {
 	}
 	s.serverPort = strconv.Itoa(port)
 
+	var proxyHandler http.Handler
+
+	proxyHandler = http.HandlerFunc(s.ProxyHandler)
+
+	if s.UseGzip {
+		gzipWrapper, err := gziphandler.GzipHandlerWithOpts(gziphandler.ContentTypes(gzipContentTypes))
+
+		if err != nil {
+			return port, errors.WithStack(err)
+		}
+
+		proxyHandler = gzipWrapper(proxyHandler)
+	}
+
 	s.httpserver = &http.Server{
-		Handler: http.HandlerFunc(s.ProxyHandler),
+		Handler: proxyHandler,
 	}
 	if s.PKCS12 == "" {
 		go func() {
@@ -83,7 +114,7 @@ func (s *Server) Start(errChan chan error) (int, error) {
 	}
 
 	s.httpsserver = &http.Server{
-		Handler: http.HandlerFunc(s.ProxyHandler),
+		Handler: proxyHandler,
 		TLSConfig: &tls.Config{
 			PreferServerCipherSuites: true,
 			CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},

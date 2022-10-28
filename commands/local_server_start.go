@@ -67,6 +67,7 @@ var localServerStartCmd = &console.Command{
 		&console.BoolFlag{Name: "no-humanize", Usage: "Do not format JSON logs"},
 		&console.StringFlag{Name: "p12", Usage: "Name of the file containing the TLS certificate to use in p12 format"},
 		&console.BoolFlag{Name: "no-tls", Usage: "Use HTTP instead of HTTPS"},
+		&console.BoolFlag{Name: "use-gzip", Usage: "Use GZIP"},
 	},
 	Action: func(c *console.Context) error {
 		ui := terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin)
