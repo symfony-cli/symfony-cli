@@ -89,11 +89,9 @@ func (s *Server) Start(errChan chan error) (int, error) {
 
 	if s.UseGzip {
 		gzipWrapper, err := gziphandler.GzipHandlerWithOpts(gziphandler.ContentTypes(gzipContentTypes))
-
 		if err != nil {
 			return port, errors.WithStack(err)
 		}
-
 		proxyHandler = gzipWrapper(proxyHandler)
 	}
 
