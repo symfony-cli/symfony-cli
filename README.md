@@ -40,6 +40,16 @@ Security Issues
 
 If you discover a security vulnerability, please follow our [disclosure procedure][11].
 
+Sponsorship [<img src="https://cloudposse.com/wp-content/uploads/2020/10/cloudsmith.svg" width="250" align="right" />](https://cloudsmith.io/)
+-----------
+
+Package repository hosting is graciously provided by
+[cloudsmith](https://cloudsmith.io/). Cloudsmith is the only fully hosted,
+cloud-native, universal package management solution, that enables your
+organization to create, store and share packages in any format, to any place,
+with total confidence. We believe there’s a better way to manage software
+assets and packages, and they're making it happen!
+
 [1]: https://symfony.com/download
 [2]: https://symfony.com/doc/current/setup.html#creating-symfony-applications
 [3]: https://symfony.com/doc/current/setup/symfony_server.html
