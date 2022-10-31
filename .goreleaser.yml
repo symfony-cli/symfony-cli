@@ -113,3 +113,12 @@ nfpms:
     - rpm
     recommends:
     - git
+
+dockers:
+  - image_templates:
+      - "ghcr.io/symfony-cli/symfony-cli:{{ .Tag }}"
+      - "ghcr.io/symfony-cli/symfony-cli:v{{ .Major }}"
+      - "ghcr.io/symfony-cli/symfony-cli:v{{ .Major }}.{{ .Minor }}"
+      - "ghcr.io/symfony-cli/symfony-cli:latest"
+    build_flag_templates:
+      - "--label=org.opencontainers.image.source=https://github.com/symfony-cli/symfony-cli"
