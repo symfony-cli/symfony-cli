@@ -119,6 +119,7 @@ dockers:
     goarch: amd64
     use: buildx
     build_flag_templates:
+      - "--pull"
       - "--platform=linux/amd64"
       - "--label=org.opencontainers.image.source=https://github.com/symfony-cli/symfony-cli"
       - "--label=org.opencontainers.image.created={{.Date}}"
@@ -127,6 +128,7 @@ dockers:
     goarch: arm64
     use: buildx
     build_flag_templates:
+      - "--pull"
       - "--platform=linux/arm64"
       - "--label=org.opencontainers.image.source=https://github.com/symfony-cli/symfony-cli"
       - "--label=org.opencontainers.image.created={{.Date}}"
