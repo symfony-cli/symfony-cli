@@ -61,7 +61,7 @@ jobs:
                 name: Run GoReleaser for snapshot
                 uses: goreleaser/goreleaser-action@v2
                 # only for PRs and push on branches
-                if: startsWith(github.ref, 'refs/heads/')
+                if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
                 with:
                     version: latest
                     args: build --rm-dist --snapshot
