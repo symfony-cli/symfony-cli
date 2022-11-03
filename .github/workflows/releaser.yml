@@ -64,7 +64,7 @@ jobs:
                 if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
                 with:
                     version: latest
-                    args: build --rm-dist --snapshot
+                    args: release --rm-dist --snapshot --skip-publish --skip-sign
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             -
