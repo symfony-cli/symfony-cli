@@ -251,8 +251,8 @@ var availableServices = []*service{
 	{
 		Type: "vault-kms",
 		Versions: serviceVersions{
-			Deprecated: []string{},
-			Supported:  []string{"1.6", "1.8"},
+			Deprecated: []string{"1.6", "1.8"},
+			Supported:  []string{"1.12"},
 		},
 	},
 }
