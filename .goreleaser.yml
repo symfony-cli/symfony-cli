@@ -113,3 +113,35 @@ nfpms:
     - rpm
     recommends:
     - git
+
+dockers:
+  - image_templates: [ "ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-amd64" ]
+    goarch: amd64
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.source=https://github.com/symfony-cli/symfony-cli"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+  - image_templates: [ "ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-arm64" ]
+    goarch: arm64
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.source=https://github.com/symfony-cli/symfony-cli"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+
+docker_manifests:
+  - name_template: ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}
+    image_templates: &docker_images
+      - ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-amd64
+      - ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-arm64
+  - name_template: ghcr.io/symfony-cli/{{ .ProjectName }}:v{{ .Major }}
+    image_templates: *docker_images
+  - name_template: ghcr.io/symfony-cli/{{ .ProjectName }}:v{{ .Major }}.{{ .Minor }}
+    image_templates: *docker_images
+  - name_template: ghcr.io/symfony-cli/{{ .ProjectName }}:latest
+    image_templates: *docker_images
