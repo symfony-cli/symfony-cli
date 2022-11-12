@@ -45,6 +45,7 @@ type Config struct {
 	NoTLS         bool `yaml:"no_tls"`
 	Daemon        bool `yaml:"daemon"`
 	UseGzip       bool `yaml:"use_gzip"`
+	FrankenPHP    bool `yaml:"frankenphp"`
 }
 
 type FileConfig struct {
@@ -104,9 +105,11 @@ func NewConfigFromContext(c *console.Context, projectDir string) (*Config, *File
 	if c.IsSet("daemon") {
 		config.Daemon = c.Bool("daemon")
 	}
-
 	if c.IsSet("use-gzip") {
 		config.UseGzip = c.Bool("use-gzip")
+	}
+	if c.IsSet("frankenphp") {
+		config.FrankenPHP = c.Bool("frankenphp")
 	}
 
 	return config, fileConfig, nil

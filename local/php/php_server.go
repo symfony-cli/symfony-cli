@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -37,6 +38,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dunglas/frankenphp"
 	"github.com/pkg/errors"
 	"github.com/rs/xid"
 	"github.com/rs/zerolog"
@@ -46,6 +48,7 @@ import (
 	"github.com/symfony-cli/symfony-cli/local/html"
 	"github.com/symfony-cli/symfony-cli/local/pid"
 	"github.com/symfony-cli/symfony-cli/local/process"
+	"go.uber.org/zap"
 )
 
 // Server represents a PHP server process (can be php-fpm, php-cgi, or php-cli)
@@ -63,16 +66,30 @@ type Server struct {
 var addslashes = strings.NewReplacer("\\", "\\\\", "'", "\\'")
 
 // NewServer creates a new PHP server backend
-func NewServer(homeDir, projectDir, documentRoot, passthru string, logger zerolog.Logger) (*Server, error) {
-	logger.Debug().Str("source", "PHP").Msg("Reloading PHP versions")
-	phpStore := phpstore.New(homeDir, true, nil)
-	version, source, warning, err := phpStore.BestVersionForDir(projectDir)
-	if warning != "" {
-		logger.Warn().Str("source", "PHP").Msg(warning)
+func NewServer(homeDir, projectDir, documentRoot, passthru string, useFrankenPHP bool, logger zerolog.Logger) (*Server, error) {
+	var (
+		version *phpstore.Version
+		source  string
+	)
+
+	if useFrankenPHP {
+		version = &phpstore.Version{Version: frankenphp.Version().Version, FrankenPHP: true}
+		source = "FrankenPHP"
+	} else {
+		logger.Debug().Str("source", "PHP").Msg("Reloading PHP versions")
+		phpStore := phpstore.New(homeDir, true, nil)
+		v, s, warning, err := phpStore.BestVersionForDir(projectDir)
+		if warning != "" {
+			logger.Warn().Str("source", "PHP").Msg(warning)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		version = v
+		source = s
 	}
-	if err != nil {
-		return nil, err
-	}
+
 	logger.Debug().Str("source", "PHP").Msgf("Using PHP version %s (from %s)", version.Version, source)
 	return &Server{
 		Version:      version,
@@ -86,6 +103,25 @@ func NewServer(homeDir, projectDir, documentRoot, passthru string, logger zerolo
 
 // Start starts a PHP server
 func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile, func() error, error) {
+	if p.Version.IsFrankenPHPServer() {
+		return nil, func() error {
+			log.Print("calllll")
+
+			// TODO: create an adapter between zerolog and zap
+			z, err := zap.NewProduction()
+			if err != nil {
+				return errors.Wrap(err, "unable to create FrankenPHP's logger")
+			}
+			if err = frankenphp.Init(frankenphp.WithLogger(z)); err != nil {
+				return errors.Wrap(err, "unable to start FrankenPHP's logger")
+			}
+
+			log.Print("started")
+
+			return nil
+		}, nil
+	}
+
 	var pathsToRemove []string
 	port, err := process.FindAvailablePort()
 	if err != nil {
@@ -196,6 +232,14 @@ func (p *Server) Serve(w http.ResponseWriter, r *http.Request, env map[string]st
 	}
 	for k, v := range p.generateEnv(r) {
 		env[k] = v
+	}
+	if p.Version.IsFrankenPHPServer() {
+		fr := frankenphp.NewRequestWithContext(r, p.documentRoot, nil)
+		fc, _ := frankenphp.FromContext(fr.Context())
+		fc.Env = env
+		fc.Env["SCRIPT_FILENAME"] = p.documentRoot + string(os.PathSeparator) + p.passthru
+
+		return frankenphp.ServeHTTP(w, fr)
 	}
 	if p.Version.IsCLIServer() {
 		rid := xid.New().String()

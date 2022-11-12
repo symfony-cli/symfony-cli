@@ -31,6 +31,7 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/dunglas/frankenphp"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/soheilhy/cmux"
@@ -68,6 +69,7 @@ var localServerStartCmd = &console.Command{
 		&console.StringFlag{Name: "p12", Usage: "Name of the file containing the TLS certificate to use in p12 format"},
 		&console.BoolFlag{Name: "no-tls", Usage: "Use HTTP instead of HTTPS"},
 		&console.BoolFlag{Name: "use-gzip", Usage: "Use GZIP"},
+		&console.BoolFlag{Name: "frankenphp", Usage: "Use FrankenPHP (built-in) instead of PHP FPM"},
 	},
 	Action: func(c *console.Context) error {
 		ui := terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin)
@@ -201,52 +203,58 @@ var localServerStartCmd = &console.Command{
 				return err
 			}
 
-			// We retrieve a reader on logs as soon as possible to be able to
-			// display error logs in case of startup errors. We can't do it
-			// later as the log file will already be deleted.
-			logs, err := phpPidFile.LogReader()
-			if err != nil {
-				return err
-			}
-
-			if !reexec.IsChild() {
-				tailer.WatchAdditionalPidFile(phpPidFile)
-			}
-
-			// we run FPM in its own goroutine to allow it to run even when
-			// foreground is forced
-			go func() { errChan <- phpStartCallback() }()
-
-			// Give time to PHP to fail or to be ready
-			select {
-			case err := <-errChan:
-				terminal.Logger.Error().Msgf("Unable to start %s", phpPidFile.CustomName)
-
-				humanizer := humanlog.NewHandler(&humanlog.Options{
-					SkipUnchanged: true,
-					WithSource:    true,
-				})
-
-				buf := bytes.Buffer{}
-				fmt.Fprintf(&buf, "%s failed to start:\n", phpPidFile.CustomName)
-
-				scanner := bufio.NewScanner(logs)
-				for scanner.Scan() {
-					buf.Write(humanizer.Simplify(scanner.Bytes()))
-					buf.WriteRune('\n')
+			if phpPidFile == nil {
+				if err := phpStartCallback(); err != nil {
+					return err
 				}
-
-				ui.Error(buf.String())
-
+			} else {
+				// We retrieve a reader on logs as soon as possible to be able to
+				// display error logs in case of startup errors. We can't do it
+				// later as the log file will already be deleted.
+				logs, err := phpPidFile.LogReader()
 				if err != nil {
 					return err
 				}
-				return nil
-			case err := <-phpPidFile.WaitForPid():
-				// PHP started, we can close logs and go ahead
-				logs.Close()
-				if err != nil {
-					return err
+
+				if !reexec.IsChild() {
+					tailer.WatchAdditionalPidFile(phpPidFile)
+				}
+
+				// we run FPM in its own goroutine to allow it to run even when
+				// foreground is forced
+				go func() { errChan <- phpStartCallback() }()
+
+				// Give time to PHP to fail or to be ready
+				select {
+				case err := <-errChan:
+					terminal.Logger.Error().Msgf("Unable to start %s", phpPidFile.CustomName)
+
+					humanizer := humanlog.NewHandler(&humanlog.Options{
+						SkipUnchanged: true,
+						WithSource:    true,
+					})
+
+					buf := bytes.Buffer{}
+					fmt.Fprintf(&buf, "%s failed to start:\n", phpPidFile.CustomName)
+
+					scanner := bufio.NewScanner(logs)
+					for scanner.Scan() {
+						buf.Write(humanizer.Simplify(scanner.Bytes()))
+						buf.WriteRune('\n')
+					}
+
+					ui.Error(buf.String())
+
+					if err != nil {
+						return err
+					}
+					return nil
+				case err := <-phpPidFile.WaitForPid():
+					// PHP started, we can close logs and go ahead
+					logs.Close()
+					if err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -343,6 +351,11 @@ var localServerStartCmd = &console.Command{
 		case <-shutdownCh:
 			terminal.Eprintln("")
 			terminal.Eprintln("Shutting down!")
+
+			if config.FrankenPHP {
+				frankenphp.Shutdown()
+			}
+
 			if err := cleanupWebServerFiles(projectDir, pidFile); err != nil {
 				return err
 			}

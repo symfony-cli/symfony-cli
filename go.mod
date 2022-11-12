@@ -1,8 +1,11 @@
 module github.com/symfony-cli/symfony-cli
 
+replace github.com/symfony-cli/phpstore => github.com/dunglas/phpstore v1.0.6-0.20221112140329-97f1078dbfc1
+
 require (
 	github.com/compose-spec/compose-go v1.6.0
 	github.com/docker/docker v20.10.21+incompatible
+	github.com/dunglas/frankenphp v0.0.0-20221112134810-6a6dda5ed924
 	github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819
 	github.com/fabpot/local-php-security-checker/v2 v2.0.5
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
@@ -24,9 +27,15 @@ require (
 	github.com/symfony-cli/phpstore v1.0.5
 	github.com/symfony-cli/terminal v1.0.4
 	github.com/syncthing/notify v0.0.0-20210616190510-c6b7342338d2
+	go.uber.org/zap v1.23.0
 	golang.org/x/sync v0.1.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
 	gopkg.in/yaml.v2 v2.4.0
+)
+
+require (
+	go.uber.org/atomic v1.10.0 // indirect
+	go.uber.org/multierr v1.8.0 // indirect
 )
 
 require (
