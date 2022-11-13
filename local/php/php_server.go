@@ -25,7 +25,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -105,8 +104,6 @@ func NewServer(homeDir, projectDir, documentRoot, passthru string, useFrankenPHP
 func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile, func() error, error) {
 	if p.Version.IsFrankenPHPServer() {
 		return nil, func() error {
-			log.Print("calllll")
-
 			// TODO: create an adapter between zerolog and zap
 			z, err := zap.NewProduction()
 			if err != nil {
@@ -115,8 +112,6 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 			if err = frankenphp.Init(frankenphp.WithLogger(z)); err != nil {
 				return errors.Wrap(err, "unable to start FrankenPHP's logger")
 			}
-
-			log.Print("started")
 
 			return nil
 		}, nil
