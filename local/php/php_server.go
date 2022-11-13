@@ -32,6 +32,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path"
 	"runtime"
 	"strconv"
 	"strings"
@@ -46,6 +47,7 @@ import (
 	"github.com/symfony-cli/symfony-cli/local/html"
 	"github.com/symfony-cli/symfony-cli/local/pid"
 	"github.com/symfony-cli/symfony-cli/local/process"
+	"github.com/symfony-cli/symfony-cli/util"
 )
 
 // Server represents a PHP server process (can be php-fpm, php-cgi, or php-cli)
@@ -98,11 +100,18 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 	var binName, workerName string
 	var args []string
 	if p.Version.IsFPMServer() {
+		socketDir := path.Join(util.GetHomeDir(), name(p.projectDir))
+
+		if _, err := os.Stat(socketDir); os.IsNotExist(err) {
+			os.MkdirAll(socketDir, os.ModePerm)
+		}
+
+		p.addr = path.Join(util.GetHomeDir(), name(p.projectDir), "php-fpm.sock")
 		fpmConfigFile := p.fpmConfigFile()
 		if err := ioutil.WriteFile(fpmConfigFile, []byte(p.defaultFPMConf()), 0644); err != nil {
 			return nil, nil, errors.WithStack(err)
 		}
-		pathsToRemove = append(pathsToRemove, fpmConfigFile)
+		pathsToRemove = append(pathsToRemove, fpmConfigFile, p.addr)
 		binName = "php-fpm"
 		workerName = "PHP-FPM"
 		args = []string{p.Version.ServerPath(), "--nodaemonize", "--fpm-config", fpmConfigFile}
@@ -150,7 +159,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 		Args:      args,
 		scriptDir: p.projectDir,
 	}
-	p.logger.Info().Int("port", port).Msg("listening")
+	p.logger.Info().Str("listen", p.addr).Msg("listening")
 
 	phpPidFile := pid.New(pidFile.Dir, append([]string{p.Version.ServerPath()}, e.Args[1:]...))
 	if phpPidFile.IsRunning() {
@@ -224,8 +233,14 @@ func (p *Server) serveFastCGI(env map[string]string, w http.ResponseWriter, r *h
 	max := 10
 	i := 0
 	for {
-		if fcgi, err = fcgiclient.Dial("tcp", p.addr); err == nil {
-			break
+		if p.Version.IsFPMServer() {
+			if fcgi, err = fcgiclient.Dial("unix", p.addr); err == nil {
+				break
+			}
+		} else {
+			if fcgi, err = fcgiclient.Dial("tcp", p.addr); err == nil {
+				break
+			}
 		}
 		i++
 		if i > max {
