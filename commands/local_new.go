@@ -72,6 +72,7 @@ var localNewCmd = &console.Command{
 		&console.StringSliceFlag{Name: "service", Usage: "Configure some services", Hidden: true},
 		&console.BoolFlag{Name: "debug", Usage: "Display commands output"},
 		&console.StringFlag{Name: "php", Usage: "PHP version to use"},
+		&console.StringFlag{Name: "git-branch", Usage: "Git branch name", DefaultValue: "main"},
 	},
 	Args: console.ArgDefinition{
 		{Name: "directory", Optional: true, Description: "Directory of the project to create"},
@@ -319,7 +320,7 @@ func parseDockerComposeServices(dir string) []*CloudService {
 func initProjectGit(c *console.Context, s *terminal.Spinner, dir string) error {
 	terminal.Println("* Setting up the project under Git version control")
 	terminal.Printfln("  (running git init %s)\n", dir)
-	if buf, err := git.Init(dir, c.Bool("debug")); err != nil {
+	if buf, err := git.Init(dir, c.Bool("debug"), c.String("git-branch")); err != nil {
 		fmt.Print(buf.String())
 		return err
 	}

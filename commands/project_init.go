@@ -50,6 +50,7 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 		&console.StringSliceFlag{Name: "service", Usage: "Configure some services", Hidden: true},
 		&console.BoolFlag{Name: "dump", Usage: "Dump file content instead of writing them on disk"},
 		&console.BoolFlag{Name: "force", Usage: "Force the overwrite of the files even if they already exists", Hidden: true},
+		&console.StringFlag{Name: "git-branch", Usage: "Git branch name", DefaultValue: "main"},
 	},
 	Before: CheckGitIsAvailable,
 	Action: func(c *console.Context) error {
@@ -65,7 +66,7 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 			return err
 		}
 
-		if buf, err := gitInit(projectDir); err != nil {
+		if buf, err := gitInit(projectDir, c.String("git-branch")); err != nil {
 			fmt.Print(buf.String())
 			return err
 		}
@@ -111,9 +112,9 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 	},
 }
 
-func gitInit(cwd string) (*bytes.Buffer, error) {
+func gitInit(cwd string, branch string) (*bytes.Buffer, error) {
 	if _, err := os.Stat(filepath.Join(cwd, ".git")); err == nil || !os.IsNotExist(err) {
 		return nil, nil
 	}
-	return git.Init(cwd, false)
+	return git.Init(cwd, false, branch)
 }
