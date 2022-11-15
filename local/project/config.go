@@ -48,7 +48,7 @@ type Config struct {
 }
 
 type FileConfig struct {
-	Proxy struct {
+	Proxy *struct {
 		Domains []string `yaml:"domains"`
 	} `yaml:"proxy"`
 	HTTP    *Config            `yaml:"http"`
