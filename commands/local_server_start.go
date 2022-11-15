@@ -131,7 +131,7 @@ var localServerStartCmd = &console.Command{
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		if fileConfig != nil {
+		if fileConfig != nil && fileConfig.Proxy != nil {
 			if err := proxyConfig.ReplaceDirDomains(projectDir, fileConfig.Proxy.Domains); err != nil {
 				return errors.WithStack(err)
 			}
