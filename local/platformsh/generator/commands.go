@@ -14,6 +14,7 @@ import (
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
+	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/php"
 )
 
@@ -152,6 +153,15 @@ func parseCommands(home string) (string, error) {
 		"decode":            true,
 		"environment:drush": true,
 	}
+
+	excludedOptions := console.AnsiFlag.Names()
+	excludedOptions = append(excludedOptions, console.NoAnsiFlag.Names()...)
+	excludedOptions = append(excludedOptions, console.NoInteractionFlag.Names()...)
+	excludedOptions = append(excludedOptions, console.QuietFlag.Names()...)
+	excludedOptions = append(excludedOptions, console.LogLevelFlag.Names()...)
+	excludedOptions = append(excludedOptions, console.HelpFlag.Names()...)
+	excludedOptions = append(excludedOptions, console.VersionFlag.Names()...)
+
 	definitionAsString := ""
 	for _, command := range definition.Commands {
 		if strings.Contains(command.Description, "deprecated") || strings.Contains(command.Description, "DEPRECATED") {
@@ -209,15 +219,23 @@ func parseCommands(home string) (string, error) {
 		}
 
 		optionNames := make([]string, 0, len(command.Definition.Options))
+
+	optionsLoop:
 		for name := range command.Definition.Options {
+			if name == "yes" || name == "no" || name == "version" {
+				continue
+			}
+			for _, excludedOption := range excludedOptions {
+				if excludedOption == name {
+					continue optionsLoop
+				}
+			}
+
 			optionNames = append(optionNames, name)
 		}
 		sort.Strings(optionNames)
 		flags := []string{}
 		for _, name := range optionNames {
-			if name == "yes" || name == "no" || name == "help" || name == "quiet" || name == "verbose" || name == "version" {
-				continue
-			}
 			option := command.Definition.Options[name]
 			optionAliasesAsString := ""
 			if option.Shortcut != "" {
