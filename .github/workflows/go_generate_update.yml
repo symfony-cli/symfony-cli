@@ -39,6 +39,9 @@ jobs:
                 name: Test
                 if: steps.git.outputs.gitstatus != ''
                 run: go test -v ./...
+            -   name: Validate build
+                if: steps.git.outputs.gitstatus != ''
+                run: go run .
             -
                 name: Commit and push the update
                 if: steps.git.outputs.gitstatus != ''
