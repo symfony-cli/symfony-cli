@@ -313,16 +313,22 @@ func (p *Proxy) Start() error {
 }
 
 func (p *Proxy) servePacFile(w http.ResponseWriter, r *http.Request) {
+	// Use the current request hostname (r.Host) to generate the PAC file.
+	// This means that as soon as you are able to reach the proxy, the generated
+	// PAC file will expose an appropriate hostname or IP even if the proxy
+	// is running remotely, in a container or a VM.
+	// No need to fall back to p.Host and p.Port as r.Host is already checked
+	// upper in the stacktrace.
 	w.Header().Add("Content-Type", "application/x-ns-proxy-autoconfig")
 	w.Write([]byte(fmt.Sprintf(`// Only proxy *.%s requests
 // Configuration file in ~/.symfony5/proxy.json
 function FindProxyForURL (url, host) {
 	if (dnsDomainIs(host, '.%s')) {
-		return 'PROXY %s:%d';
+		return 'PROXY %s';
 	}
 	return 'DIRECT';
 }
-`, p.TLD, p.TLD, p.Host, p.Port)))
+`, p.TLD, p.TLD, r.Host)))
 }
 
 func (p *Proxy) serveIndex(w http.ResponseWriter, r *http.Request) {
