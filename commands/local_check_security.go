@@ -72,9 +72,19 @@ a specific "composer.lock" file.`,
 		terminal.Stdout.Write(output)
 
 		if os.Getenv("GITHUB_WORKSPACE") != "" {
+			gOutFile := os.Getenv("GITHUB_OUTPUT")
+
+			f, err := os.OpenFile(gOutFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			if err != nil {
+				return console.Exit(fmt.Sprintf("unable to open github output: %s", err), 127)
+			}
+			defer f.Close()
+
 			// Ran inside a Github action, export vulns
 			output, _ := security.Format(vulns, "raw_json")
-			terminal.Eprintf("::set-output name=vulns::%s", output)
+			if _, err = f.WriteString("vulns=" + string(output) + "\n"); err != nil {
+				return console.Exit(fmt.Sprintf("unable to write into github output: %s", err), 127)
+			}
 		}
 
 		if vulns.Count() > 0 && !c.Bool(("disable-exit-code")) {
