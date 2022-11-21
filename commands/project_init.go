@@ -115,5 +115,8 @@ func gitInit(cwd string) (*bytes.Buffer, error) {
 	if _, err := os.Stat(filepath.Join(cwd, ".git")); err == nil || !os.IsNotExist(err) {
 		return nil, nil
 	}
-	return git.Init(cwd, false)
+
+	// project:init is only used in a Cloud context, so we can safely force the
+	// branch to be "main"
+	return git.Init(cwd, true, false)
 }

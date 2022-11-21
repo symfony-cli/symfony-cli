@@ -21,11 +21,14 @@ package git
 
 import "bytes"
 
-func Init(dir string, debug bool) (*bytes.Buffer, error) {
+func Init(dir string, forceMainGitBranchName, debug bool) (*bytes.Buffer, error) {
 	if content, err := doExecGit(dir, []string{"init"}, !debug); err != nil {
 		return content, err
 	}
-	return doExecGit(dir, []string{"checkout", "-b", "main"}, !debug)
+	if forceMainGitBranchName {
+		return doExecGit(dir, []string{"checkout", "-b", "main"}, !debug)
+	}
+	return nil, nil
 }
 
 func AddAndCommit(dir string, files []string, msg string, debug bool) (*bytes.Buffer, error) {
