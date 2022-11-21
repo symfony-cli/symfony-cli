@@ -101,7 +101,7 @@ func main() {
 	app := &console.Application{
 		Name:          "Symfony CLI",
 		Usage:         "Symfony CLI helps developers manage projects, from local code to remote infrastructure",
-		Copyright:     fmt.Sprintf("(c) 2017-%d Symfony SAS <bg=#0057B7;fg=#FFDD00>#StandWith</><bg=#FFDD00;fg=#0057B7>Ukraine</> <href=https://sf.to/ukraine>Support Ukraine</>", time.Now().Year()),
+		Copyright:     fmt.Sprintf("(c) 2021-%d Fabien Potencier <bg=#0057B7;fg=#FFDD00>#StandWith</><bg=#FFDD00;fg=#0057B7>Ukraine</> <href=https://sf.to/ukraine>Support Ukraine</>", time.Now().Year()),
 		FlagEnvPrefix: []string{"SYMFONY", "PLATFORM"},
 		Commands:      cmds,
 		Action: func(ctx *console.Context) error {
