@@ -320,7 +320,7 @@ func initProjectGit(c *console.Context, s *terminal.Spinner, dir string) error {
 	terminal.Println("* Setting up the project under Git version control")
 	terminal.Printfln("  (running git init %s)\n", dir)
 	// Only force the branch to be "main" when running a Cloud context to make
-	// om boarding simpler.
+	// onboarding simpler.
 	if buf, err := git.Init(dir, c.Bool("cloud"), c.Bool("debug")); err != nil {
 		fmt.Print(buf.String())
 		return err
