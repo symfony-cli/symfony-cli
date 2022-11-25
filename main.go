@@ -43,6 +43,13 @@ var (
 	buildDate string
 )
 
+func getCliExtraEnv() []string {
+	return []string{
+		"SYMFONY_CLI_VERSION=" + version,
+		"SYMFONY_CLI_BINARY_NAME=" + console.CurrentBinaryName(),
+	}
+}
+
 func main() {
 	args := os.Args
 	name := console.CurrentBinaryName()
@@ -55,8 +62,9 @@ func main() {
 	// called via "symfony php"?
 	if len(args) >= 2 && php.IsBinaryName(args[1]) {
 		e := &php.Executor{
-			BinName: args[1],
-			Args:    args[1:],
+			BinName:  args[1],
+			Args:     args[1:],
+			ExtraEnv: getCliExtraEnv(),
 		}
 		os.Exit(e.Execute(true))
 	}
@@ -67,14 +75,15 @@ func main() {
 			args[1] = "app/console"
 		}
 		e := &php.Executor{
-			BinName: "php",
-			Args:    args,
+			BinName:  "php",
+			Args:     args,
+			ExtraEnv: getCliExtraEnv(),
 		}
 		os.Exit(e.Execute(false))
 	}
 	// called via "symfony composer"?
 	if len(args) >= 2 && args[1] == "composer" {
-		res := php.Composer("", args[2:], []string{}, os.Stdout, os.Stderr, ioutil.Discard, zerolog.Nop())
+		res := php.Composer("", args[2:], getCliExtraEnv(), os.Stdout, os.Stderr, ioutil.Discard, zerolog.Nop())
 		terminal.Eprintln(res.Error())
 		os.Exit(res.ExitCode())
 	}
