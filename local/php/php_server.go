@@ -32,7 +32,6 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"path"
 	"runtime"
 	"strconv"
 	"strings"
@@ -47,7 +46,6 @@ import (
 	"github.com/symfony-cli/symfony-cli/local/html"
 	"github.com/symfony-cli/symfony-cli/local/pid"
 	"github.com/symfony-cli/symfony-cli/local/process"
-	"github.com/symfony-cli/symfony-cli/util"
 )
 
 // Server represents a PHP server process (can be php-fpm, php-cgi, or php-cli)
@@ -100,13 +98,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 	var binName, workerName string
 	var args []string
 	if p.Version.IsFPMServer() {
-		socketDir := path.Join(util.GetHomeDir(), name(p.projectDir))
-
-		if _, err := os.Stat(socketDir); os.IsNotExist(err) {
-			os.MkdirAll(socketDir, os.ModePerm)
-		}
-
-		p.addr = path.Join(util.GetHomeDir(), name(p.projectDir), "php-fpm.sock")
+		p.addr = p.fpmSocketFile()
 		fpmConfigFile := p.fpmConfigFile()
 		if err := ioutil.WriteFile(fpmConfigFile, []byte(p.defaultFPMConf()), 0644); err != nil {
 			return nil, nil, errors.WithStack(err)

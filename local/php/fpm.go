@@ -25,10 +25,12 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/hashicorp/go-version"
+	"github.com/symfony-cli/symfony-cli/util"
 	"github.com/symfony-cli/terminal"
 )
 
@@ -116,4 +118,14 @@ func (p *Server) fpmConfigFile() string {
 		_ = os.MkdirAll(filepath.Dir(path), 0755)
 	}
 	return path
+}
+
+func (p *Server) fpmSocketFile() string {
+	socketDir := path.Join(util.GetHomeDir(), name(p.projectDir))
+
+	if _, err := os.Stat(socketDir); os.IsNotExist(err) {
+		os.MkdirAll(socketDir, os.ModePerm)
+	}
+
+	return path.Join(util.GetHomeDir(), name(p.projectDir), "php-fpm.sock")
 }
