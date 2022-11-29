@@ -67,6 +67,7 @@ func CommonCommands() []*console.Command {
 		localProxyDetachDomainCmd,
 		localProxyStartCmd,
 		localProxyStatusCmd,
+		localProxyUrlCmd,
 		localProxyStopCmd,
 		localRequirementsCheckCmd,
 		localRunCmd,
