@@ -325,6 +325,14 @@ var Commands = []*console.Command{
 		},
 	},
 	{
+		Category: "cloud:auth",
+		Name:     "verify-phone-number",
+		Aliases:  []*console.Alias{
+			{Name: "auth:verify-phone-number", Hidden: true},
+		},
+		Usage:    "Verify your phone number interactively",
+	},
+	{
 		Category: "cloud:backup",
 		Name:     "create",
 		Aliases:  []*console.Alias{
