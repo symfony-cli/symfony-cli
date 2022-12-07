@@ -63,7 +63,7 @@ func CheckRequirements() (bool, error) {
 	}
 
 	// PHP
-	minv, err := version.NewVersion("7.2.4")
+	minv, err := version.NewVersion("8.1.0")
 	if err != nil {
 		return false, err
 	}
@@ -146,12 +146,12 @@ func CheckRequirements() (bool, error) {
 		terminal.Println("<info>[OK]</> Docker Compose installed")
 	}
 
-	// yarn
-	if _, err := exec.LookPath("yarn"); err != nil {
+	// NPM
+	if _, err := exec.LookPath("npm"); err != nil {
 		ready = false
-		terminal.Println("<error>[KO]</> Cannot find the Yarn package manager, please install it <href=https://yarnpkg.com/>https://yarnpkg.com/</>")
+		terminal.Println("<error>[KO]</> Cannot find the npm package manager, please install it <href=https://www.npmjs.com/>https://www.npmjs.com/</>")
 	} else {
-		terminal.Println("<info>[OK]</> Yarn installed")
+		terminal.Println("<info>[OK]</> npm installed")
 	}
 
 	return ready, nil

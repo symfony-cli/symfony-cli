@@ -196,7 +196,12 @@ func (b *Book) Checkout(step string) error {
 
 	printBanner("<comment>[WEB]</> Installing Node dependencies (might take some time)", b.Debug)
 	if _, err := os.Stat(filepath.Join(b.Dir, "package.json")); err == nil {
-		if err := executeCommand([]string{"yarn", "install"}, b.Debug, false, nil); err != nil {
+		args := []string{"npm", "install"}
+		if _, err := os.Stat(filepath.Join(b.Dir, "yarn.lock")); err == nil {
+			// old version of the book using Yarn instead of npm
+			args = []string{"yarn", "install"}
+		}
+		if err := executeCommand(args, b.Debug, false, nil); err != nil {
 			return err
 		}
 	} else {
@@ -205,7 +210,11 @@ func (b *Book) Checkout(step string) error {
 
 	printBanner("<comment>[WEB]</> Building CSS and JS assets", b.Debug)
 	if _, err := os.Stat(filepath.Join(b.Dir, "package.json")); err == nil {
-		if err := executeCommand([]string{"yarn", "encore", "dev"}, b.Debug, false, nil); err != nil {
+		args := []string{"npx", "encore", "dev"}
+		if _, err := os.Stat(filepath.Join(b.Dir, "yarn.lock")); err == nil {
+			args = []string{"yarn", "encore", "dev"}
+		}
+		if err := executeCommand(args, b.Debug, false, nil); err != nil {
 			return err
 		}
 	} else {
@@ -229,7 +238,12 @@ func (b *Book) Checkout(step string) error {
 	printBanner("<comment>[SPA]</> Installing Node dependencies (might take some time)", b.Debug)
 	if _, err := os.Stat(filepath.Join(b.Dir, "spa")); err == nil {
 		os.Chdir(filepath.Join(b.Dir, "spa"))
-		if err := executeCommand([]string{"yarn", "install"}, b.Debug, false, nil); err != nil {
+		args := []string{"npm", "install"}
+		if _, err := os.Stat(filepath.Join(b.Dir, "yarn.lock")); err == nil {
+			// old version of the book using Yarn instead of npm
+			args = []string{"yarn", "install"}
+		}
+		if err := executeCommand(args, b.Debug, false, nil); err != nil {
 			return err
 		}
 		os.Chdir(b.Dir)
@@ -252,7 +266,11 @@ func (b *Book) Checkout(step string) error {
 		}
 		os.Chdir(filepath.Join(b.Dir, "spa"))
 		env := append(os.Environ(), "API_ENDPOINT="+endpoint.String())
-		if err := executeCommand([]string{"yarn", "encore", "dev"}, b.Debug, false, env); err != nil {
+		args := []string{"npx", "encore", "dev"}
+		if _, err := os.Stat(filepath.Join(b.Dir, "yarn.lock")); err == nil {
+			args = []string{"yarn", "encore", "dev"}
+		}
+		if err := executeCommand(args, b.Debug, false, env); err != nil {
 			return err
 		}
 		os.Chdir(b.Dir)
