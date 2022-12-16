@@ -96,24 +96,6 @@ var localServerStartCmd = &console.Command{
 			shutdownCh <- true
 		}()
 
-		if c.Bool("daemon") && !reexec.IsChild() {
-			varDir := filepath.Join(homeDir, "var")
-			if err := os.MkdirAll(varDir, 0755); err != nil {
-				return errors.Wrap(err, "Could not create status file")
-			}
-			if err := reexec.Background(varDir); err != nil {
-				if _, isExitCoder := err.(console.ExitCoder); isExitCoder {
-					return err
-				}
-				terminal.Eprintln("Impossible to go to the background")
-				terminal.Eprintln("Continue in foreground")
-				c.Set("daemon", "false")
-			} else {
-				terminal.Eprintfln("Stream the logs via <info>%s server:log</>", c.App.HelpName)
-				return nil
-			}
-		}
-
 		if err := reexec.NotifyForeground("boot"); err != nil {
 			terminal.Logger.Error().Msg("Unable to go to the background: %s.\nAborting\n" + err.Error())
 			return console.Exit("", 1)
@@ -125,6 +107,24 @@ var localServerStartCmd = &console.Command{
 			return errors.WithStack(err)
 		}
 		config.HomeDir = homeDir
+
+		if config.Daemon && !reexec.IsChild() {
+			varDir := filepath.Join(homeDir, "var")
+			if err := os.MkdirAll(varDir, 0755); err != nil {
+				return errors.Wrap(err, "Could not create status file")
+			}
+			if err := reexec.Background(varDir); err != nil {
+				if _, isExitCoder := err.(console.ExitCoder); isExitCoder {
+					return err
+				}
+				terminal.Eprintln("Impossible to go to the background")
+				terminal.Eprintln("Continue in foreground")
+				config.Daemon = false
+			} else {
+				terminal.Eprintfln("Stream the logs via <info>%s server:log</>", c.App.HelpName)
+				return nil
+			}
+		}
 
 		reexec.NotifyForeground("proxy")
 		proxyConfig, err := proxy.Load(homeDir)
