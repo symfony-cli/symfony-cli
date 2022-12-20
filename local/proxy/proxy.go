@@ -20,6 +20,7 @@
 package proxy
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -58,8 +59,8 @@ func tlsToLocalWebServer(proxy *goproxy.ProxyHttpServer, tlsConfig *tls.Config, 
 		if proxy.ConnectDial != nil {
 			return proxy.ConnectDial(network, addr)
 		}
-		if proxy.Tr.Dial != nil {
-			return proxy.Tr.Dial(network, addr)
+		if proxy.Tr.DialContext != nil {
+			return proxy.Tr.DialContext(context.Background(), network, addr)
 		}
 		return net.Dial(network, addr)
 	}
@@ -76,13 +77,13 @@ func tlsToLocalWebServer(proxy *goproxy.ProxyHttpServer, tlsConfig *tls.Config, 
 		Action: goproxy.ConnectHijack,
 		Hijack: func(req *http.Request, proxyClient net.Conn, ctx *goproxy.ProxyCtx) {
 			ctx.Logf("Hijacking CONNECT")
-			proxyClient.Write([]byte("HTTP/1.0 200 OK\r\n\r\n"))
+			_, _ = proxyClient.Write([]byte("HTTP/1.0 200 OK\r\n\r\n"))
 
 			proxyClientTls := tls.Server(proxyClient, tlsConfig)
 			if err := proxyClientTls.Handshake(); err != nil {
 				defer proxyClient.Close()
 				if re, ok := err.(tls.RecordHeaderError); ok && re.Conn != nil && tlsRecordHeaderLooksLikeHTTP(re.RecordHeader) {
-					io.WriteString(proxyClient, "HTTP/1.0 400 Bad Request\r\n\r\nClient sent an HTTP request to an HTTPS server.\n")
+					_, _ = io.WriteString(proxyClient, "HTTP/1.0 400 Bad Request\r\n\r\nClient sent an HTTP request to an HTTPS server.\n")
 					return
 				}
 
@@ -124,14 +125,14 @@ func tlsToLocalWebServer(proxy *goproxy.ProxyHttpServer, tlsConfig *tls.Config, 
 					ctx.Warnf("Error copying to target: %s", err)
 					httpError(proxyClientTls, ctx, err)
 				}
-				proxyClientTls.CloseWrite()
+				_ = proxyClientTls.CloseWrite()
 				wg.Done()
 			}()
 			go func() {
 				if _, err := io.Copy(targetSiteTls, proxyClientTls); err != nil {
 					ctx.Warnf("Error copying to client: %s", err)
 				}
-				targetSiteTls.CloseWrite()
+				_ = targetSiteTls.CloseWrite()
 				wg.Done()
 			}()
 			wg.Wait()
@@ -320,7 +321,7 @@ func (p *Proxy) servePacFile(w http.ResponseWriter, r *http.Request) {
 	// No need to fall back to p.Host and p.Port as r.Host is already checked
 	// upper in the stacktrace.
 	w.Header().Add("Content-Type", "application/x-ns-proxy-autoconfig")
-	w.Write([]byte(fmt.Sprintf(`// Only proxy *.%s requests
+	_, _ = w.Write([]byte(fmt.Sprintf(`// Only proxy *.%s requests
 // Configuration file in ~/.symfony5/proxy.json
 function FindProxyForURL (url, host) {
 	if (dnsDomainIs(host, '.%s')) {
@@ -371,5 +372,5 @@ func (p *Proxy) serveIndex(w http.ResponseWriter, r *http.Request) {
 			content += "<br>"
 		}
 	}
-	w.Write([]byte(html.WrapHTML("Proxy Index", html.CreateTerminal(content), "")))
+	_, _ = w.Write([]byte(html.WrapHTML("Proxy Index", html.CreateTerminal(content), "")))
 }

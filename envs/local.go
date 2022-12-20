@@ -254,15 +254,14 @@ func (l *Local) webServer() Envs {
 	host := fmt.Sprintf("127.0.0.1:%s", port)
 
 	if proxyConf, err := proxy.Load(util.GetHomeDir()); err == nil {
-		for _, domain := range proxyConf.GetDomains(l.Dir) {
-			// we get the first one only
-			host = domain
+		domains := proxyConf.GetDomains(l.Dir)
+		if len(domains) > 0 {
+			host = domains[0]
 			if pidFile.Scheme == "http" {
 				port = "80"
 			} else {
 				port = "443"
 			}
-			break
 		}
 	}
 

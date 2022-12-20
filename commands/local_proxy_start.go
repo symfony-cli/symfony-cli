@@ -70,8 +70,8 @@ var localProxyStartCmd = &console.Command{
 				if _, isExitCoder := err.(console.ExitCoder); isExitCoder {
 					return err
 				}
-				terminal.Printfln("Impossible to go to the background: %s", err)
-				terminal.Println("Continue in foreground")
+				_, _ = terminal.Printfln("Impossible to go to the background: %s", err)
+				_, _ = terminal.Println("Continue in foreground")
 			} else {
 				return nil
 			}
@@ -112,8 +112,7 @@ var localProxyStartCmd = &console.Command{
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		var lw io.Writer
-		lw = f
+		var lw io.Writer = f
 		logger := zerolog.New(decorateLogger(lw, c.Bool("no-humanize"))).With().Timestamp().Logger()
 
 		config, err := proxy.Load(homeDir)
@@ -123,7 +122,7 @@ var localProxyStartCmd = &console.Command{
 
 		if c.IsSet("host") {
 			config.Host = c.String("host")
-			config.Save()
+			_ = config.Save()
 		}
 
 		spinner := terminal.NewSpinner(terminal.Stderr)
@@ -159,9 +158,11 @@ var localProxyStartCmd = &console.Command{
 
 		if !c.Bool("foreground") && reexec.IsChild() {
 			terminal.RemapOutput(lw, lw).SetDecorated(true)
-			reexec.NotifyForeground(reexec.UP)
+			_ = reexec.NotifyForeground(reexec.UP)
 		} else {
-			defer pidFile.Remove()
+			defer func() {
+				_ = pidFile.Remove()
+			}()
 		}
 
 		shutdownCh := make(chan bool, 1)

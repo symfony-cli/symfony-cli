@@ -69,7 +69,7 @@ a specific "composer.lock" file.`,
 		if err != nil {
 			return console.Exit(fmt.Sprintf("unable to output the results: %s", err), 127)
 		}
-		terminal.Stdout.Write(output)
+		_, _ = terminal.Stdout.Write(output)
 
 		if os.Getenv("GITHUB_WORKSPACE") != "" {
 			gOutFile := os.Getenv("GITHUB_OUTPUT")

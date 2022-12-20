@@ -35,6 +35,9 @@ jobs:
                 run: |
                     RESULT=$(git status --untracked-files=no --porcelain)
                     echo "gitstatus=$RESULT" >> $GITHUB_OUTPUT
+            - 
+                name: golangci-lint
+                uses: golangci/golangci-lint-action@v3
             -
                 name: Test
                 if: steps.git.outputs.gitstatus != ''

@@ -24,7 +24,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -148,7 +147,7 @@ var localNewCmd = &console.Command{
 			return err
 		}
 
-		if "" != c.String("php") && !c.Bool("cloud") {
+		if c.String("php") != "" && !c.Bool("cloud") {
 			if err := createPhpVersionFile(c.String("php"), dir); err != nil {
 				return err
 			}
@@ -317,24 +316,24 @@ func parseDockerComposeServices(dir string) []*CloudService {
 }
 
 func initProjectGit(c *console.Context, s *terminal.Spinner, dir string) error {
-	terminal.Println("* Setting up the project under Git version control")
-	terminal.Printfln("  (running git init %s)\n", dir)
+	_, _ = terminal.Println("* Setting up the project under Git version control")
+	_, _ = terminal.Printfln("  (running git init %s)\n", dir)
 	// Only force the branch to be "main" when running a Cloud context to make
 	// onboarding simpler.
 	if buf, err := git.Init(dir, c.Bool("cloud"), c.Bool("debug")); err != nil {
-		fmt.Print(buf.String())
+		_, _ = fmt.Print(buf.String())
 		return err
 	}
 	buf, err := git.AddAndCommit(dir, []string{"."}, "Add initial set of files", c.Bool("debug"))
 	if err != nil {
-		fmt.Print(buf.String())
+		_, _ = fmt.Print(buf.String())
 	}
 	return err
 }
 
 func createProjectWithComposer(c *console.Context, dir, version string) error {
 	if c.Bool("demo") {
-		terminal.Println("* Creating a new Symfony Demo project with Composer")
+		_, _ = terminal.Println("* Creating a new Symfony Demo project with Composer")
 	} else if version != "" {
 		if version == "lts" || version == "previous" || version == "stable" || version == "next" || version == "dev" {
 			var err error
@@ -344,9 +343,9 @@ func createProjectWithComposer(c *console.Context, dir, version string) error {
 			}
 		}
 
-		terminal.Printfln("* Creating a new Symfony %s project with Composer", version)
+		_, _ = terminal.Printfln("* Creating a new Symfony %s project with Composer", version)
 	} else {
-		terminal.Println("* Creating a new Symfony project with Composer")
+		_, _ = terminal.Println("* Creating a new Symfony project with Composer")
 	}
 
 	repo := "symfony/skeleton"
@@ -397,7 +396,7 @@ func getSpecialVersion(version string) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}

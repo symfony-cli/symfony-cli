@@ -24,7 +24,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -72,7 +71,7 @@ func New(dir string, args []string) *PidFile {
 }
 
 func Load(path string) (*PidFile, error) {
-	contents, err := ioutil.ReadFile(path)
+	contents, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +254,7 @@ func (p *PidFile) Write(pid, port int, scheme string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(p.path, b, 0644)
+	return os.WriteFile(p.path, b, 0644)
 }
 
 // Stop kills the current process
@@ -263,7 +262,9 @@ func (p *PidFile) Stop() error {
 	if p.Pid == 0 {
 		return nil
 	}
-	defer p.Remove()
+	defer func() {
+		_ = p.Remove()
+	}()
 	return kill(p.Pid)
 }
 
@@ -315,13 +316,13 @@ func (p *PidFile) Name() string {
 
 func name(dir string) string {
 	h := sha1.New()
-	io.WriteString(h, dir)
+	_, _ = io.WriteString(h, dir)
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 func doAll(dir string) []*PidFile {
 	pidFiles := []*PidFile{}
-	filepath.Walk(dir, func(p string, f os.FileInfo, err error) error {
+	_ = filepath.Walk(dir, func(p string, f os.FileInfo, err error) error {
 		if err != nil {
 			// prevent panic by handling failure accessing a path
 			return nil
@@ -333,7 +334,7 @@ func doAll(dir string) []*PidFile {
 		if !strings.HasSuffix(p, ".pid") {
 			return nil
 		}
-		contents, err := ioutil.ReadFile(p)
+		contents, err := os.ReadFile(p)
 		if err != nil {
 			return nil
 		}
@@ -346,7 +347,7 @@ func doAll(dir string) []*PidFile {
 		}
 		pidFile.path = p
 		if !pidFile.IsRunning() {
-			pidFile.Remove()
+			_ = pidFile.Remove()
 			return nil
 		}
 		pidFiles = append(pidFiles, pidFile)

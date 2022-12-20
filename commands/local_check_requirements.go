@@ -21,7 +21,6 @@ package commands
 
 import (
 	_ "embed"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -33,6 +32,7 @@ import (
 
 // To generate, run in symfony/requirements-checker
 // php bin/release.php > data/check-requirements.php
+//
 //go:embed data/check-requirements.php
 var phpChecker []byte
 
@@ -63,7 +63,7 @@ var localRequirementsCheckCmd = &console.Command{
 
 		cachePath := filepath.Join(cacheDir, "check.php")
 		defer os.Remove(cachePath)
-		if err := ioutil.WriteFile(cachePath, phpChecker, 0600); err != nil {
+		if err := os.WriteFile(cachePath, phpChecker, 0600); err != nil {
 			return err
 		}
 

@@ -22,7 +22,6 @@ package platformsh
 import (
 	goerr "errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -113,7 +112,7 @@ func guessProjectRoot(currentDir string, debug bool) (string, string) {
 }
 
 func getProjectConfig(projectRoot string, debug bool) string {
-	contents, err := ioutil.ReadFile(filepath.Join(projectRoot, ".platform", "local", "project.yaml"))
+	contents, err := os.ReadFile(filepath.Join(projectRoot, ".platform", "local", "project.yaml"))
 	if err != nil {
 		if debug {
 			fmt.Fprintf(os.Stderr, "WARNING: unable to find Platform.sh config file: %s\n", err)

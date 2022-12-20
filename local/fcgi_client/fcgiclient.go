@@ -10,7 +10,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -337,7 +336,7 @@ func (f *FCGIClient) Do(p map[string]string, req io.Reader) (r io.Reader, err er
 
 	body := newWriter(f, FCGI_STDIN)
 	if req != nil {
-		io.Copy(body, req)
+		_, _ = io.Copy(body, req)
 	}
 	body.Close()
 
@@ -376,9 +375,9 @@ func (f *FCGIClient) Request(p map[string]string, req io.Reader) (resp *http.Res
 	}
 
 	if chunked(resp.TransferEncoding) {
-		resp.Body = ioutil.NopCloser(httputil.NewChunkedReader(rb))
+		resp.Body = io.NopCloser(httputil.NewChunkedReader(rb))
 	} else {
-		resp.Body = ioutil.NopCloser(rb)
+		resp.Body = io.NopCloser(rb)
 	}
 	return
 }

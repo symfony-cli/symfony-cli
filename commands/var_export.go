@@ -70,11 +70,11 @@ var variableExportCmd = &console.Command{
 			}
 			sort.Strings(keys)
 			for _, k := range keys {
-				terminal.Printfln("export %s=%s", k, m[k])
+				_, _ = terminal.Printfln("export %s=%s", k, m[k])
 			}
 		} else {
 			// output the string (useful when doing export $(envs))
-			terminal.Print(envs.AsString(env))
+			_, _ = terminal.Print(envs.AsString(env))
 		}
 
 		return nil

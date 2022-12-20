@@ -46,7 +46,7 @@ var localProxyDetachDomainCmd = &console.Command{
 		}
 		terminal.Println("<info>The following domains are not defined anymore on the proxy:</>")
 		for _, domain := range domains {
-			terminal.Printfln(" * http://%s", domain)
+			_, _ = terminal.Printfln(" * http://%s", domain)
 		}
 		return nil
 	},

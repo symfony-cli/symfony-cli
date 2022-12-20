@@ -24,7 +24,6 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -99,7 +98,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 	var args []string
 	if p.Version.IsFPMServer() {
 		fpmConfigFile := p.fpmConfigFile()
-		if err := ioutil.WriteFile(fpmConfigFile, []byte(p.defaultFPMConf()), 0644); err != nil {
+		if err := os.WriteFile(fpmConfigFile, []byte(p.defaultFPMConf()), 0644); err != nil {
 			return nil, nil, errors.WithStack(err)
 		}
 		pathsToRemove = append(pathsToRemove, fpmConfigFile)
@@ -124,7 +123,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 		args = []string{p.Version.ServerPath(), "-b", strconv.Itoa(port), "-d", "error_log=" + errorLog}
 	} else {
 		routerPath := p.phpRouterFile()
-		if err := ioutil.WriteFile(routerPath, phprouter, 0644); err != nil {
+		if err := os.WriteFile(routerPath, phprouter, 0644); err != nil {
 			return nil, nil, errors.WithStack(err)
 		}
 		pathsToRemove = append(pathsToRemove, routerPath)
@@ -140,7 +139,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 		p.proxy = httputil.NewSingleHostReverseProxy(target)
 		p.proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 			w.WriteHeader(http.StatusBadGateway)
-			w.Write([]byte(html.WrapHTML(err.Error(), html.CreateErrorTerminal("# "+err.Error()), "")))
+			_, _ = w.Write([]byte(html.WrapHTML(err.Error(), html.CreateErrorTerminal("# "+err.Error()), "")))
 		}
 	}
 
@@ -205,7 +204,7 @@ func (p *Server) Serve(w http.ResponseWriter, r *http.Request, env map[string]st
 		for k, v := range env {
 			envContent += fmt.Sprintf("$_ENV['%s'] = '%s';\n", addslashes.Replace(k), addslashes.Replace(v))
 		}
-		err := errors.WithStack(ioutil.WriteFile(envPath, []byte(envContent), 0644))
+		err := errors.WithStack(os.WriteFile(envPath, []byte(envContent), 0644))
 		if err != nil {
 			return err
 		}
@@ -280,13 +279,13 @@ func (p *Server) writeResponse(w http.ResponseWriter, r *http.Request, env map[s
 	}
 	w.WriteHeader(resp.StatusCode)
 	if r.Method != http.MethodHead {
-		io.Copy(w, resp.Body)
+		_, _ = io.Copy(w, resp.Body)
 	}
 	return nil
 }
 
 func name(dir string) string {
 	h := sha1.New()
-	io.WriteString(h, dir)
+	_, _ = io.WriteString(h, dir)
 	return fmt.Sprintf("%x", h.Sum(nil))
 }

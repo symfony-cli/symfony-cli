@@ -32,16 +32,6 @@ import (
 	"github.com/symfony-cli/terminal"
 )
 
-var openDocCmd = &console.Command{
-	Category: "open",
-	Name:     "docs",
-	Usage:    "Open the online Web documentation",
-	Action: func(c *console.Context) error {
-		abstractOpenCmd("https://symfony.com/doc/cloud")
-		return nil
-	},
-}
-
 var projectLocalOpenCmd = &console.Command{
 	Category: "open",
 	Name:     "local",
@@ -163,6 +153,6 @@ func abstractOpenCmd(url string) {
 		terminal.Eprintln("<error>Error while opening:", err, "</>")
 		terminal.Eprintfln("Please visit <href=%s>%s</> manually.", url, url)
 	} else {
-		terminal.Eprintfln("Opened: <href=%s>%s</>", url, url)
+		_, _ = terminal.Eprintfln("Opened: <href=%s>%s</>", url, url)
 	}
 }

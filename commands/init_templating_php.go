@@ -22,7 +22,7 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -158,7 +158,7 @@ type composerLock struct {
 }
 
 func parseComposerLock(directory string) (*composerLock, error) {
-	b, err := ioutil.ReadFile(filepath.Join(directory, "composer.lock"))
+	b, err := os.ReadFile(filepath.Join(directory, "composer.lock"))
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +181,7 @@ type composerJSON struct {
 }
 
 func parseComposerJSON(directory string) (*composerJSON, error) {
-	b, err := ioutil.ReadFile(filepath.Join(directory, "composer.json"))
+	b, err := os.ReadFile(filepath.Join(directory, "composer.json"))
 	if err != nil {
 		return nil, err
 	}

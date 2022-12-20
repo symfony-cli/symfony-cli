@@ -27,7 +27,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -120,7 +119,7 @@ func composerVersion() int {
 	if err != nil {
 		return DefaultComposerVersion
 	}
-	contents, err := ioutil.ReadFile(filepath.Join(cwd, "composer.lock"))
+	contents, err := os.ReadFile(filepath.Join(cwd, "composer.lock"))
 	if err != nil {
 		return DefaultComposerVersion
 	}
@@ -179,7 +178,7 @@ func downloadComposer(dir string) (string, error) {
 		return "", errors.New("signature was wrong when downloading Composer; please try again")
 	}
 	setupPath := filepath.Join(dir, "composer-setup.php")
-	ioutil.WriteFile(setupPath, installer, 0666)
+	_ = os.WriteFile(setupPath, installer, 0666)
 
 	var stdout bytes.Buffer
 	e := &Executor{
@@ -210,7 +209,7 @@ func downloadComposerInstaller() ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	return ioutil.ReadAll(resp.Body)
+	return io.ReadAll(resp.Body)
 }
 
 func downloadComposerInstallerSignature() ([]byte, error) {
@@ -219,5 +218,5 @@ func downloadComposerInstallerSignature() ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	return ioutil.ReadAll(resp.Body)
+	return io.ReadAll(resp.Body)
 }

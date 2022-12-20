@@ -112,7 +112,7 @@ var localServerStartCmd = &console.Command{
 			return console.Exit("", 1)
 		}
 
-		reexec.NotifyForeground("config")
+		_ = reexec.NotifyForeground("config")
 		config, fileConfig, err := project.NewConfigFromContext(c, projectDir)
 		if err != nil {
 			return errors.WithStack(err)
@@ -128,16 +128,16 @@ var localServerStartCmd = &console.Command{
 				if _, isExitCoder := err.(console.ExitCoder); isExitCoder {
 					return err
 				}
-				terminal.Eprintln("Impossible to go to the background")
-				terminal.Eprintln("Continue in foreground")
+				_, _ = terminal.Eprintln("Impossible to go to the background")
+				_, _ = terminal.Eprintln("Continue in foreground")
 				config.Daemon = false
 			} else {
-				terminal.Eprintfln("Stream the logs via <info>%s server:log</>", c.App.HelpName)
+				_, _ = terminal.Eprintfln("Stream the logs via <info>%s server:log</>", c.App.HelpName)
 				return nil
 			}
 		}
 
-		reexec.NotifyForeground("proxy")
+		_ = reexec.NotifyForeground("proxy")
 		proxyConfig, err := proxy.Load(homeDir)
 		if err != nil {
 			return errors.WithStack(err)
@@ -148,7 +148,7 @@ var localServerStartCmd = &console.Command{
 			}
 		}
 
-		reexec.NotifyForeground("tls")
+		_ = reexec.NotifyForeground("tls")
 		if !config.NoTLS && config.PKCS12 == "" {
 			ca, err := cert.NewCA(filepath.Join(homeDir, "certs"))
 			if err != nil {
@@ -206,11 +206,11 @@ var localServerStartCmd = &console.Command{
 		errChan := make(chan error, 1)
 
 		if !reexec.IsChild() {
-			tailer.Watch(pidFile)
+			_ = tailer.Watch(pidFile)
 		}
 
 		if p.PHPServer != nil {
-			reexec.NotifyForeground("php")
+			_ = reexec.NotifyForeground("php")
 			phpPidFile, phpStartCallback, err := p.PHPServer.Start(ctx, pidFile)
 			if err != nil {
 				return err
@@ -266,7 +266,7 @@ var localServerStartCmd = &console.Command{
 			}
 		}
 
-		reexec.NotifyForeground("http")
+		_ = reexec.NotifyForeground("http")
 		port, err := p.HTTP.Start(errChan)
 		if err != nil {
 			return err
@@ -298,21 +298,23 @@ var localServerStartCmd = &console.Command{
 				return err
 			}
 
-			reexec.NotifyForeground("listening")
+			_ = reexec.NotifyForeground("listening")
 			ui.Warning(localWebServerProdWarningMsg)
 			ui.Success(msg)
 		}
 
 		if !reexec.IsChild() {
-			go tailer.Tail(terminal.Stderr)
+			go func(tLog logs.Tailer) {
+				_ = tLog.Tail(terminal.Stderr)
+			}(tailer)
 		}
 
 		if fileConfig != nil {
-			reexec.NotifyForeground("workers")
+			_ = reexec.NotifyForeground("workers")
 			for name, worker := range fileConfig.Workers {
 				pidFile := pid.New(projectDir, worker.Cmd)
 				if pidFile.IsRunning() {
-					terminal.Eprintfln("<warning>WARNING</> Unable to start worker \"%s\": it is already running for this project as PID %d", name, pidFile.Pid)
+					_, _ = terminal.Eprintfln("<warning>WARNING</> Unable to start worker \"%s\": it is already running for this project as PID %d", name, pidFile.Pid)
 					continue
 				}
 				pidFile.Watched = worker.Watch
@@ -323,7 +325,7 @@ var localServerStartCmd = &console.Command{
 				go func(name string, pidFile *pid.PidFile) {
 					runner, err := local.NewRunner(pidFile, local.RunnerModeLoopAttached)
 					if err != nil {
-						terminal.Eprintfln("<warning>WARNING</> Unable to start worker \"%s\": %s", name, err)
+						_, _ = terminal.Eprintfln("<warning>WARNING</> Unable to start worker \"%s\": %s", name, err)
 						return
 					}
 
@@ -341,13 +343,13 @@ var localServerStartCmd = &console.Command{
 
 					ui.Success(fmt.Sprintf("Started worker \"%s\"", name))
 					if err := runner.Run(); err != nil {
-						terminal.Eprintfln("<warning>WARNING</> Worker \"%s\" exited with an error: %s", name, err)
+						_, _ = terminal.Eprintfln("<warning>WARNING</> Worker \"%s\" exited with an error: %s", name, err)
 					}
 				}(name, pidFile)
 			}
 		}
 
-		reexec.NotifyForeground(reexec.UP)
+		_ = reexec.NotifyForeground(reexec.UP)
 		if reexec.IsChild() {
 			terminal.RemapOutput(lw, lw).SetDecorated(true)
 		}

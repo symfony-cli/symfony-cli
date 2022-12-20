@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -83,7 +83,7 @@ func generateConfig() {
 	if err != nil {
 		panic(err)
 	}
-	f.Write(buf.Bytes())
+	_, _ = f.Write(buf.Bytes())
 }
 
 func parseServices() (string, error) {
@@ -93,7 +93,7 @@ func parseServices() (string, error) {
 	}
 	defer resp.Body.Close()
 	var services map[string]*service
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}

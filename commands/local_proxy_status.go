@@ -42,10 +42,10 @@ var localProxyStatusCmd = &console.Command{
 			return nil
 		}
 
-		terminal.Printfln("    Listening on <href=%s://127.0.0.1:%d>%s://127.0.0.1:%d</>", pidFile.Scheme, pidFile.Port, pidFile.Scheme, pidFile.Port)
+		_, _ = terminal.Printfln("    Listening on <href=%s://127.0.0.1:%d>%s://127.0.0.1:%d</>", pidFile.Scheme, pidFile.Port, pidFile.Scheme, pidFile.Port)
 
-		terminal.Println()
-		terminal.Println("<info>Configured Web Servers</>")
+		_, _ = terminal.Println()
+		_, _ = terminal.Println("<info>Configured Web Servers</>")
 		return printConfiguredServers()
 	},
 }

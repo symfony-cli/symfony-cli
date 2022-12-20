@@ -71,7 +71,7 @@ func NewRunner(pidFile *pid.PidFile, mode runnerMode) (*Runner, error) {
 	}
 	r.binary, err = exec.LookPath(pidFile.Binary())
 	if err != nil {
-		r.pidFile.Remove()
+		_ = r.pidFile.Remove()
 		return nil, errors.WithStack(err)
 	}
 
@@ -93,8 +93,8 @@ func (r *Runner) Run() error {
 			if _, isExitCoder := err.(console.ExitCoder); isExitCoder {
 				return err
 			}
-			terminal.Printfln("Impossible to go to the background: %s", err)
-			terminal.Println("Continue in foreground")
+			_, _ = terminal.Printfln("Impossible to go to the background: %s", err)
+			_, _ = terminal.Println("Continue in foreground")
 			r.mode = RunnerModeOnce
 		} else {
 			if err := reexec.NotifyForeground("boot"); err != nil {
@@ -107,7 +107,7 @@ func (r *Runner) Run() error {
 	cmdExitChan := make(chan error) // receives command exit status, allow to cmd.Wait() in non-blocking way
 	restartChan := make(chan bool)  // receives requests to restart the command
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Kill, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigChan, syscall.SIGTERM, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	defer signal.Stop(sigChan)
 
 	if len(r.pidFile.Watched) > 0 {
@@ -175,7 +175,7 @@ func (r *Runner) Run() error {
 			timer.Reset(RunnerReliefDuration)
 
 			if r.mode == RunnerModeLoopDetached {
-				reexec.NotifyForeground("started")
+				_ = reexec.NotifyForeground("started")
 			}
 
 			select {
@@ -203,7 +203,7 @@ func (r *Runner) Run() error {
 		}
 		if firstBoot && r.mode == RunnerModeLoopDetached {
 			terminal.RemapOutput(cmd.Stdout, cmd.Stderr).SetDecorated(true)
-			reexec.NotifyForeground(reexec.UP)
+			_ = reexec.NotifyForeground(reexec.UP)
 		}
 
 		firstBoot = false
@@ -219,7 +219,7 @@ func (r *Runner) Run() error {
 		case <-restartChan:
 			// We use SIGTERM here because it's nicer and thus when we use our
 			// wrappers, signal will be nicely forwarded
-			cmd.Process.Signal(syscall.SIGTERM)
+			_ = cmd.Process.Signal(syscall.SIGTERM)
 			// we need to drain cmdExit channel to unblock cmd channel receiver
 			<-cmdExitChan
 		case err := <-cmdExitChan:
