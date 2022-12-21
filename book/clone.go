@@ -50,7 +50,9 @@ func (b *Book) Clone(version string) error {
 	}
 	terminal.Println("")
 
-	_ = os.Chdir(b.Dir)
+	if err = os.Chdir(b.Dir); err != nil {
+		return err
+	}
 	// checkout the first step by default
 	ui.Section("Getting Ready for the First Step of the Book")
 	if err := b.Checkout("3"); err != nil {

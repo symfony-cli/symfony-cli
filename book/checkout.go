@@ -35,7 +35,9 @@ import (
 func (b *Book) Checkout(step string) error {
 	// FIXME: keep vendor/ node_modules/ around before git clean, but them back as they will be updated the right way, less Internet traffic
 	// FIXME: if the checkout is to a later step, no need to remove the DB, we can just migrate it
-	_ = os.Chdir(b.Dir)
+	if err := os.Chdir(b.Dir); err != nil {
+		return err
+	}
 	step = strings.Replace(step, ".", "-", -1)
 	tag := fmt.Sprintf("step-%s", step)
 	branch := "work-" + tag
@@ -117,7 +119,9 @@ func (b *Book) Checkout(step string) error {
 	}
 
 	printBanner("<comment>[WEB]</> Stopping the Local Web Server", b.Debug)
-	_ = executeCommand([]string{"symfony", "server:stop"}, b.Debug, true, nil)
+	if err = executeCommand([]string{"symfony", "server:stop"}, b.Debug, true, nil); err != nil {
+		return err
+	}
 
 	printBanner("<comment>[WEB]</> Stopping the Platform.sh tunnel", b.Debug)
 	if err := executeCommand([]string{"symfony", "tunnel:close", "-y"}, b.Debug, true, nil); err != nil {
@@ -131,7 +135,9 @@ func (b *Book) Checkout(step string) error {
 
 	printBanner("<comment>[SPA]</> Stopping the Local Web Server", b.Debug)
 	if _, err := os.Stat(filepath.Join(b.Dir, "spa")); err == nil {
-		_ = executeCommand([]string{"symfony", "server:stop", "--dir", filepath.Join(b.Dir, "spa")}, b.Debug, true, nil)
+		if err = executeCommand([]string{"symfony", "server:stop", "--dir", filepath.Join(b.Dir, "spa")}, b.Debug, true, nil); err != nil {
+			return err
+		}
 	} else {
 		terminal.Println("Skipped for this step")
 	}
@@ -237,7 +243,9 @@ func (b *Book) Checkout(step string) error {
 
 	printBanner("<comment>[SPA]</> Installing Node dependencies (might take some time)", b.Debug)
 	if _, err := os.Stat(filepath.Join(b.Dir, "spa")); err == nil {
-		_ = os.Chdir(filepath.Join(b.Dir, "spa"))
+		if err = os.Chdir(filepath.Join(b.Dir, "spa")); err != nil {
+			return err
+		}
 		args := []string{"npm", "install"}
 		if _, err := os.Stat(filepath.Join(b.Dir, "yarn.lock")); err == nil {
 			// old version of the book using Yarn instead of npm
@@ -246,7 +254,9 @@ func (b *Book) Checkout(step string) error {
 		if err := executeCommand(args, b.Debug, false, nil); err != nil {
 			return err
 		}
-		_ = os.Chdir(b.Dir)
+		if err = os.Chdir(b.Dir); err != nil {
+			return err
+		}
 	} else {
 		terminal.Println("Skipped for this step")
 	}
@@ -264,7 +274,9 @@ func (b *Book) Checkout(step string) error {
 		if endpoint.String() == "" {
 			return errors.Errorf("unable to get the URL of the local web server:\n%s\n%s", stderr.String(), endpoint.String())
 		}
-		_ = os.Chdir(filepath.Join(b.Dir, "spa"))
+		if err = os.Chdir(filepath.Join(b.Dir, "spa")); err != nil {
+			return err
+		}
 		env := append(os.Environ(), "API_ENDPOINT="+endpoint.String())
 		args := []string{"npx", "encore", "dev"}
 		if _, err := os.Stat(filepath.Join(b.Dir, "yarn.lock")); err == nil {
@@ -273,7 +285,9 @@ func (b *Book) Checkout(step string) error {
 		if err := executeCommand(args, b.Debug, false, env); err != nil {
 			return err
 		}
-		_ = os.Chdir(b.Dir)
+		if err = os.Chdir(b.Dir); err != nil {
+			return err
+		}
 	} else {
 		terminal.Println("Skipped for this step")
 	}

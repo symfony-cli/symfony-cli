@@ -178,7 +178,9 @@ func downloadComposer(dir string) (string, error) {
 		return "", errors.New("signature was wrong when downloading Composer; please try again")
 	}
 	setupPath := filepath.Join(dir, "composer-setup.php")
-	_ = os.WriteFile(setupPath, installer, 0666)
+	if err = os.WriteFile(setupPath, installer, 0666); err != nil {
+		return "", err
+	}
 
 	var stdout bytes.Buffer
 	e := &Executor{

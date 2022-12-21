@@ -336,7 +336,9 @@ func (f *FCGIClient) Do(p map[string]string, req io.Reader) (r io.Reader, err er
 
 	body := newWriter(f, FCGI_STDIN)
 	if req != nil {
-		_, _ = io.Copy(body, req)
+		if _, err = io.Copy(body, req); err != nil {
+			return
+		}
 	}
 	body.Close()
 
@@ -366,7 +368,9 @@ func (f *FCGIClient) Request(p map[string]string, req io.Reader) (resp *http.Res
 	resp.Header = http.Header(mimeHeader)
 	// TODO: fixTransferEncoding?
 	resp.TransferEncoding = resp.Header["Transfer-Encoding"]
-	resp.ContentLength, _ = strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
+	if resp.ContentLength, err = strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64); err != nil {
+		return nil, err
+	}
 
 	// status
 	err = errors.WithStack(extractStatus(resp))

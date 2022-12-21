@@ -124,5 +124,8 @@ func main() {
 		Channel:   channel,
 		BuildDate: buildDate,
 	}
-	_ = app.Run(args)
+	err = app.Run(args)
+	if err != nil {
+		panic(err)
+	}
 }

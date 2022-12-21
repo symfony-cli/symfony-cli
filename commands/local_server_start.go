@@ -112,7 +112,9 @@ var localServerStartCmd = &console.Command{
 			return console.Exit("", 1)
 		}
 
-		_ = reexec.NotifyForeground("config")
+		if err = reexec.NotifyForeground("config"); err != nil {
+			return err
+		}
 		config, fileConfig, err := project.NewConfigFromContext(c, projectDir)
 		if err != nil {
 			return errors.WithStack(err)
@@ -137,7 +139,9 @@ var localServerStartCmd = &console.Command{
 			}
 		}
 
-		_ = reexec.NotifyForeground("proxy")
+		if err = reexec.NotifyForeground("proxy"); err != nil {
+			return err
+		}
 		proxyConfig, err := proxy.Load(homeDir)
 		if err != nil {
 			return errors.WithStack(err)
@@ -148,7 +152,9 @@ var localServerStartCmd = &console.Command{
 			}
 		}
 
-		_ = reexec.NotifyForeground("tls")
+		if err = reexec.NotifyForeground("tls"); err != nil {
+			return err
+		}
 		if !config.NoTLS && config.PKCS12 == "" {
 			ca, err := cert.NewCA(filepath.Join(homeDir, "certs"))
 			if err != nil {
@@ -206,11 +212,15 @@ var localServerStartCmd = &console.Command{
 		errChan := make(chan error, 1)
 
 		if !reexec.IsChild() {
-			_ = tailer.Watch(pidFile)
+			if err = tailer.Watch(pidFile); err != nil {
+				return err
+			}
 		}
 
 		if p.PHPServer != nil {
-			_ = reexec.NotifyForeground("php")
+			if err = reexec.NotifyForeground("php"); err != nil {
+				return err
+			}
 			phpPidFile, phpStartCallback, err := p.PHPServer.Start(ctx, pidFile)
 			if err != nil {
 				return err
@@ -266,7 +276,9 @@ var localServerStartCmd = &console.Command{
 			}
 		}
 
-		_ = reexec.NotifyForeground("http")
+		if err = reexec.NotifyForeground("http"); err != nil {
+			return err
+		}
 		port, err := p.HTTP.Start(errChan)
 		if err != nil {
 			return err
@@ -298,7 +310,9 @@ var localServerStartCmd = &console.Command{
 				return err
 			}
 
-			_ = reexec.NotifyForeground("listening")
+			if err = reexec.NotifyForeground("listening"); err != nil {
+				return err
+			}
 			ui.Warning(localWebServerProdWarningMsg)
 			ui.Success(msg)
 		}
@@ -310,7 +324,9 @@ var localServerStartCmd = &console.Command{
 		}
 
 		if fileConfig != nil {
-			_ = reexec.NotifyForeground("workers")
+			if err = reexec.NotifyForeground("workers"); err != nil {
+				return err
+			}
 			for name, worker := range fileConfig.Workers {
 				pidFile := pid.New(projectDir, worker.Cmd)
 				if pidFile.IsRunning() {
@@ -349,7 +365,9 @@ var localServerStartCmd = &console.Command{
 			}
 		}
 
-		_ = reexec.NotifyForeground(reexec.UP)
+		if err = reexec.NotifyForeground(reexec.UP); err != nil {
+			return err
+		}
 		if reexec.IsChild() {
 			terminal.RemapOutput(lw, lw).SetDecorated(true)
 		}

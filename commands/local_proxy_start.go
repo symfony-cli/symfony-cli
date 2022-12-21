@@ -122,7 +122,9 @@ var localProxyStartCmd = &console.Command{
 
 		if c.IsSet("host") {
 			config.Host = c.String("host")
-			_ = config.Save()
+			if err = config.Save(); err != nil {
+				return err
+			}
 		}
 
 		spinner := terminal.NewSpinner(terminal.Stderr)
@@ -158,7 +160,9 @@ var localProxyStartCmd = &console.Command{
 
 		if !c.Bool("foreground") && reexec.IsChild() {
 			terminal.RemapOutput(lw, lw).SetDecorated(true)
-			_ = reexec.NotifyForeground(reexec.UP)
+			if err = reexec.NotifyForeground(reexec.UP); err != nil {
+				return err
+			}
 		} else {
 			defer func() {
 				_ = pidFile.Remove()

@@ -113,7 +113,9 @@ clear_env = no
 func (p *Server) fpmConfigFile() string {
 	path := filepath.Join(p.homeDir, fmt.Sprintf("php/%s/fpm-%s.ini", name(p.projectDir), p.Version.Version))
 	if _, err := os.Stat(filepath.Dir(path)); os.IsNotExist(err) {
-		_ = os.MkdirAll(filepath.Dir(path), 0755)
+		if err = os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+			return ""
+		}
 	}
 	return path
 }

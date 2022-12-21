@@ -45,7 +45,9 @@ func InstallPlatformPhar(home string) error {
 	}
 
 	installerPath := filepath.Join(home, "platformsh-installer.php")
-	_ = os.WriteFile(installerPath, installer, 0666)
+	if err = os.WriteFile(installerPath, installer, 0666); err != nil {
+		return err
+	}
 	defer func() {
 		_ = os.Remove(installerPath)
 	}()

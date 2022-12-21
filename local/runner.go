@@ -175,7 +175,9 @@ func (r *Runner) Run() error {
 			timer.Reset(RunnerReliefDuration)
 
 			if r.mode == RunnerModeLoopDetached {
-				_ = reexec.NotifyForeground("started")
+				if err = reexec.NotifyForeground("started"); err != nil {
+					return err
+				}
 			}
 
 			select {
@@ -203,7 +205,9 @@ func (r *Runner) Run() error {
 		}
 		if firstBoot && r.mode == RunnerModeLoopDetached {
 			terminal.RemapOutput(cmd.Stdout, cmd.Stderr).SetDecorated(true)
-			_ = reexec.NotifyForeground(reexec.UP)
+			if err = reexec.NotifyForeground(reexec.UP); err != nil {
+				return err
+			}
 		}
 
 		firstBoot = false
