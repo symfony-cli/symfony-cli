@@ -136,7 +136,7 @@ var Commands = []*console.Command{
 		Usage:    "View detailed information on a single activity",
 		Flags:    []console.Flag{
 			&console.BoolFlag{Name: "all", Aliases: []string{"a"},},
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "exclude-type",},
@@ -164,7 +164,7 @@ var Commands = []*console.Command{
 		Usage:    "Get a list of activities for an environment or project",
 		Flags:    []console.Flag{
 			&console.BoolFlag{Name: "all", Aliases: []string{"a"},},
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "exclude-type", Aliases: []string{"x"},},
@@ -249,7 +249,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "List apps in the project",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
@@ -289,7 +289,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "Display your account information",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.BoolFlag{Name: "no-auto-login",},
 			&console.BoolFlag{Name: "no-header",},
@@ -369,7 +369,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "List available backups of an environment",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
@@ -458,7 +458,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "List project certificates",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "domain",},
 			&console.StringFlag{Name: "exclude-domain",},
@@ -503,7 +503,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "List commits",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
@@ -554,7 +554,7 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "app", Aliases: []string{"A"},},
 			&console.BoolFlag{Name: "bytes", Aliases: []string{"B"},},
 			&console.BoolFlag{Name: "cleanup", Aliases: []string{"C"},},
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
@@ -625,7 +625,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "Show detailed information for a domain",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
@@ -644,7 +644,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "Get a list of all domains",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
 			&console.BoolFlag{Name: "no-header",},
@@ -797,7 +797,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "Read or set properties for an environment",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
@@ -837,7 +837,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "Get a list of environments",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
 			&console.BoolFlag{Name: "no-header",},
@@ -1068,7 +1068,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "View detailed information on a single integration activity",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
@@ -1090,7 +1090,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "Get a list of activities for an integration",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "exclude-type", Aliases: []string{"x"},},
@@ -1198,7 +1198,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "View details of an integration",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
 			&console.BoolFlag{Name: "no-header",},
@@ -1216,7 +1216,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "View a list of project integration(s)",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
 			&console.BoolFlag{Name: "no-header",},
@@ -1301,7 +1301,7 @@ var Commands = []*console.Command{
 		Usage:    "Show disk usage on a service",
 		Flags:    []console.Flag{
 			&console.BoolFlag{Name: "bytes", Aliases: []string{"B"},},
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
@@ -1352,7 +1352,7 @@ var Commands = []*console.Command{
 		Usage:    "Get a list of mounts",
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "app", Aliases: []string{"A"},},
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
@@ -1374,7 +1374,7 @@ var Commands = []*console.Command{
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "app", Aliases: []string{"A"},},
 			&console.BoolFlag{Name: "bytes", Aliases: []string{"B"},},
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
@@ -1417,7 +1417,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "View or change an organization's billing address",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.BoolFlag{Name: "no-header",},
@@ -1432,7 +1432,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "View or change an organization's billing profile",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.BoolFlag{Name: "no-header",},
@@ -1492,7 +1492,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "View or change organization details",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.BoolFlag{Name: "no-header",},
@@ -1511,7 +1511,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "List organizations",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.BoolFlag{Name: "my",},
 			&console.BoolFlag{Name: "no-header",},
@@ -1568,7 +1568,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "View an organization user",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.BoolFlag{Name: "no-header",},
@@ -1586,7 +1586,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "List organization users",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.BoolFlag{Name: "no-header",},
@@ -1702,7 +1702,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "Read or set properties for a project",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
@@ -1828,7 +1828,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "List all routes for an environment",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
@@ -1876,7 +1876,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "List services in the project",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
@@ -2066,7 +2066,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "Get a list of SSH keys in your account",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.BoolFlag{Name: "no-header",},
 		},
@@ -2079,7 +2079,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "Read or modify subscription properties",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
@@ -2134,7 +2134,7 @@ var Commands = []*console.Command{
 		Flags:    []console.Flag{
 			&console.BoolFlag{Name: "all", Aliases: []string{"a"},},
 			&console.StringFlag{Name: "app", Aliases: []string{"A"},},
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
@@ -2236,7 +2236,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "List project users",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
 			&console.BoolFlag{Name: "no-header",},
@@ -2309,7 +2309,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "View a variable",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
@@ -2332,7 +2332,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "List variables",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
@@ -2374,7 +2374,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "Get a list of all deployed workers",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "columns",},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
