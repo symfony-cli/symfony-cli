@@ -28,6 +28,7 @@ import (
 
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/git"
+	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	"github.com/symfony-cli/terminal"
 )
 
@@ -79,7 +80,8 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 			return err
 		}
 
-		createdFiles, err := createRequiredFilesProject(projectDir, slug, c.String("template"), minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
+		brand := platformsh.GuessCloudFromCommandName(c.Command.UserName)
+		createdFiles, err := createRequiredFilesProject(brand, projectDir, slug, c.String("template"), minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
 		if err != nil {
 			return err
 		}

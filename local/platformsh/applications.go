@@ -29,6 +29,8 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// FIXME: update the logic for Upsun
+
 var skippedDirectories = map[string]interface{}{
 	".git":         nil,
 	"vendor":       nil,

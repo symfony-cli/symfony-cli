@@ -211,7 +211,9 @@ func isEmpty(dir string) (bool, error) {
 }
 
 func initCloud(c *console.Context, s *terminal.Spinner, minorPHPVersion, dir string) error {
-	terminal.Println("* Adding Platform.sh configuration")
+	brand := platformsh.GuessCloudFromCommandName(c.Command.UserName)
+
+	terminal.Printfln("* Adding %s configuration", brand)
 
 	cloudServices, err := parseCloudServices(dir, c.StringSlice("service"))
 	if err != nil {
@@ -219,12 +221,12 @@ func initCloud(c *console.Context, s *terminal.Spinner, minorPHPVersion, dir str
 	}
 
 	// FIXME: display or hide output based on debug flag
-	_, err = createRequiredFilesProject(dir, "app", "", minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
+	_, err = createRequiredFilesProject(brand, dir, "app", "", minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
 	if err != nil {
 		return err
 	}
 
-	buf, err := git.AddAndCommit(dir, []string{"."}, "Add Platform.sh configuration", c.Bool("debug"))
+	buf, err := git.AddAndCommit(dir, []string{"."}, fmt.Sprintf("Add %s configuration", brand), c.Bool("debug"))
 	if err != nil {
 		fmt.Print(buf.String())
 	}

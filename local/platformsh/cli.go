@@ -22,6 +22,7 @@ package platformsh
 import (
 	"bytes"
 	_ "embed"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -87,7 +88,7 @@ func (p *CLI) AddBeforeHook(name string, f console.BeforeFunc) {
 	}
 }
 
-func (p *CLI) getPath() string {
+func (p *CLI) getPath(brand string) string {
 	if p.path != "" {
 		return p.path
 	}
@@ -98,9 +99,9 @@ func (p *CLI) getPath() string {
 	}
 
 	// the Platform.sh CLI is always available on the containers thanks to the configurator
-	p.path = BinaryPath(home)
+	p.path = BinaryPath(home, brand)
 	if !util.InCloud() {
-		if cloudPath, err := Install(home); err == nil {
+		if cloudPath, err := Install(home, brand); err == nil {
 			p.path = cloudPath
 		}
 	}
@@ -142,17 +143,20 @@ func (p *CLI) proxyPSHCmd(commandName string) console.ActionFunc {
 }
 
 func (p *CLI) executor(args []string) *exec.Cmd {
+	brand := GuessCloudFromCommandName(args[0])
+	prefix := brand.CLIPrefix
+
 	env := []string{
-		"PLATFORMSH_CLI_APPLICATION_NAME=Platform.sh CLI for Symfony",
-		"PLATFORMSH_CLI_APPLICATION_EXECUTABLE=symfony",
+		fmt.Sprintf("%sAPPLICATION_NAME=%s CLI for Symfony", prefix, brand),
+		fmt.Sprintf("%sAPPLICATION_EXECUTABLE=symfony", prefix),
 		"XDEBUG_MODE=off",
-		"PLATFORMSH_CLI_WRAPPED=1",
+		fmt.Sprintf("%sWRAPPED=1", prefix),
 	}
 	if util.InCloud() {
-		env = append(env, "PLATFORMSH_CLI_UPDATES_CHECK=0")
+		env = append(env, fmt.Sprintf("%sUPDATES_CHECK=0", prefix))
 	}
-	args[0] = strings.TrimPrefix(args[0], "cloud:")
-	cmd := exec.Command(p.getPath(), args...)
+	args[0] = strings.TrimPrefix(strings.TrimPrefix(args[0], "upsun:"), "cloud:")
+	cmd := exec.Command(p.getPath(brand.Slug), args...)
 	cmd.Env = append(os.Environ(), env...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -176,7 +180,7 @@ func (p *CLI) RunInteractive(logger zerolog.Logger, projectDir string, args []st
 	if stdin != nil {
 		cmd.Stdin = stdin
 	}
-	logger.Debug().Str("cmd", strings.Join(cmd.Args, " ")).Msg("Executing Platform.sh CLI command interactively")
+	logger.Debug().Str("cmd", strings.Join(cmd.Args, " ")).Msgf("Executing %s CLI command interactively", GuessCloudFromCommandName(args[0]))
 	if err := cmd.Run(); err != nil {
 		return buf, false
 	}

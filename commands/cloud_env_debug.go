@@ -30,24 +30,25 @@ var cloudEnvDebugCmd = &console.Command{
 		if err != nil {
 			return err
 		}
+		prefix := platformsh.GuessCloudFromCommandName(c.Command.UserName).CommandPrefix
 
 		projectID := c.String("project")
 		if projectID == "" {
-			out, ok := psh.RunInteractive(terminal.Logger, "", []string{"project:info", "id", "-y"}, c.Bool("debug"), nil)
+			out, ok := psh.RunInteractive(terminal.Logger, "", []string{prefix + "project:info", "id", "-y"}, c.Bool("debug"), nil)
 			if !ok {
 				return errors.New("Unable to detect the project")
 			}
 			projectID = strings.TrimSpace(out.String())
 		}
 
-		out, ok := psh.RunInteractive(terminal.Logger, "", []string{"project:info", "default_branch", "--project=" + projectID, "-y"}, c.Bool("debug"), nil)
+		out, ok := psh.RunInteractive(terminal.Logger, "", []string{prefix + "project:info", "default_branch", "--project=" + projectID, "-y"}, c.Bool("debug"), nil)
 		if !ok {
 			return errors.New("Unable to detect the default branch name")
 		}
 		defaultEnvName := strings.TrimSpace(out.String())
 		envName := c.String("environment")
 		if envName == "" {
-			if out, ok := psh.RunInteractive(terminal.Logger, "", []string{"env:info", "id", "--project=" + projectID, "-y"}, false, nil); ok {
+			if out, ok := psh.RunInteractive(terminal.Logger, "", []string{prefix + "env:info", "id", "--project=" + projectID, "-y"}, false, nil); ok {
 				envName = strings.TrimSpace(out.String())
 			} else {
 				envName = defaultEnvName
@@ -63,12 +64,12 @@ var cloudEnvDebugCmd = &console.Command{
 
 		if c.Bool("off") {
 			terminal.Println("Deleting APP_ENV and APP_DEBUG (can take some time, --debug to tail commands)")
-			if out, ok := psh.RunInteractive(terminal.Logger, "", append(defaultArgs, "var:delete", "env:APP_ENV"), c.Bool("debug"), nil); !ok {
+			if out, ok := psh.RunInteractive(terminal.Logger, "", append(defaultArgs, prefix+"var:delete", "env:APP_ENV"), c.Bool("debug"), nil); !ok {
 				if !strings.Contains(out.String(), "Variable not found") {
 					return errors.New("An error occurred while removing APP_ENV")
 				}
 			}
-			if out, ok := psh.RunInteractive(terminal.Logger, "", append(defaultArgs, "var:delete", "env:APP_DEBUG"), c.Bool("debug"), nil); !ok {
+			if out, ok := psh.RunInteractive(terminal.Logger, "", append(defaultArgs, prefix+"var:delete", "env:APP_DEBUG"), c.Bool("debug"), nil); !ok {
 				if !strings.Contains(out.String(), "Variable not found") {
 					return errors.New("An error occurred while removing APP_DEBUG")
 				}
@@ -77,7 +78,7 @@ var cloudEnvDebugCmd = &console.Command{
 			return nil
 		}
 
-		out, ok = psh.RunInteractive(terminal.Logger, "", []string{"project:info", "default_domain", "--project=" + projectID, "-y"}, c.Bool("debug"), nil)
+		out, ok = psh.RunInteractive(terminal.Logger, "", []string{prefix + "project:info", "default_domain", "--project=" + projectID, "-y"}, c.Bool("debug"), nil)
 		if !ok {
 			return errors.New("Unable to detect the default domain")
 		}
@@ -89,21 +90,21 @@ var cloudEnvDebugCmd = &console.Command{
 		}
 
 		terminal.Println("Setting APP_ENV and APP_DEBUG to dev/debug (can take some time, --debug to tail commands)")
-		if out, ok := psh.RunInteractive(terminal.Logger, "", append(defaultArgs, "var:create", "--name=env:APP_ENV", "--value=dev"), c.Bool("debug"), nil); !ok {
+		if out, ok := psh.RunInteractive(terminal.Logger, "", append(defaultArgs, prefix+"var:create", "--name=env:APP_ENV", "--value=dev"), c.Bool("debug"), nil); !ok {
 			if !strings.Contains(out.String(), "already exists on the environment") {
 				return errors.New("An error occurred while adding APP_ENV")
 			}
-			if out, ok := psh.RunInteractive(terminal.Logger, "", append(defaultArgs, "var:update", "--value=dev", "env:APP_ENV"), c.Bool("debug"), nil); !ok {
+			if out, ok := psh.RunInteractive(terminal.Logger, "", append(defaultArgs, prefix+"var:update", "--value=dev", "env:APP_ENV"), c.Bool("debug"), nil); !ok {
 				if !strings.Contains(out.String(), "No changes were provided") {
 					return errors.New("An error occurred while adding APP_ENV")
 				}
 			}
 		}
-		if out, ok := psh.RunInteractive(terminal.Logger, "", append(defaultArgs, "var:create", "--name=env:APP_DEBUG", "--value=1"), c.Bool("debug"), nil); !ok {
+		if out, ok := psh.RunInteractive(terminal.Logger, "", append(defaultArgs, prefix+"var:create", "--name=env:APP_DEBUG", "--value=1"), c.Bool("debug"), nil); !ok {
 			if !strings.Contains(out.String(), "already exists on the environment") {
 				return errors.New("An error occurred while adding APP_DEBUG")
 			}
-			if out, ok := psh.RunInteractive(terminal.Logger, "", append(defaultArgs, "var:update", "--value=1", "env:APP_DEBUG"), c.Bool("debug"), nil); !ok {
+			if out, ok := psh.RunInteractive(terminal.Logger, "", append(defaultArgs, prefix+"var:update", "--value=1", "env:APP_DEBUG"), c.Bool("debug"), nil); !ok {
 				if !strings.Contains(out.String(), "No changes were provided") {
 					return errors.New("An error occurred while adding APP_DEBUG")
 				}

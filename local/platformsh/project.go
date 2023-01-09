@@ -96,10 +96,12 @@ func repositoryRootDir(currentDir string) string {
 }
 
 func getProjectID(projectRoot string, debug bool) string {
-	contents, err := os.ReadFile(filepath.Join(projectRoot, ".platform", "local", "project.yaml"))
+	brand := GuessCloudFromDirectory(projectRoot)
+
+	contents, err := os.ReadFile(filepath.Join(projectRoot, "."+brand.Slug, "local", "project.yaml"))
 	if err != nil {
 		if debug {
-			fmt.Fprintf(os.Stderr, "WARNING: unable to find Platform.sh config file: %s\n", err)
+			fmt.Fprintf(os.Stderr, "WARNING: unable to find %s config file: %s\n", brand, err)
 		}
 		return ""
 	}
@@ -108,7 +110,7 @@ func getProjectID(projectRoot string, debug bool) string {
 	}
 	if err := yaml.Unmarshal(contents, &config); err != nil {
 		if debug {
-			fmt.Fprintf(os.Stderr, "ERROR: unable to decode Platform.sh config file: %s\n", err)
+			fmt.Fprintf(os.Stderr, "ERROR: unable to decode %s config file: %s\n", brand, err)
 		}
 		return ""
 	}

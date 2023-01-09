@@ -87,7 +87,8 @@ func generateCommands() {
 	if err != nil {
 		panic(err)
 	}
-	cloudPath, err := platformsh.Install(home)
+	// as platform.sh and upsun have the same commands, we can use either one
+	cloudPath, err := platformsh.Install(home, "platform")
 	if err != nil {
 		panic(err.Error())
 	}
@@ -181,8 +182,10 @@ func parseCommands(cloudPath string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		aliases = append(aliases, fmt.Sprintf("{Name: \"upsun:%s\", Hidden: true}", command.Name))
 		for _, alias := range cmdAliases {
 			aliases = append(aliases, fmt.Sprintf("{Name: \"cloud:%s\"}", alias))
+			aliases = append(aliases, fmt.Sprintf("{Name: \"upsun:%s\", Hidden: true}", alias))
 			if namespace != "cloud" && !strings.HasPrefix(command.Name, "self:") {
 				aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", alias))
 			}
