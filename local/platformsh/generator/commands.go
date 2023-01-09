@@ -11,7 +11,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/platformsh"
@@ -83,10 +82,7 @@ var Commands = []*console.Command{
 `))
 
 func generateCommands() {
-	home, err := homedir.Dir()
-	if err != nil {
-		panic(err)
-	}
+	home := os.TempDir()
 	if err := platformsh.InstallBin(home); err != nil {
 		panic(err.Error())
 	}
