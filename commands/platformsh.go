@@ -97,7 +97,7 @@ func (p *platformshCLI) proxyPSHCmd(commandName string) console.ActionFunc {
 				if err != nil {
 					return err
 				}
-				if err := php.InstallPlatformPhar(home); err != nil {
+				if err := php.InstallPlatformBin(home); err != nil {
 					return console.Exit(err.Error(), 1)
 				}
 			}

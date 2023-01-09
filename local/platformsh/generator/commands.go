@@ -88,7 +88,7 @@ func generateCommands() {
 	if err != nil {
 		panic(err)
 	}
-	if err := php.InstallPlatformPhar(home); err != nil {
+	if err := php.InstallPlatformBin(home); err != nil {
 		panic(err.Error())
 	}
 	definitionAsString, err := parseCommands(home)

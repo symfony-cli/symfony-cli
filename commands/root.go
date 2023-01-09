@@ -189,7 +189,7 @@ func initConfig() {
 		viper.SetConfigFile(os.Getenv("SF_CONFIG"))
 	}
 	viper.SetConfigName("symfony")
-	viper.AddConfigPath("$HOME/.symfony")
+	viper.AddConfigPath("$HOME/.symfony5")
 	viper.AddConfigPath(".")
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("SYMFONY")
