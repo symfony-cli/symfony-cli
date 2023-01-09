@@ -1,6 +1,8 @@
 module github.com/symfony-cli/symfony-cli
 
 require (
+	github.com/NYTimes/gziphandler v1.1.1
+	github.com/blackfireio/osinfo v1.0.4
 	github.com/compose-spec/compose-go v1.7.0
 	github.com/docker/docker v20.10.21+incompatible
 	github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819
@@ -30,12 +32,8 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
-
 require (
 	github.com/Microsoft/go-winio v0.6.0 // indirect
-	github.com/NYTimes/gziphandler v1.1.1
-	github.com/blackfireio/osinfo v1.0.4
 	github.com/distribution/distribution/v3 v3.0.0-20221103125252-ebfa2a0ac0a9 // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -53,6 +51,7 @@ require (
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/mattn/go-shellwords v1.0.12 // indirect
+	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/term v0.0.0-20220808134915-39b0c02b01ae // indirect
 	github.com/morikuni/aec v1.0.0 // indirect

@@ -1,4 +1,23 @@
-package php
+/*
+ * Copyright (c) 2023-present Fabien Potencier <fabien@symfony.com>
+ *
+ * This file is part of Symfony CLI project
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package platformsh
 
 import (
 	"archive/tar"
@@ -23,7 +42,7 @@ type githubAsset struct {
 	URL  string `json:"browser_download_url"`
 }
 
-func InstallPlatformBin(home string) error {
+func InstallBin(home string) error {
 	dir := filepath.Join(home, ".platformsh", "bin")
 	if _, err := os.Stat(filepath.Join(dir, "platform")); err == nil {
 		return nil
@@ -34,7 +53,7 @@ func InstallPlatformBin(home string) error {
 		return err
 	}
 
-	return downloadAndExtractPlatform(asset, home)
+	return downloadAndExtract(asset, home)
 }
 
 func getLatestVersionURL() (*githubAsset, error) {
@@ -82,7 +101,7 @@ func getLatestVersionURL() (*githubAsset, error) {
 	return asset, nil
 }
 
-func downloadAndExtractPlatform(asset *githubAsset, home string) error {
+func downloadAndExtract(asset *githubAsset, home string) error {
 	resp, err := http.Get(asset.URL)
 	if err != nil {
 		return err
@@ -130,6 +149,9 @@ func downloadAndExtractPlatform(asset *githubAsset, home string) error {
 					continue
 				}
 				path := filepath.Join(home, ".platformsh", "bin", "platform")
+				if _, err := os.Stat(filepath.Dir(path)); os.IsNotExist(err) {
+					_ = os.MkdirAll(filepath.Dir(path), 0755)
+				}
 				out, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 				if err != nil {
 					return err

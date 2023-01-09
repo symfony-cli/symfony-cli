@@ -1838,35 +1838,6 @@ var Commands = []*console.Command{
 		},
 	},
 	{
-		Category: "cloud:self",
-		Name:     "install",
-		Aliases:  []*console.Alias{
-			{Name: "cloud:local:install"},
-		},
-		Usage:    "Install or update CLI configuration files",
-		Hidden:   console.Hide,
-		Flags:    []console.Flag{
-			&console.StringFlag{Name: "shell-type",},
-		},
-	},
-	{
-		Category: "cloud:self",
-		Name:     "update",
-		Aliases:  []*console.Alias{
-			{Name: "cloud:self-update"},
-			{Name: "cloud:update"},
-		},
-		Usage:    "Update the CLI to the latest version",
-		Hidden:   console.Hide,
-		Flags:    []console.Flag{
-			&console.StringFlag{Name: "current-version",},
-			&console.StringFlag{Name: "manifest",},
-			&console.BoolFlag{Name: "no-major",},
-			&console.StringFlag{Name: "timeout",},
-			&console.BoolFlag{Name: "unstable",},
-		},
-	},
-	{
 		Category: "cloud:service",
 		Name:     "list",
 		Aliases:  []*console.Alias{

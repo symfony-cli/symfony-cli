@@ -2,11 +2,10 @@ package main
 
 import (
 	"bytes"
-	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -15,7 +14,7 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
-	"github.com/symfony-cli/symfony-cli/local/php"
+	"github.com/symfony-cli/symfony-cli/local/platformsh"
 )
 
 type application struct {
@@ -88,7 +87,7 @@ func generateCommands() {
 	if err != nil {
 		panic(err)
 	}
-	if err := php.InstallPlatformBin(home); err != nil {
+	if err := platformsh.InstallBin(home); err != nil {
 		panic(err.Error())
 	}
 	definitionAsString, err := parseCommands(home)
@@ -112,21 +111,13 @@ func generateCommands() {
 
 func parseCommands(home string) (string, error) {
 	dir := filepath.Join(home, ".platformsh", "bin")
-	var pharPath = filepath.Join(dir, "platform")
-	hasher := md5.New()
-	if s, err := ioutil.ReadFile(pharPath); err != nil {
-		hasher.Write(s)
-	}
+	var binPath = filepath.Join(dir, "platform")
 
 	var buf bytes.Buffer
-	e := &php.Executor{
-		BinName: "php",
-		Args:    []string{"php", filepath.Join(dir, "platform"), "list", "--format=json"},
-	}
-	e.Paths = append([]string{dir}, e.Paths...)
-	e.Dir = dir
-	e.Stdout = &buf
-	if ret := e.Execute(false); ret != 0 {
+	cmd := exec.Command(binPath, "list", "--format=json")
+	cmd.Dir = dir
+	cmd.Stdout = &buf
+	if ret := cmd.Run(); ret != nil {
 		return "", errors.Errorf("unable to list commands: %s", buf.String())
 	}
 

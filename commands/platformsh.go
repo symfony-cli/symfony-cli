@@ -24,13 +24,13 @@ import (
 	_ "embed"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/rs/zerolog"
 	"github.com/symfony-cli/console"
-	"github.com/symfony-cli/symfony-cli/local/php"
 	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	"github.com/symfony-cli/symfony-cli/util"
 )
@@ -97,7 +97,7 @@ func (p *platformshCLI) proxyPSHCmd(commandName string) console.ActionFunc {
 				if err != nil {
 					return err
 				}
-				if err := php.InstallPlatformBin(home); err != nil {
+				if err := platformsh.InstallBin(home); err != nil {
 					return console.Exit(err.Error(), 1)
 				}
 			}
@@ -115,13 +115,12 @@ func (p *platformshCLI) proxyPSHCmd(commandName string) console.ActionFunc {
 					break
 				}
 			}
-			e := p.executor(args)
-			return console.Exit("", e.Execute(false))
+			return p.executor(args).Run()
 		}
 	}(commandName)
 }
 
-func (p *platformshCLI) executor(args []string) *php.Executor {
+func (p *platformshCLI) executor(args []string) *exec.Cmd {
 	env := []string{
 		"PLATFORMSH_CLI_APPLICATION_NAME=Platform.sh CLI for Symfony",
 		"PLATFORMSH_CLI_APPLICATION_EXECUTABLE=symfony",
@@ -131,34 +130,32 @@ func (p *platformshCLI) executor(args []string) *php.Executor {
 	if util.InCloud() {
 		env = append(env, "PLATFORMSH_CLI_UPDATES_CHECK=0")
 	}
-	e := &php.Executor{
-		BinName:  "php",
-		Args:     append([]string{"php", p.path}, args...),
-		ExtraEnv: env,
-	}
-	e.Paths = append([]string{filepath.Dir(p.path)}, e.Paths...)
-	return e
+	cmd := exec.Command(p.path, args...)
+	cmd.Env = append(os.Environ(), env...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd
 }
 
 func (p *platformshCLI) RunInteractive(logger zerolog.Logger, projectDir string, args []string, debug bool, stdin io.Reader) (bytes.Buffer, bool) {
 	var buf bytes.Buffer
 
-	e := p.executor(args)
+	cmd := p.executor(args)
 	if projectDir != "" {
-		e.Dir = projectDir
+		cmd.Dir = projectDir
 	}
 	if debug {
-		e.Stdout = io.MultiWriter(&buf, os.Stdout)
-		e.Stderr = io.MultiWriter(&buf, os.Stderr)
+		cmd.Stdout = io.MultiWriter(&buf, os.Stdout)
+		cmd.Stderr = io.MultiWriter(&buf, os.Stderr)
 	} else {
-		e.Stdout = &buf
-		e.Stderr = &buf
+		cmd.Stdout = &buf
+		cmd.Stderr = &buf
 	}
 	if stdin != nil {
-		e.Stdin = stdin
+		cmd.Stdin = stdin
 	}
-	logger.Debug().Str("cmd", strings.Join(e.Args, " ")).Msg("Executing Platform.sh CLI command interactively")
-	if ret := e.Execute(false); ret != 0 {
+	logger.Debug().Str("cmd", strings.Join(cmd.Args, " ")).Msg("Executing Platform.sh CLI command interactively")
+	if err := cmd.Run(); err != nil {
 		return buf, false
 	}
 	return buf, true
@@ -170,8 +167,8 @@ func (p *platformshCLI) WrapHelpPrinter() func(w io.Writer, templ string, data i
 		switch cmd := data.(type) {
 		case *console.Command:
 			if strings.HasPrefix(cmd.Category, "cloud") {
-				e := p.executor([]string{strings.TrimPrefix(cmd.FullName(), "cloud:"), "--help", "--ansi"})
-				e.Execute(false)
+				cmd := p.executor([]string{strings.TrimPrefix(cmd.FullName(), "cloud:"), "--help", "--ansi"})
+				cmd.Run()
 			} else {
 				currentHelpPrinter(w, templ, data)
 			}
