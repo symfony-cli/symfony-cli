@@ -2,6 +2,7 @@ module github.com/symfony-cli/symfony-cli
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1
+	github.com/blackfireio/osinfo v1.0.4
 	github.com/compose-spec/compose-go v1.18.4
 	github.com/docker/docker v24.0.6+incompatible
 	github.com/elazarl/goproxy v0.0.0-20230808193330-2592e75ae04a
@@ -11,11 +12,13 @@ require (
 	github.com/hashicorp/golang-lru/arc/v2 v2.0.6
 	github.com/hpcloud/tail v1.0.0
 	github.com/joho/godotenv v1.5.1
+	github.com/kr/pty v1.1.8
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pkg/errors v0.9.1
 	github.com/rs/xid v1.5.0
 	github.com/rs/zerolog v1.30.0
+	github.com/schollz/progressbar/v3 v3.13.1
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/soheilhy/cmux v0.1.5
 	github.com/stoicperlman/fls v0.0.0-20171222144224-f073b7a01081
@@ -32,6 +35,7 @@ require (
 
 require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/creack/pty v1.1.18 // indirect
 	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -48,6 +52,7 @@ require (
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mattn/go-shellwords v1.0.12 // indirect
+	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect

@@ -318,7 +318,7 @@ type configTemplate struct {
 	Template     string
 }
 
-func (c *configTemplate) Match(directory string, minorPHPVersion string) bool {
+func (c *configTemplate) Match(directory, minorPHPVersion string) bool {
 	for _, req := range c.Requirements {
 		if !req.Check(directory, minorPHPVersion) {
 			return false

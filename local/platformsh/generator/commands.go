@@ -2,11 +2,10 @@ package main
 
 import (
 	"bytes"
-	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
+	"os/exec"
 	"sort"
 	"strings"
 	"text/template"
@@ -14,7 +13,7 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
-	"github.com/symfony-cli/symfony-cli/local/php"
+	"github.com/symfony-cli/symfony-cli/local/platformsh"
 )
 
 type application struct {
@@ -88,10 +87,11 @@ func generateCommands() {
 	if err != nil {
 		panic(err)
 	}
-	if err := php.InstallPlatformPhar(home); err != nil {
+	cloudPath, err := platformsh.Install(home)
+	if err != nil {
 		panic(err.Error())
 	}
-	definitionAsString, err := parseCommands(home)
+	definitionAsString, err := parseCommands(cloudPath)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -110,24 +110,14 @@ func generateCommands() {
 
 }
 
-func parseCommands(home string) (string, error) {
-	dir := filepath.Join(home, ".platformsh", "bin")
-	var pharPath = filepath.Join(dir, "platform")
-	hasher := md5.New()
-	if s, err := os.ReadFile(pharPath); err != nil {
-		hasher.Write(s)
-	}
-
+func parseCommands(cloudPath string) (string, error) {
 	var buf bytes.Buffer
-	e := &php.Executor{
-		BinName: "php",
-		Args:    []string{"php", filepath.Join(dir, "platform"), "list", "--format=json", "--all"},
-	}
-	e.Paths = append([]string{dir}, e.Paths...)
-	e.Dir = dir
-	e.Stdout = &buf
-	if ret := e.Execute(false); ret != 0 {
-		return "", errors.Errorf("unable to list commands: %s", buf.String())
+	var bufErr bytes.Buffer
+	cmd := exec.Command(cloudPath, "list", "--format=json", "--all")
+	cmd.Stdout = &buf
+	cmd.Stderr = &bufErr
+	if err := cmd.Run(); err != nil {
+		return "", errors.Errorf("unable to list commands: %s\n%s\n%s", err, bufErr.String(), buf.String())
 	}
 
 	// Fix PHP types
@@ -138,20 +128,13 @@ func parseCommands(home string) (string, error) {
 		return "", err
 	}
 
-	allCommandNames := map[string]bool{}
-	for _, n := range definition.Namespaces {
-		for _, name := range n.Commands {
-			allCommandNames[name] = true
-		}
-		// FIXME: missing the aliases here
-	}
-
 	excludedCommands := map[string]bool{
 		"list":              true,
 		"help":              true,
 		"self:stats":        true,
 		"decode":            true,
 		"environment:drush": true,
+		"project:init":      true,
 	}
 
 	excludedOptions := console.AnsiFlag.Names()
@@ -194,16 +177,14 @@ func parseCommands(home string) (string, error) {
 			aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", command.Name))
 		}
 
-		cmdAliases, err := getCommandAliases(command.Name, dir)
+		cmdAliases, err := getCommandAliases(command.Name, cloudPath)
 		if err != nil {
 			return "", err
 		}
 		for _, alias := range cmdAliases {
-			if allCommandNames[alias] {
-				aliases = append(aliases, fmt.Sprintf("{Name: \"cloud:%s\"}", alias))
-				if namespace != "cloud" && !strings.HasPrefix(command.Name, "self:") {
-					aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", alias))
-				}
+			aliases = append(aliases, fmt.Sprintf("{Name: \"cloud:%s\"}", alias))
+			if namespace != "cloud" && !strings.HasPrefix(command.Name, "self:") {
+				aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", alias))
 			}
 		}
 		if command.Name == "environment:push" {
@@ -284,17 +265,17 @@ func parseCommands(home string) (string, error) {
 	return definitionAsString, nil
 }
 
-func getCommandAliases(name, dir string) ([]string, error) {
+func getCommandAliases(name, cloudPath string) ([]string, error) {
 	var buf bytes.Buffer
-	e := &php.Executor{
-		BinName: "php",
-		Args:    []string{"php", filepath.Join(dir, "platform"), name, "--help", "--format=json"},
-	}
-	e.Paths = append([]string{dir}, e.Paths...)
-	e.Dir = dir
-	e.Stdout = &buf
-	if ret := e.Execute(false); ret != 0 {
-		return nil, errors.Errorf("unable to get definition for command %s: %s", name, buf.String())
+	var bufErr bytes.Buffer
+	c := exec.Command(cloudPath, name, "--help", "--format=json")
+	c.Stdout = &buf
+	c.Stderr = &bufErr
+	if err := c.Run(); err != nil {
+		// Can currently happen for commands implemented in Go upstream (like app:config-validate)
+		// FIXME: to be removed once upstream implements --help --format=json for all commands
+		return []string{}, nil
+		//return nil, errors.Errorf("unable to get definition for command %s: %s\n%s\n%s", name, err, bufErr.String(), buf.String())
 	}
 	var cmd command
 	if err := json.Unmarshal(buf.Bytes(), &cmd); err != nil {
