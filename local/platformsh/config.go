@@ -245,7 +245,7 @@ var availableServices = []*service{
 		Type: "varnish",
 		Versions: serviceVersions{
 			Deprecated: []string{"5.1", "5.2"},
-			Supported:  []string{"6.0", "6.3", "7.1"},
+			Supported:  []string{"6.0", "6.3", "7.1", "7.2"},
 		},
 	},
 	{
