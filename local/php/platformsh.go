@@ -53,6 +53,7 @@ func InstallPlatformPhar(home string) error {
 		Dir:        home,
 		BinName:    "php",
 		Args:       []string{"php", installerPath},
+		ExtraEnv:   []string{"PLATFORMSH_CLI_NO_INTERACTION=1"},
 		SkipNbArgs: 1,
 		Stdout:     &stdout,
 		Stderr:     &stdout,
