@@ -55,47 +55,47 @@ func printWebServerStatus(projectDir string) error {
 	workers := pid.AllWorkers(projectDir)
 
 	// web server
-	_, _ = terminal.Println("<info>Local Web Server</>")
+	terminal.Println("<info>Local Web Server</>")
 	if !pidFile.IsRunning() {
-		_, _ = terminal.Println("    <error>Not Running</>")
+		terminal.Println("    <error>Not Running</>")
 	} else {
-		_, _ = terminal.Printfln("    Listening on <href=%s://127.0.0.1:%d>%s://127.0.0.1:%d</>", pidFile.Scheme, pidFile.Port, pidFile.Scheme, pidFile.Port)
+		terminal.Printfln("    Listening on <href=%s://127.0.0.1:%d>%s://127.0.0.1:%d</>", pidFile.Scheme, pidFile.Port, pidFile.Scheme, pidFile.Port)
 		homeDir := util.GetHomeDir()
 		phpStore := phpstore.New(homeDir, true, nil)
 		version, source, warning, err := phpStore.BestVersionForDir(projectDir)
 		if err == nil {
-			_, _ = terminal.Printfln("    The Web server is using <info>%s %s</> (from %s)", version.ServerTypeName(), version.Version, source)
+			terminal.Printfln("    The Web server is using <info>%s %s</> (from %s)", version.ServerTypeName(), version.Version, source)
 			if warning != "" {
-				_, _ = terminal.Printfln("    <warning>WARNING</> %s", warning)
+				terminal.Printfln("    <warning>WARNING</> %s", warning)
 			}
 		}
-		_, _ = terminal.Println()
-		_, _ = terminal.Println("<info>Local Domains</>")
+		terminal.Println()
+		terminal.Println("<info>Local Domains</>")
 		if proxyConf, err := proxy.Load(util.GetHomeDir()); err == nil {
 			for _, domain := range proxyConf.GetDomains(projectDir) {
-				_, _ = terminal.Printfln("    <href=%s://%s>%s://%s</>", pidFile.Scheme, domain, pidFile.Scheme, domain)
+				terminal.Printfln("    <href=%s://%s>%s://%s</>", pidFile.Scheme, domain, pidFile.Scheme, domain)
 			}
 		}
 	}
 
 	// workers
-	_, _ = terminal.Println()
-	_, _ = terminal.Println("<info>Workers</info>")
+	terminal.Println()
+	terminal.Println("<info>Workers</info>")
 	if len(workers) == 0 {
-		_, _ = terminal.Println("    <warning>No Workers</>")
+		terminal.Println("    <warning>No Workers</>")
 	} else {
 		for _, p := range workers {
 			msg := fmt.Sprintf(`    PID <info>%d</>: %s`, p.Pid, p.Command())
 			if len(p.Watched) > 0 {
 				msg += fmt.Sprintf(" (watching <comment>%s/</comment>)", strings.Join(p.Watched, "/, "))
 			}
-			_, _ = terminal.Println(msg)
+			terminal.Println(msg)
 		}
 	}
 
 	// env vars
-	_, _ = terminal.Println()
-	_, _ = terminal.Println("<info>Environment Variables</>")
+	terminal.Println()
+	terminal.Println("<info>Environment Variables</>")
 	data, err := envs.GetEnv(projectDir, terminal.IsDebug())
 	if err != nil {
 		return err
@@ -108,7 +108,7 @@ func printWebServerStatus(projectDir string) error {
 	if env["SYMFONY_DOCKER_ENV"] == "1" && env["SYMFONY_TUNNEL_ENV"] == "" {
 		envVars = `Exposed from <info>Docker</>`
 	}
-	_, _ = terminal.Printfln("    %s", envVars)
+	terminal.Printfln("    %s", envVars)
 
 	return nil
 }

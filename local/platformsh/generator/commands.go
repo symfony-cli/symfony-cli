@@ -105,7 +105,7 @@ func generateCommands() {
 	if err != nil {
 		panic(err)
 	}
-	_, _ = f.Write(buf.Bytes())
+	f.Write(buf.Bytes())
 
 }
 

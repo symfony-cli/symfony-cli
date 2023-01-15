@@ -54,7 +54,7 @@ func testStdoutCapture(c *C, dst io.Writer) func() {
 	go func() {
 		defer close(doneCh)
 		defer r.Close()
-		_, _ = io.Copy(dst, r)
+		io.Copy(dst, r)
 	}()
 
 	return func() {

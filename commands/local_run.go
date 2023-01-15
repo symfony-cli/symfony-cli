@@ -86,7 +86,7 @@ var localRunCmd = &console.Command{
 
 		if err := runner.Run(); err != nil {
 			if _, wentToBackground := err.(local.RunnerWentToBackground); wentToBackground {
-				_, _ = terminal.Printfln("Stream the logs via <info>%s server:log</>", c.App.HelpName)
+				terminal.Printfln("Stream the logs via <info>%s server:log</>", c.App.HelpName)
 				return nil
 			}
 

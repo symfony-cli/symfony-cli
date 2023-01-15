@@ -93,8 +93,8 @@ func (r *Runner) Run() error {
 			if _, isExitCoder := err.(console.ExitCoder); isExitCoder {
 				return err
 			}
-			_, _ = terminal.Printfln("Impossible to go to the background: %s", err)
-			_, _ = terminal.Println("Continue in foreground")
+			terminal.Printfln("Impossible to go to the background: %s", err)
+			terminal.Println("Continue in foreground")
 			r.mode = RunnerModeOnce
 		} else {
 			if err := reexec.NotifyForeground("boot"); err != nil {

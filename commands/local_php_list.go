@@ -54,7 +54,7 @@ var localPhpListCmd = &console.Command{
 		currentPHPPath := ""
 		v, source, warning, _ := phpStore.BestVersionForDir(wd)
 		if warning != "" {
-			_, _ = terminal.Eprintfln("<warning>WARNING</> %s", warning)
+			terminal.Eprintfln("<warning>WARNING</> %s", warning)
 		}
 		if v != nil {
 			currentPHPPath = v.PHPPath

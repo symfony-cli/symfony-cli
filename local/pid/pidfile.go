@@ -316,7 +316,7 @@ func (p *PidFile) Name() string {
 
 func name(dir string) string {
 	h := sha1.New()
-	_, _ = io.WriteString(h, dir)
+	io.WriteString(h, dir)
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 

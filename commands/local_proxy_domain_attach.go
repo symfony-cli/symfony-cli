@@ -53,7 +53,7 @@ var localProxyAttachDomainCmd = &console.Command{
 		}
 		terminal.Println("<info>The proxy is now configured with the following domains for this directory:</>")
 		for _, domain := range config.GetDomains(projectDir) {
-			_, _ = terminal.Printfln(" * http://%s", domain)
+			terminal.Printfln(" * http://%s", domain)
 		}
 		return nil
 	},

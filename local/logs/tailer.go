@@ -112,7 +112,7 @@ func (tailer *Tailer) Watch(pidFile *pid.PidFile) error {
 				}
 				p, err := pid.Load(e.Path())
 				if err != nil {
-					_, _ = terminal.Printfln("<warning>WARNING</> %s", err)
+					terminal.Printfln("<warning>WARNING</> %s", err)
 					continue
 				}
 				tailer.pidFileChan <- p
@@ -179,7 +179,7 @@ func (tailer *Tailer) Watch(pidFile *pid.PidFile) error {
 					go func() {
 						tsf, err := tailFile(applog, tailer.Follow, tailer.LinesNb)
 						if err != nil {
-							_, _ = terminal.Printfln("<warning>WARNING</> %s log file cannot be tailed: %s", applog, err)
+							terminal.Printfln("<warning>WARNING</> %s log file cannot be tailed: %s", applog, err)
 							return
 						}
 						for line := range tsf.Lines {
@@ -219,7 +219,7 @@ func (tailer *Tailer) Tail(w io.Writer) error {
 			buf.Write(humanizer.Prettify([]byte(content)))
 			buf.Write([]byte("\n"))
 		}
-		_, _ = w.Write(buf.Bytes())
+		w.Write(buf.Bytes())
 	}
 }
 
@@ -229,15 +229,15 @@ func (tailer Tailer) WatchAdditionalPidFile(file *pid.PidFile) {
 
 func tailLogFile(p *pid.PidFile, lines chan *namedLine, follow bool, nblines int64) {
 	if err := p.WaitForLogs(); err != nil {
-		_, _ = terminal.Printfln("<warning>WARNING</> %s log file cannot be tailed: %s", p.String(), err)
+		terminal.Printfln("<warning>WARNING</> %s log file cannot be tailed: %s", p.String(), err)
 		return
 	}
 	t, err := tailFile(p.LogFile(), follow, nblines)
 	if err != nil {
-		_, _ = terminal.Printfln("<warning>WARNING</> %s log file cannot be tailed: %s", p.String(), err)
+		terminal.Printfln("<warning>WARNING</> %s log file cannot be tailed: %s", p.String(), err)
 		return
 	}
-	_, _ = terminal.Printfln("Following <info>%s</info> log file (%s)", p.String(), p.LogFile())
+	terminal.Printfln("Following <info>%s</info> log file (%s)", p.String(), p.LogFile())
 	for line := range t.Lines {
 		lines <- &namedLine{name: p.ShortName(), line: line}
 	}

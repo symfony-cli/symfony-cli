@@ -46,7 +46,7 @@ func Getppid() int {
 }
 
 func waitForProcess(ps *os.Process) {
-	_, _ = ps.Wait()
+	ps.Wait()
 
 	return
 }

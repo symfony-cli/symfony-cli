@@ -83,7 +83,7 @@ func generateConfig() {
 	if err != nil {
 		panic(err)
 	}
-	_, _ = f.Write(buf.Bytes())
+	f.Write(buf.Bytes())
 }
 
 func parseServices() (string, error) {

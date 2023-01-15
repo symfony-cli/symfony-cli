@@ -153,6 +153,6 @@ func abstractOpenCmd(url string) {
 		terminal.Eprintln("<error>Error while opening:", err, "</>")
 		terminal.Eprintfln("Please visit <href=%s>%s</> manually.", url, url)
 	} else {
-		_, _ = terminal.Eprintfln("Opened: <href=%s>%s</>", url, url)
+		terminal.Eprintfln("Opened: <href=%s>%s</>", url, url)
 	}
 }

@@ -70,8 +70,8 @@ var localProxyStartCmd = &console.Command{
 				if _, isExitCoder := err.(console.ExitCoder); isExitCoder {
 					return err
 				}
-				_, _ = terminal.Printfln("Impossible to go to the background: %s", err)
-				_, _ = terminal.Println("Continue in foreground")
+				terminal.Printfln("Impossible to go to the background: %s", err)
+				terminal.Println("Continue in foreground")
 			} else {
 				return nil
 			}

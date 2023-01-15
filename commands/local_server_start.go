@@ -130,11 +130,11 @@ var localServerStartCmd = &console.Command{
 				if _, isExitCoder := err.(console.ExitCoder); isExitCoder {
 					return err
 				}
-				_, _ = terminal.Eprintln("Impossible to go to the background")
-				_, _ = terminal.Eprintln("Continue in foreground")
+				terminal.Eprintln("Impossible to go to the background")
+				terminal.Eprintln("Continue in foreground")
 				config.Daemon = false
 			} else {
-				_, _ = terminal.Eprintfln("Stream the logs via <info>%s server:log</>", c.App.HelpName)
+				terminal.Eprintfln("Stream the logs via <info>%s server:log</>", c.App.HelpName)
 				return nil
 			}
 		}
@@ -330,7 +330,7 @@ var localServerStartCmd = &console.Command{
 			for name, worker := range fileConfig.Workers {
 				pidFile := pid.New(projectDir, worker.Cmd)
 				if pidFile.IsRunning() {
-					_, _ = terminal.Eprintfln("<warning>WARNING</> Unable to start worker \"%s\": it is already running for this project as PID %d", name, pidFile.Pid)
+					terminal.Eprintfln("<warning>WARNING</> Unable to start worker \"%s\": it is already running for this project as PID %d", name, pidFile.Pid)
 					continue
 				}
 				pidFile.Watched = worker.Watch
@@ -341,7 +341,7 @@ var localServerStartCmd = &console.Command{
 				go func(name string, pidFile *pid.PidFile) {
 					runner, err := local.NewRunner(pidFile, local.RunnerModeLoopAttached)
 					if err != nil {
-						_, _ = terminal.Eprintfln("<warning>WARNING</> Unable to start worker \"%s\": %s", name, err)
+						terminal.Eprintfln("<warning>WARNING</> Unable to start worker \"%s\": %s", name, err)
 						return
 					}
 
@@ -359,7 +359,7 @@ var localServerStartCmd = &console.Command{
 
 					ui.Success(fmt.Sprintf("Started worker \"%s\"", name))
 					if err := runner.Run(); err != nil {
-						_, _ = terminal.Eprintfln("<warning>WARNING</> Worker \"%s\" exited with an error: %s", name, err)
+						terminal.Eprintfln("<warning>WARNING</> Worker \"%s\" exited with an error: %s", name, err)
 					}
 				}(name, pidFile)
 			}

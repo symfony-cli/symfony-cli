@@ -172,7 +172,7 @@ func (s *ProxySuite) TestProxy(c *C) {
 	{
 		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(200)
-			_, _ = w.Write([]byte(`http://symfony-no-tls.wip`))
+			w.Write([]byte(`http://symfony-no-tls.wip`))
 		}))
 		defer backend.Close()
 		backendURL, err := url.Parse(backend.URL)

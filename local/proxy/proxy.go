@@ -77,13 +77,13 @@ func tlsToLocalWebServer(proxy *goproxy.ProxyHttpServer, tlsConfig *tls.Config, 
 		Action: goproxy.ConnectHijack,
 		Hijack: func(req *http.Request, proxyClient net.Conn, ctx *goproxy.ProxyCtx) {
 			ctx.Logf("Hijacking CONNECT")
-			_, _ = proxyClient.Write([]byte("HTTP/1.0 200 OK\r\n\r\n"))
+			proxyClient.Write([]byte("HTTP/1.0 200 OK\r\n\r\n"))
 
 			proxyClientTls := tls.Server(proxyClient, tlsConfig)
 			if err := proxyClientTls.Handshake(); err != nil {
 				defer proxyClient.Close()
 				if re, ok := err.(tls.RecordHeaderError); ok && re.Conn != nil && tlsRecordHeaderLooksLikeHTTP(re.RecordHeader) {
-					_, _ = io.WriteString(proxyClient, "HTTP/1.0 400 Bad Request\r\n\r\nClient sent an HTTP request to an HTTPS server.\n")
+					io.WriteString(proxyClient, "HTTP/1.0 400 Bad Request\r\n\r\nClient sent an HTTP request to an HTTPS server.\n")
 					return
 				}
 
@@ -321,7 +321,7 @@ func (p *Proxy) servePacFile(w http.ResponseWriter, r *http.Request) {
 	// No need to fall back to p.Host and p.Port as r.Host is already checked
 	// upper in the stacktrace.
 	w.Header().Add("Content-Type", "application/x-ns-proxy-autoconfig")
-	_, _ = w.Write([]byte(fmt.Sprintf(`// Only proxy *.%s requests
+	w.Write([]byte(fmt.Sprintf(`// Only proxy *.%s requests
 // Configuration file in ~/.symfony5/proxy.json
 function FindProxyForURL (url, host) {
 	if (dnsDomainIs(host, '.%s')) {
@@ -372,5 +372,5 @@ func (p *Proxy) serveIndex(w http.ResponseWriter, r *http.Request) {
 			content += "<br>"
 		}
 	}
-	_, _ = w.Write([]byte(html.WrapHTML("Proxy Index", html.CreateTerminal(content), "")))
+	w.Write([]byte(html.WrapHTML("Proxy Index", html.CreateTerminal(content), "")))
 }

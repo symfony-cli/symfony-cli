@@ -227,7 +227,7 @@ func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 
 	if s.Callback == nil {
 		w.WriteHeader(http.StatusNotFound)
-		_, _ = w.Write([]byte(html.WrapHTML("Page not found", html.CreateErrorTerminal("# Page not found"), "")))
+		w.Write([]byte(html.WrapHTML("Page not found", html.CreateErrorTerminal("# Page not found"), "")))
 		return
 	}
 	env := map[string]string{
@@ -244,7 +244,7 @@ func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 	if err := s.Callback(w, r, env); err != nil {
 		s.Logger.Error().Err(err).Msg("issue with server callback")
 		w.WriteHeader(http.StatusBadGateway)
-		_, _ = w.Write([]byte(html.WrapHTML(err.Error(), html.CreateErrorTerminal("# "+err.Error()), "")))
+		w.Write([]byte(html.WrapHTML(err.Error(), html.CreateErrorTerminal("# "+err.Error()), "")))
 		return
 	}
 }

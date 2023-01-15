@@ -139,7 +139,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 		p.proxy = httputil.NewSingleHostReverseProxy(target)
 		p.proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 			w.WriteHeader(http.StatusBadGateway)
-			_, _ = w.Write([]byte(html.WrapHTML(err.Error(), html.CreateErrorTerminal("# "+err.Error()), "")))
+			w.Write([]byte(html.WrapHTML(err.Error(), html.CreateErrorTerminal("# "+err.Error()), "")))
 		}
 	}
 
@@ -279,13 +279,13 @@ func (p *Server) writeResponse(w http.ResponseWriter, r *http.Request, env map[s
 	}
 	w.WriteHeader(resp.StatusCode)
 	if r.Method != http.MethodHead {
-		_, _ = io.Copy(w, resp.Body)
+		io.Copy(w, resp.Body)
 	}
 	return nil
 }
 
 func name(dir string) string {
 	h := sha1.New()
-	_, _ = io.WriteString(h, dir)
+	io.WriteString(h, dir)
 	return fmt.Sprintf("%x", h.Sum(nil))
 }

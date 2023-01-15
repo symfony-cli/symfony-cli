@@ -75,13 +75,13 @@ func CheckRequirements() (bool, error) {
 	v, _, _, _ := store.BestVersionForDir(wd)
 	if v == nil {
 		ready = false
-		_, _ = terminal.Println("<error>[KO]</> Cannot find PHP, please install it <href=https://php.net/>https://php.net/</>")
+		terminal.Println("<error>[KO]</> Cannot find PHP, please install it <href=https://php.net/>https://php.net/</>")
 	} else {
 		if v.FullVersion.GreaterThan(minv) {
-			_, _ = terminal.Printfln("<info>[OK]</> PHP installed version %s (%s)", v.FullVersion, v.PHPPath)
+			terminal.Printfln("<info>[OK]</> PHP installed version %s (%s)", v.FullVersion, v.PHPPath)
 		} else {
 			ready = false
-			_, _ = terminal.Printfln("<error>[KO]</> PHP installed; version %s found but we need version 7.2.5+ (%s)", v.FullVersion, v.PHPPath)
+			terminal.Printfln("<error>[KO]</> PHP installed; version %s found but we need version 7.2.5+ (%s)", v.FullVersion, v.PHPPath)
 		}
 	}
 
@@ -110,12 +110,12 @@ func CheckRequirements() (bool, error) {
 			if _, ok := phpexts[ext]; !ok {
 				if reason == "required" {
 					ready = false
-					_, _ = terminal.Printfln(`<error>[KO]</> PHP extension "%s" <error>not found</>, please install it - <comment>%s</>`, ext, reason)
+					terminal.Printfln(`<error>[KO]</> PHP extension "%s" <error>not found</>, please install it - <comment>%s</>`, ext, reason)
 				} else {
-					_, _ = terminal.Printfln(`<warning>[KO]</> PHP extension "%s" <warning>not found</>, <comment>%s</>`, ext, reason)
+					terminal.Printfln(`<warning>[KO]</> PHP extension "%s" <warning>not found</>, <comment>%s</>`, ext, reason)
 				}
 			} else {
-				_, _ = terminal.Printfln(`<info>[OK]</> PHP extension "%s" installed - <comment>%s</>`, ext, reason)
+				terminal.Printfln(`<info>[OK]</> PHP extension "%s" installed - <comment>%s</>`, ext, reason)
 			}
 		}
 	}

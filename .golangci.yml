@@ -1,0 +1,11 @@
+run:
+  timeout: 30s
+  issues-exit-code: 1
+
+linters:
+  disable:
+    # TODO remove these linters and fix the deadcode/errcheck/unused/varcheck
+    - deadcode
+    - errcheck
+    - unused
+    - varcheck

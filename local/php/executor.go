@@ -77,7 +77,7 @@ func (e *Executor) lookupPHP(cliDir string, forceReload bool) (*phpstore.Version
 	phpStore := phpstore.New(cliDir, forceReload, nil)
 	v, source, warning, err := phpStore.BestVersionForDir(e.scriptDir)
 	if warning != "" {
-		_, _ = terminal.Eprintfln("<warning>WARNING</> %s", warning)
+		terminal.Eprintfln("<warning>WARNING</> %s", warning)
 	}
 	if err != nil {
 		return nil, "", true, err
@@ -400,7 +400,7 @@ func LookPath(file string) (string, error) {
 	wd, _ := os.Getwd()
 	v, _, warning, _ := phpStore.BestVersionForDir(wd)
 	if warning != "" {
-		_, _ = terminal.Eprintfln("<warning>WARNING</> %s", warning)
+		terminal.Eprintfln("<warning>WARNING</> %s", warning)
 	}
 	if v == nil {
 		// unable to find the current PHP version, fall back
