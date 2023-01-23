@@ -1,0 +1,4 @@
+#!/opt/homebrew/Cellar/php/8.2.1_1/bin/php
+<?php
+
+echo 'Hello World!';
