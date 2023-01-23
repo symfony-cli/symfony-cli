@@ -20,6 +20,7 @@
 package php
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/sha512"
 	"encoding/hex"
@@ -71,7 +72,7 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, 
 		composerBin = "composer2"
 	}
 	path, err := e.findComposer(composerBin)
-	if err != nil || !isComposerPHPScript(path) {
+	if err != nil || !isPHPScript(path) {
 		fmt.Fprintln(logger, "  WARNING: Unable to find Composer, downloading one. It is recommended to install Composer yourself at https://getcomposer.org/download/")
 		// we don't store it under bin/ to avoid it being found by findComposer as we want to only use it as a fallback
 		binDir := filepath.Join(util.GetHomeDir(), "composer")
@@ -95,19 +96,20 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, 
 	return ComposerResult{}
 }
 
-// isComposerPHPScript checks that the composer file is indeed a phar/PHP script (not a .bat file)
-func isComposerPHPScript(path string) bool {
+// isPHPScript checks that the composer file is indeed a phar/PHP script (not a .bat file)
+func isPHPScript(path string) bool {
 	file, err := os.Open(path)
 	if err != nil {
 		return false
 	}
 	defer file.Close()
-	magicPrefix := []byte("#!/usr/bin/env php")
-	byteSlice := make([]byte, len(magicPrefix))
-	if _, err := file.Read(byteSlice); err != nil {
+	reader := bufio.NewReader(file)
+	byteSlice, _, err := reader.ReadLine()
+	if err != nil {
 		return false
 	}
-	return bytes.Equal(byteSlice, magicPrefix)
+
+	return bytes.HasPrefix(byteSlice, []byte("#!/")) && bytes.HasSuffix(byteSlice, []byte("php"))
 }
 
 func composerVersion() int {
