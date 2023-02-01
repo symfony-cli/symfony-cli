@@ -75,6 +75,24 @@ func (l *Local) FindRelationshipPrefix(frel, fscheme string) string {
 	return ""
 }
 
+func (l *Local) FindHttpServices() []string {
+	services := []string{}
+
+	for key, endpoints := range l.Relationships() {
+		for _, endpoint := range endpoints {
+			if scheme, ok := endpoint["scheme"].(string); !ok {
+				continue
+			} else if scheme != "http" && scheme != "https" {
+				continue
+			}
+
+			services = append(services, key)
+		}
+	}
+
+	return services
+}
+
 func (l *Local) FindServiceUrl(serviceOrRelationship string) (string, bool) {
 	relationships := l.Relationships()
 	env := AsMap(l)
