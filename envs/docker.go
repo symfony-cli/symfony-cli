@@ -380,6 +380,16 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 				"scheme": "http",
 			}
 			return rels
+		} else if p.PrivatePort == 5601 {
+			rels[""] = map[string]interface{}{
+				"host":   host,
+				"ip":     host,
+				"port":   formatDockerPort(p.PublicPort),
+				"path":   "/",
+				"rel":    "kibana",
+				"scheme": "http",
+			}
+			return rels
 		} else if p.PrivatePort == 27017 {
 			path := ""
 			for _, env := range c.Config.Env {
