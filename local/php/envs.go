@@ -29,20 +29,36 @@ import (
 	"github.com/symfony-cli/symfony-cli/envs"
 )
 
-func (p *Server) generateEnv(req *http.Request) map[string]string {
-	scriptName := p.passthru
-	https := ""
-	if req.TLS != nil {
-		https = "On"
-	}
-
-	pathInfo := req.URL.Path
+func (p *Server) resolveScriptName(pathInfo string) (string, string) {
 	if pos := strings.Index(strings.ToLower(pathInfo), ".php"); pos != -1 {
 		file := pathInfo[:pos+4]
 		if _, err := os.Stat(filepath.Join(p.documentRoot, file)); err == nil {
-			scriptName = file
-			pathInfo = pathInfo[pos+4:]
+			return file, pathInfo[pos+4:]
 		}
+	}
+
+	paths := strings.Split(strings.Trim(pathInfo, "/"), "/")
+	for n := len(paths); n > 0; n-- {
+		pathPart := paths[n-1]
+		if pathPart == "" {
+			continue
+		}
+
+		file := filepath.Join(append(paths[:n], p.passthru)...)
+		if _, err := os.Stat(filepath.Join(p.documentRoot, file)); err == nil {
+			return "/" + file, pathInfo[strings.LastIndex(pathInfo, pathPart)+len(pathPart):]
+		}
+	}
+
+	return p.passthru, pathInfo
+}
+
+func (p *Server) generateEnv(req *http.Request) map[string]string {
+	scriptName, pathInfo := p.resolveScriptName(req.URL.Path)
+
+	https := ""
+	if req.TLS != nil {
+		https = "On"
 	}
 
 	remoteAddr := req.Header.Get("X-Client-IP")
