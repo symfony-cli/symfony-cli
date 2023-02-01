@@ -269,7 +269,7 @@ func extractRelationshipsEnvs(env Environment) Envs {
 			} else if rel == "mercure" {
 				values["MERCURE_URL"] = fmt.Sprintf("%s://%s:%s/.well-known/mercure", endpoint["scheme"].(string), endpoint["host"].(string), formatInt(endpoint["port"]))
 				values["MERCURE_PUBLIC_URL"] = values["MERCURE_URL"]
-			} else if scheme == "http" {
+			} else if scheme == "http" || scheme == "https" {
 				username, hasUsername := endpoint["username"].(string)
 				password, hasPassword := endpoint["password"].(string)
 				if hasUsername || hasPassword {
