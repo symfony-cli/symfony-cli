@@ -83,6 +83,7 @@ func CommonCommands() []*console.Command {
 		localSecurityCheckCmd,
 		projectLocalMailCatcherOpenCmd,
 		projectLocalRabbitMQManagementOpenCmd,
+		projectLocalServiceOpenCmd,
 		projectLocalOpenCmd,
 	}
 	return append(localCommands, adminCommands...)
