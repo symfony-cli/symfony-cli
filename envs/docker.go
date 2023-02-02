@@ -439,6 +439,12 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 			"port": formatDockerPort(p.PublicPort),
 			"rel":  "simple",
 		}
+		// Official HTTP(s) ports or well know alternatives
+		if p.PrivatePort == 80 || p.PrivatePort == 8008 || p.PrivatePort == 8080 || p.PrivatePort == 8081 {
+			rels[""]["scheme"] = "http"
+		} else if p.PrivatePort == 443 || p.PrivatePort == 8443 {
+			rels[""]["scheme"] = "https"
+		}
 		return rels
 	}
 
