@@ -135,7 +135,7 @@ var projectLocalRabbitMQManagementOpenCmd = &console.Command{
 func abstractOpenCmd(url string) {
 	if err := open.Run(url); err != nil {
 		terminal.Eprintln("<error>Error while opening:", err, "</>")
-		terminal.Eprintfln("Please visit <href=%>%s</> manually.", url)
+		terminal.Eprintfln("Please visit <href=%>%s</> manually.", url, url)
 	} else {
 		terminal.Eprintfln("Opened: <href=%s>%s</>", url, url)
 	}
