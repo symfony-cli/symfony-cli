@@ -223,6 +223,7 @@ func extractRelationshipsEnvs(env Environment) Envs {
 				if !isMaster(endpoint) {
 					continue
 				}
+				values[fmt.Sprintf("%sURL", prefix)] = fmt.Sprintf("%s://%s:%s@%s:%s/?authSource=%s", endpoint["scheme"].(string), endpoint["username"].(string), endpoint["password"].(string), endpoint["host"].(string), formatInt(endpoint["port"]), endpoint["path"].(string))
 				values[fmt.Sprintf("%sSERVER", prefix)] = formatServer(endpoint)
 				values[fmt.Sprintf("%sHOST", prefix)] = endpoint["host"].(string)
 				values[fmt.Sprintf("%sPORT", prefix)] = formatInt(endpoint["port"])
@@ -233,14 +234,6 @@ func extractRelationshipsEnvs(env Environment) Envs {
 				values[fmt.Sprintf("%sUSER", prefix)] = endpoint["username"].(string)
 				values[fmt.Sprintf("%sUSERNAME", prefix)] = endpoint["username"].(string)
 				values[fmt.Sprintf("%sPASSWORD", prefix)] = endpoint["password"].(string)
-				values[fmt.Sprintf("%sURL", prefix)] = fmt.Sprintf(
-					"%s://%s:%s@%s:%s/?authSource=%s",
-					endpoint["scheme"].(string),
-					endpoint["username"].(string),
-					endpoint["password"].(string),
-					endpoint["host"].(string),
-					formatInt(endpoint["port"]),
-					endpoint["path"].(string))
 			} else if scheme == "amqp" {
 				values[fmt.Sprintf("%sURL", prefix)] = fmt.Sprintf("%s://%s:%s@%s:%s", endpoint["scheme"].(string), endpoint["username"].(string), endpoint["password"].(string), endpoint["host"].(string), formatInt(endpoint["port"]))
 				values[fmt.Sprintf("%sDSN", prefix)] = fmt.Sprintf("%s://%s:%s@%s:%s", endpoint["scheme"].(string), endpoint["username"].(string), endpoint["password"].(string), endpoint["host"].(string), formatInt(endpoint["port"]))
