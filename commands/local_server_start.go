@@ -72,6 +72,12 @@ var localServerStartCmd = &console.Command{
 		&console.StringFlag{
 			Name:  "tls-key-log-file",
 			Usage: "Destination for TLS master secrets in NSS key log format",
+			// If 'SSLKEYLOGFILE' environment variable is set, uses this as a
+			// destination of TLS key log. In this context, the name
+			// 'SSLKEYLOGFILE' is common, so using 'SSL' instead of 'TLS' name.
+			// This environment variable is preferred than the key log file
+			// from the console argument.
+			EnvVars: []string{"SSLKEYLOGFILE"},
 		},
 	},
 	Action: func(c *console.Context) error {
@@ -172,13 +178,6 @@ var localServerStartCmd = &console.Command{
 				}
 				config.PKCS12 = p12
 			}
-		}
-
-		// If 'SSLKEYLOGFILE' environment variable is set, uses this as a destination of TLS key log.
-		// In this context, the name 'SSLKEYLOGFILE' is common, so using 'SSL' instead of 'TLS' name.
-		// This environment variable is preferred than the key log file from the console argument.
-		if path := os.Getenv("SSLKEYLOGFILE"); path != "" {
-			config.TlsKeyLogFile = path
 		}
 
 		if config.TlsKeyLogFile != "" {
