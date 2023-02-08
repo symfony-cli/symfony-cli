@@ -88,10 +88,10 @@ func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.Rea
 	extraLinks := ``
 	if env, err := envs.NewLocal(p.projectDir, terminal.IsDebug()); err == nil {
 		if url, exists := env.FindServiceUrl("mailer"); exists {
-			webmail = fmt.Sprintf(`<b><a class="sf-cli-webmail" href="%s" target="_blank">Webmail</a></b> <span class="sf-toolbar-status sf-toolbar-status-green">Up</span></a>`, url)
+			webmail = fmt.Sprintf(`<b><a class="sf-cli-webmail" href="%s" rel="noopener" target="_blank">Webmail</a></b> <span class="sf-toolbar-status sf-toolbar-status-green">Up</span></a>`, url)
 		}
 		if url, exists := env.FindServiceUrl("amqp"); exists {
-			rabbitmqui = fmt.Sprintf(`<b><a class="sf-cli-rabbitmq" href="%s" target="_blank">RabbitMQ UI</a></b> <span class="sf-toolbar-status sf-toolbar-status-green">Up</span></a>`, url)
+			rabbitmqui = fmt.Sprintf(`<b><a class="sf-cli-rabbitmq" href="%s" rel="noopener" target="_blank">RabbitMQ UI</a></b> <span class="sf-toolbar-status sf-toolbar-status-green">Up</span></a>`, url)
 		}
 		if prefix := env.FindRelationshipPrefix("blackfire", "tcp"); prefix != "" {
 			blackfire = `<span class="sf-toolbar-status sf-toolbar-status-green">Up</span>`
@@ -102,7 +102,7 @@ func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.Rea
 			}
 
 			if url, exists := env.FindServiceUrl(service); exists {
-				extraLinks += fmt.Sprintf(`<div class="sf-toolbar-info-piece"><b><a class="sf-cli-service-link" href="%s" target="_blank">%s</a></b></div>`, url, cases.Title(language.Und).String(service))
+				extraLinks += fmt.Sprintf(`<div class="sf-toolbar-info-piece"><b><a class="sf-cli-service-link" href="%s" rel="noopener" target="_blank">%s</a></b></div>`, url, cases.Title(language.Und).String(service))
 			}
 		}
 
@@ -142,7 +142,7 @@ func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.Rea
 		<div class="sf-toolbar-info-piece">` + rabbitmqui + `</div>
 		<div class="sf-toolbar-info-piece">` + webmail + `</div>
 		<div class="sf-toolbar-info-piece">
-			<b><a class="sf-cli-blackfire" href="https://blackfire.io/" target="_blank">Blackfire.io Agent</a></b>` + blackfire + `</div>
+			<b><a class="sf-cli-blackfire" href="https://blackfire.io/" rel="noopener" target="_blank">Blackfire.io Agent</a></b>` + blackfire + `</div>
 	` + extraLinks + `
 	</div>
 	<div></div>
