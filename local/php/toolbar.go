@@ -22,13 +22,14 @@ package php
 import (
 	"bytes"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"regexp"
-
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/symfony-cli/envs"
 	"github.com/symfony-cli/terminal"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
+	"io"
+	"io/ioutil"
+	"regexp"
 )
 
 func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.ReadCloser, error) {
@@ -81,23 +82,32 @@ func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.Rea
 		}
 	}
 
-	webmail := `<span class="sf-toolbar-status sf-toolbar-status-red">Down</span>`
-	rabbitmqui := `<span class="sf-toolbar-status sf-toolbar-status-red">Down</span>`
+	webmail := `<b>Webmail</b> <span class="sf-toolbar-status sf-toolbar-status-red">Down</span>`
+	rabbitmqui := `<b>RabbitMQ UI</b> <span class="sf-toolbar-status sf-toolbar-status-red">Down</span>`
 	blackfire := `<span class="sf-toolbar-status sf-toolbar-status-red">Down</span>`
+	extraLinks := ``
 	if env, err := envs.NewLocal(p.projectDir, terminal.IsDebug()); err == nil {
-		values := envs.AsMap(env)
-		if prefix := env.FindRelationshipPrefix("mailer", "http"); prefix != "" {
-			if url, exists := values[prefix+"URL"]; exists {
-				webmail = fmt.Sprintf(`<span class="sf-toolbar-status sf-toolbar-status-green">Up</span>&nbsp;&nbsp;&nbsp;<a class="sf-cli-webmail" href="%s" target="_blank">Open</a>`, url)
-			}
+		if url, exists := env.FindServiceUrl("mailer"); exists {
+			webmail = fmt.Sprintf(`<b><a class="sf-cli-webmail" href="%s" rel="noopener" target="_blank">Webmail</a></b> <span class="sf-toolbar-status sf-toolbar-status-green">Up</span></a>`, url)
 		}
-		if prefix := env.FindRelationshipPrefix("amqp", "http"); prefix != "" {
-			if url, exists := values[prefix+"URL"]; exists {
-				rabbitmqui = fmt.Sprintf(`<span class="sf-toolbar-status sf-toolbar-status-green">Up</span>&nbsp;&nbsp;&nbsp;<a class="sf-cli-rabbitmq" href="%s" target="_blank">Open</a>`, url)
-			}
+		if url, exists := env.FindServiceUrl("amqp"); exists {
+			rabbitmqui = fmt.Sprintf(`<b><a class="sf-cli-rabbitmq" href="%s" rel="noopener" target="_blank">RabbitMQ UI</a></b> <span class="sf-toolbar-status sf-toolbar-status-green">Up</span></a>`, url)
 		}
 		if prefix := env.FindRelationshipPrefix("blackfire", "tcp"); prefix != "" {
-			blackfire = `<span class="sf-toolbar-status sf-toolbar-status-green">Up</span>&nbsp;&nbsp;&nbsp;<a class="sf-cli-blackfire" href="https://blackfire.io/" target="_blank">Open</a>`
+			blackfire = `<span class="sf-toolbar-status sf-toolbar-status-green">Up</span>`
+		}
+		for _, service := range env.FindHttpServices() {
+			if service == "mailer-web" || service == "amqp" {
+				continue
+			}
+
+			if url, exists := env.FindServiceUrl(service); exists {
+				extraLinks += fmt.Sprintf(`<div class="sf-toolbar-info-piece"><b><a class="sf-cli-service-link" href="%s" rel="noopener" target="_blank">%s</a></b></div>`, url, cases.Title(language.Und).String(service))
+			}
+		}
+
+		if len(extraLinks) > 0 {
+			extraLinks = `<hr/>` + extraLinks
 		}
 	}
 
@@ -129,15 +139,11 @@ func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.Rea
 		<div class="sf-toolbar-info-piece">
 			<b>Env Vars</b>` + envVars + `
 		</div>
+		<div class="sf-toolbar-info-piece">` + rabbitmqui + `</div>
+		<div class="sf-toolbar-info-piece">` + webmail + `</div>
 		<div class="sf-toolbar-info-piece">
-			<b>RabbitMQ UI</b>` + rabbitmqui + `
-		</div>
-		<div class="sf-toolbar-info-piece">
-			<b>Webmail</b>` + webmail + `
-		</div>
-		<div class="sf-toolbar-info-piece">
-			<b>Blackfire.io Agent</b>` + blackfire + `
-		</div>
+			<b><a class="sf-cli-blackfire" href="https://blackfire.io/" rel="noopener" target="_blank">Blackfire.io Agent</a></b>` + blackfire + `</div>
+	` + extraLinks + `
 	</div>
 	<div></div>
 </div>
