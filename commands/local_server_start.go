@@ -176,8 +176,8 @@ var localServerStartCmd = &console.Command{
 
 		// If 'SSLKEYLOGFILE' environment variable is set, uses this as a destination of TLS key log.
 		// In this context, the name 'SSLKEYLOGFILE' is common, so using 'SSL' instead of 'TLS' name.
-		// The key log file from the console argument or YAML config is preferred than the environment variable.
-		if path := os.Getenv("SSLKEYLOGFILE"); path != "" && config.TlsKeyLogFile == "" {
+		// This environment variable is preferred than the key log file from the console argument.
+		if path := os.Getenv("SSLKEYLOGFILE"); path != "" {
 			config.TlsKeyLogFile = path
 		}
 
