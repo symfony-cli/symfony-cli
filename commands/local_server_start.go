@@ -50,6 +50,7 @@ import (
 )
 
 var localWebServerProdWarningMsg = "The local web server is optimized for local development and MUST never be used in a production setup."
+var localWebServerTlsKeyLogWarningMsg = "Logging TLS master key is enabled. It means TLS connections between the client and this server will be INSECURE. This is NOT recommended unless you are debugging the connections."
 
 var localServerStartCmd = &console.Command{
 	Category:    "local",
@@ -178,6 +179,10 @@ var localServerStartCmd = &console.Command{
 		// The key log file from the console argument or YAML config is preferred than the environment variable.
 		if path := os.Getenv("SSLKEYLOGFILE"); path != "" && config.TlsKeyLogFile == "" {
 			config.TlsKeyLogFile = path
+		}
+
+		if config.TlsKeyLogFile != "" {
+			ui.Warning(localWebServerTlsKeyLogWarningMsg)
 		}
 
 		lw, err := pidFile.LogWriter()
