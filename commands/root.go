@@ -26,7 +26,6 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
-	"github.com/spf13/viper"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/reexec"
 	"github.com/symfony-cli/symfony-cli/updater"
@@ -99,7 +98,6 @@ func CheckGitIsAvailable(c *console.Context) error {
 
 func init() {
 	initCLI()
-	initConfig()
 }
 
 func GetPSH() (*platformshCLI, error) {
@@ -182,21 +180,6 @@ Environment variables to use Platform.sh relationships or Docker services are au
 {{with .Command "php"}}  <info>{{.PreferredName}}</>{{"\t"}}{{.Usage}}{{end}}
 
 `
-}
-
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	if os.Getenv("SF_CONFIG") != "" {
-		viper.SetConfigFile(os.Getenv("SF_CONFIG"))
-	}
-	viper.SetConfigName("symfony")
-	viper.AddConfigPath("$HOME/.symfony")
-	viper.AddConfigPath(".")
-	viper.AutomaticEnv()
-	viper.SetEnvPrefix("SYMFONY")
-	if err := viper.ReadInConfig(); err == nil {
-		terminal.Logger.Info().Msg("Using config file: " + viper.ConfigFileUsed())
-	}
 }
 
 func getProjectDir(dir string) (string, error) {
