@@ -62,6 +62,7 @@ func New(c *Config) (*Project, error) {
 			AllowHTTP:     c.AllowHTTP,
 			UseGzip:       c.UseGzip,
 			Appversion:    c.AppVersion,
+			TlsKeyLogFile: c.TlsKeyLogFile,
 		},
 	}
 	if err != nil {

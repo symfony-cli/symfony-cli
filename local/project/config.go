@@ -41,10 +41,11 @@ type Config struct {
 	PKCS12        string `yaml:"p12"`
 	Logger        zerolog.Logger
 	AppVersion    string
-	AllowHTTP     bool `yaml:"allow_http"`
-	NoTLS         bool `yaml:"no_tls"`
-	Daemon        bool `yaml:"daemon"`
-	UseGzip       bool `yaml:"use_gzip"`
+	AllowHTTP     bool   `yaml:"allow_http"`
+	NoTLS         bool   `yaml:"no_tls"`
+	Daemon        bool   `yaml:"daemon"`
+	UseGzip       bool   `yaml:"use_gzip"`
+	TlsKeyLogFile string `yaml:"tls_key_log_file"`
 }
 
 type FileConfig struct {
@@ -104,9 +105,11 @@ func NewConfigFromContext(c *console.Context, projectDir string) (*Config, *File
 	if c.IsSet("daemon") {
 		config.Daemon = c.Bool("daemon")
 	}
-
 	if c.IsSet("use-gzip") {
 		config.UseGzip = c.Bool("use-gzip")
+	}
+	if c.IsSet("tls-key-log-file") {
+		config.TlsKeyLogFile = c.String("tls-key-log-file")
 	}
 
 	return config, fileConfig, nil

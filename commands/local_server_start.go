@@ -68,6 +68,10 @@ var localServerStartCmd = &console.Command{
 		&console.StringFlag{Name: "p12", Usage: "Name of the file containing the TLS certificate to use in p12 format"},
 		&console.BoolFlag{Name: "no-tls", Usage: "Use HTTP instead of HTTPS"},
 		&console.BoolFlag{Name: "use-gzip", Usage: "Use GZIP"},
+		&console.StringFlag{
+			Name:  "tls-key-log-file",
+			Usage: "Destination for TLS master secrets in NSS key log format",
+		},
 	},
 	Action: func(c *console.Context) error {
 		ui := terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin)
