@@ -150,7 +150,7 @@ func WelcomeAction(c *console.Context) error {
 	terminal.Println("")
 	psh, err := GetPSH()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	displayCommandsHelp(c, append([]*console.Command{projectInitCmd}, psh.PSHMainCommands()...))
 	terminal.Println("")
@@ -186,8 +186,10 @@ func getProjectDir(dir string) (string, error) {
 
 	var err error
 	if dir, err = filepath.Abs(dir); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 
-	return filepath.EvalSymlinks(dir)
+	link, e := filepath.EvalSymlinks(dir)
+
+	return link, errors.WithStack(e)
 }

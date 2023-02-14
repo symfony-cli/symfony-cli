@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/php"
 	"github.com/symfony-cli/symfony-cli/util"
@@ -50,21 +51,21 @@ var localRequirementsCheckCmd = &console.Command{
 			var err error
 			path, err = os.Getwd()
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		}
 
 		cacheDir := filepath.Join(util.GetHomeDir(), "cache")
 		if _, err := os.Stat(cacheDir); err != nil {
 			if err := os.MkdirAll(cacheDir, 0755); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		}
 
 		cachePath := filepath.Join(cacheDir, "check.php")
 		defer os.Remove(cachePath)
 		if err := os.WriteFile(cachePath, phpChecker, 0600); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		args := []string{"php", cachePath}

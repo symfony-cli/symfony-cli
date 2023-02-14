@@ -19,7 +19,10 @@
 
 package inotify
 
-import "github.com/syncthing/notify"
+import (
+	"github.com/pkg/errors"
+	"github.com/syncthing/notify"
+)
 
 // Create, Remove, Write and Rename are the only event values guaranteed to be
 // present on all platforms.
@@ -40,5 +43,9 @@ func Stop(c chan<- EventInfo) {
 }
 
 func simpleWatch(path string, c chan<- EventInfo, events ...notify.Event) error {
-	return notify.Watch(path, c, events...)
+	if err := notify.Watch(path, c, events...); err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
 }

@@ -36,7 +36,7 @@ func (b *Book) Checkout(step string) error {
 	// FIXME: keep vendor/ node_modules/ around before git clean, but them back as they will be updated the right way, less Internet traffic
 	// FIXME: if the checkout is to a later step, no need to remove the DB, we can just migrate it
 	if err := os.Chdir(b.Dir); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	step = strings.Replace(step, ".", "-", -1)
 	tag := fmt.Sprintf("step-%s", step)
@@ -82,21 +82,21 @@ func (b *Book) Checkout(step string) error {
 
 	printBanner("<comment>[GIT]</> Removing Git ignored files (vendor, cache, ...)", b.Debug)
 	if err := executeCommand([]string{"git", "clean", "-d", "-f", "-x"}, b.Debug, false, nil); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	printBanner("<comment>[GIT]</> Resetting Git staged files", b.Debug)
 	if err := executeCommand([]string{"git", "reset", "HEAD", "."}, b.Debug, false, nil); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	printBanner("<comment>[GIT]</> Removing un-tracked Git files", b.Debug)
 	if err := executeCommand([]string{"git", "checkout", "."}, b.Debug, false, nil); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	printBanner("<comment>[WEB]</> Adding .env.local", b.Debug)
 	emptyFile, err := os.Create(filepath.Join(b.Dir, ".env.local"))
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	emptyFile.Close()
 	if !b.Debug {
@@ -112,7 +112,7 @@ func (b *Book) Checkout(step string) error {
 	printBanner("<comment>[WEB]</> Stopping Docker Containers", b.Debug)
 	if hasDocker {
 		if err := executeCommand(append(dockerComposeBin(), "down", "--remove-orphans"), b.Debug, false, nil); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	} else {
 		terminal.Println("Skipped for this step")
@@ -120,23 +120,23 @@ func (b *Book) Checkout(step string) error {
 
 	printBanner("<comment>[WEB]</> Stopping the Local Web Server", b.Debug)
 	if err = executeCommand([]string{"symfony", "server:stop"}, b.Debug, true, nil); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	printBanner("<comment>[WEB]</> Stopping the Platform.sh tunnel", b.Debug)
 	if err := executeCommand([]string{"symfony", "tunnel:close", "-y"}, b.Debug, true, nil); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	printBanner("<comment>[GIT]</> Checking out the step", b.Debug)
 	if err := executeCommand([]string{"git", "checkout", "-B", branch, tag}, b.Debug, false, nil); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	printBanner("<comment>[SPA]</> Stopping the Local Web Server", b.Debug)
 	if _, err := os.Stat(filepath.Join(b.Dir, "spa")); err == nil {
 		if err = executeCommand([]string{"symfony", "server:stop", "--dir", filepath.Join(b.Dir, "spa")}, b.Debug, true, nil); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	} else {
 		terminal.Println("Skipped for this step")
@@ -144,12 +144,12 @@ func (b *Book) Checkout(step string) error {
 
 	printBanner("<comment>[WEB]</> Installing Composer dependencies (might take some time)", b.Debug)
 	if err := executeCommand([]string{"symfony", "composer", "install"}, b.Debug, false, nil); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	printBanner("<comment>[WEB]</> Adding .env.local", b.Debug)
 	if emptyFile, err = os.Create(filepath.Join(b.Dir, ".env.local")); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	emptyFile.Close()
 	if !b.Debug {
@@ -159,7 +159,7 @@ func (b *Book) Checkout(step string) error {
 	printBanner("<comment>[WEB]</> Starting Docker Compose", b.Debug)
 	if hasDocker {
 		if err := executeCommand(append(dockerComposeBin(), "up", "-d"), b.Debug, false, nil); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		printBanner("<comment>[WEB]</> Waiting for the Containers to be ready", b.Debug)
 		if _, err := os.Stat(filepath.Join(b.Dir, "src", "MessageHandler", "CommentMessageHandler.php")); err == nil {
@@ -185,7 +185,7 @@ func (b *Book) Checkout(step string) error {
 	}
 	if hasMigrations {
 		if err := executeCommand([]string{"symfony", "console", "doctrine:migrations:migrate", "-n"}, b.Debug, false, nil); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	} else {
 		terminal.Println("Skipped for this step")
@@ -194,7 +194,7 @@ func (b *Book) Checkout(step string) error {
 	printBanner("<comment>[WEB]</> Inserting Fixtures", b.Debug)
 	if _, err := os.Stat(filepath.Join(b.Dir, "src", "DataFixtures")); err == nil {
 		if err := executeCommand([]string{"symfony", "console", "doctrine:fixtures:load", "-n"}, b.Debug, false, nil); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	} else {
 		terminal.Println("Skipped for this step")
@@ -208,7 +208,7 @@ func (b *Book) Checkout(step string) error {
 			args = []string{"yarn", "install"}
 		}
 		if err := executeCommand(args, b.Debug, false, nil); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	} else {
 		terminal.Println("Skipped for this step")
@@ -221,7 +221,7 @@ func (b *Book) Checkout(step string) error {
 			args = []string{"yarn", "encore", "dev"}
 		}
 		if err := executeCommand(args, b.Debug, false, nil); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	} else {
 		terminal.Println("Skipped for this step")
@@ -229,13 +229,13 @@ func (b *Book) Checkout(step string) error {
 
 	printBanner("<comment>[WEB]</> Starting the Local Web Server", b.Debug)
 	if err := executeCommand([]string{"symfony", "server:start", "-d"}, b.Debug, false, nil); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	printBanner("<comment>[WEB]</> Starting Message Consumer", b.Debug)
 	if _, err := os.Stat(filepath.Join(b.Dir, "src", "MessageHandler", "CommentMessageHandler.php")); err == nil {
 		if err := executeCommand([]string{"symfony", "run", "-d", "--watch", "config,src,templates,vendor", "symfony", "console", "messenger:consume", "async", "-vv"}, b.Debug, false, nil); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	} else {
 		terminal.Println("Skipped for this step")
@@ -244,7 +244,7 @@ func (b *Book) Checkout(step string) error {
 	printBanner("<comment>[SPA]</> Installing Node dependencies (might take some time)", b.Debug)
 	if _, err := os.Stat(filepath.Join(b.Dir, "spa")); err == nil {
 		if err = os.Chdir(filepath.Join(b.Dir, "spa")); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		args := []string{"npm", "install"}
 		if _, err := os.Stat(filepath.Join(b.Dir, "yarn.lock")); err == nil {
@@ -252,10 +252,10 @@ func (b *Book) Checkout(step string) error {
 			args = []string{"yarn", "install"}
 		}
 		if err := executeCommand(args, b.Debug, false, nil); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		if err = os.Chdir(b.Dir); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	} else {
 		terminal.Println("Skipped for this step")
@@ -275,7 +275,7 @@ func (b *Book) Checkout(step string) error {
 			return errors.Errorf("unable to get the URL of the local web server:\n%s\n%s", stderr.String(), endpoint.String())
 		}
 		if err = os.Chdir(filepath.Join(b.Dir, "spa")); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		env := append(os.Environ(), "API_ENDPOINT="+endpoint.String())
 		args := []string{"npx", "encore", "dev"}
@@ -283,10 +283,10 @@ func (b *Book) Checkout(step string) error {
 			args = []string{"yarn", "encore", "dev"}
 		}
 		if err := executeCommand(args, b.Debug, false, env); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		if err = os.Chdir(b.Dir); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	} else {
 		terminal.Println("Skipped for this step")
@@ -295,7 +295,7 @@ func (b *Book) Checkout(step string) error {
 	printBanner("<comment>[SPA]</> Starting the Local Web Server", b.Debug)
 	if _, err := os.Stat(filepath.Join(b.Dir, "spa")); err == nil {
 		if err := executeCommand([]string{"symfony", "server:start", "-d", "--passthru", "index.html", "--dir", filepath.Join(b.Dir, "spa")}, b.Debug, false, nil); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	} else {
 		terminal.Println("Skipped for this step")
@@ -336,7 +336,7 @@ func executeCommand(args []string, debug, skipErrors bool, env []string) error {
 			terminal.Println("<error>[ KO ]</>")
 		}
 		terminal.Print(buf.String())
-		return err
+		return errors.WithStack(err)
 	}
 	if !debug {
 		terminal.Println("<info>[ OK ]</>")

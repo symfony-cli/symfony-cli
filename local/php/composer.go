@@ -154,7 +154,7 @@ func findComposer(extraBin string) (string, error) {
 
 func downloadComposer(dir string) (string, error) {
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	path := filepath.Join(dir, "composer.phar")
 	if _, err := os.Stat(path); err == nil {
@@ -163,11 +163,11 @@ func downloadComposer(dir string) (string, error) {
 
 	sig, err := downloadComposerInstallerSignature()
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	installer, err := downloadComposerInstaller()
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	h := sha512.New384()
 	h.Write(installer)
@@ -179,7 +179,7 @@ func downloadComposer(dir string) (string, error) {
 	}
 	setupPath := filepath.Join(dir, "composer-setup.php")
 	if err = os.WriteFile(setupPath, installer, 0666); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 
 	var stdout bytes.Buffer
@@ -196,10 +196,10 @@ func downloadComposer(dir string) (string, error) {
 		return "", errors.New("unable to setup Composer")
 	}
 	if err := os.Chmod(path, 0755); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	if err := os.Remove(filepath.Join(dir, "composer-setup.php")); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 
 	return path, nil
@@ -208,17 +208,21 @@ func downloadComposer(dir string) (string, error) {
 func downloadComposerInstaller() ([]byte, error) {
 	resp, err := http.Get("https://getcomposer.org/installer")
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	defer resp.Body.Close()
-	return io.ReadAll(resp.Body)
+	b, e := io.ReadAll(resp.Body)
+
+	return b, errors.WithStack(e)
 }
 
 func downloadComposerInstallerSignature() ([]byte, error) {
 	resp, err := http.Get("https://composer.github.io/installer.sig")
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	defer resp.Body.Close()
-	return io.ReadAll(resp.Body)
+	b, e := io.ReadAll(resp.Body)
+
+	return b, errors.WithStack(e)
 }

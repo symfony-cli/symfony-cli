@@ -45,7 +45,7 @@ var localServerCAInstallCmd = &console.Command{
 		certsDir := filepath.Join(homeDir, "certs")
 		ca, err := cert.NewCA(certsDir)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		newCA := false
 		renew := c.Bool("renew")
@@ -62,10 +62,10 @@ var localServerCAInstallCmd = &console.Command{
 		}
 		if renew && !newCA {
 			if err = ca.Uninstall(); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 			if err = os.RemoveAll(certsDir); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 			renew = false
 

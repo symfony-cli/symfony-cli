@@ -36,7 +36,7 @@ func Fetch(cwd, remote, branch string) error {
 
 	_, err := execGitQuiet(cwd, args...)
 
-	return err
+	return errors.WithStack(err)
 }
 
 func Clone(url, dir string) error {

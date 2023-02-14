@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/phpstore"
 	"github.com/symfony-cli/symfony-cli/envs"
@@ -43,7 +44,7 @@ var localServerStatusCmd = &console.Command{
 	Action: func(c *console.Context) error {
 		projectDir, err := getProjectDir(c.String("dir"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		return printWebServerStatus(projectDir)
@@ -98,7 +99,7 @@ func printWebServerStatus(projectDir string) error {
 	terminal.Println("<info>Environment Variables</>")
 	data, err := envs.GetEnv(projectDir, terminal.IsDebug())
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	env := envs.AsMap(data)
 	envVars := `<comment>None</>`

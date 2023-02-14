@@ -18,7 +18,7 @@ func InstallPlatformPhar(home string) error {
 	cacheDir := filepath.Join(os.TempDir(), ".symfony", "platformsh", "cache")
 	if _, err := os.Stat(cacheDir); err != nil {
 		if err := os.MkdirAll(cacheDir, 0755); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	}
 	var versionPath = filepath.Join(cacheDir, "internal_version")
@@ -36,17 +36,17 @@ func InstallPlatformPhar(home string) error {
 	defer spinner.Stop()
 	resp, err := http.Get("https://platform.sh/cli/installer")
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	defer resp.Body.Close()
 	installer, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	installerPath := filepath.Join(home, "platformsh-installer.php")
 	if err = os.WriteFile(installerPath, installer, 0666); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	defer func() {
 		_ = os.Remove(installerPath)
@@ -66,5 +66,5 @@ func InstallPlatformPhar(home string) error {
 		return errors.Errorf("unable to setup platformsh CLI: %s", stdout.String())
 	}
 
-	return os.WriteFile(versionPath, internalVersion, 0644)
+	return errors.WithStack(os.WriteFile(versionPath, internalVersion, 0644))
 }

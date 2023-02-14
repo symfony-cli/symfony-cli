@@ -33,7 +33,7 @@ func (b *Book) Clone(version string) error {
 	ui.Section("Checking Book Requirements")
 	ready, err := CheckRequirements()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	terminal.Println("")
 	if !ready {
@@ -51,7 +51,7 @@ func (b *Book) Clone(version string) error {
 	terminal.Println("")
 
 	if err = os.Chdir(b.Dir); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	// checkout the first step by default
 	ui.Section("Getting Ready for the First Step of the Book")
@@ -61,7 +61,7 @@ func (b *Book) Clone(version string) error {
 			terminal.Println("Re-run the command with <comment>--debug</> to get more information about the error")
 			terminal.Println("")
 		}
-		return err
+		return errors.WithStack(err)
 	}
 	return nil
 }

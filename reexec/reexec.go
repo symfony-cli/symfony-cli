@@ -189,9 +189,9 @@ func NotifyForeground(status string) error {
 		os.Stdin.Close()
 		os.Stdout.Close()
 		os.Stderr.Close()
-		return os.Remove(statusFile)
+		return errors.WithStack(os.Remove(statusFile))
 	}
-	return os.WriteFile(statusFile, []byte(status), 0600)
+	return errors.WithStack(os.WriteFile(statusFile, []byte(status), 0600))
 }
 
 func WatchParent(stopCh chan bool) error {
@@ -231,7 +231,7 @@ func Restart(postRespawn func()) error {
 	}
 	p, err := Respawn()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	if postRespawn != nil {
@@ -282,7 +282,7 @@ func Restart(postRespawn func()) error {
 func Respawn() (*os.Process, error) {
 	argv0, err := console.CurrentBinaryPath()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	wd, err := os.Getwd()
 	if err != nil {

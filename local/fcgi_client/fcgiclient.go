@@ -255,7 +255,7 @@ func (w *bufWriter) Close() error {
 		w.closer.Close()
 		return errors.WithStack(err)
 	}
-	return w.closer.Close()
+	return errors.WithStack(w.closer.Close())
 }
 
 func newWriter(c *FCGIClient, recType uint8) *bufWriter {
@@ -363,19 +363,19 @@ func (f *FCGIClient) Request(p map[string]string, req io.Reader) (resp *http.Res
 		if err == io.EOF {
 			err = io.ErrUnexpectedEOF
 		}
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	resp.Header = http.Header(mimeHeader)
 	// TODO: fixTransferEncoding?
 	resp.TransferEncoding = resp.Header["Transfer-Encoding"]
 	if resp.ContentLength, err = strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64); err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	// status
 	err = errors.WithStack(extractStatus(resp))
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	if chunked(resp.TransferEncoding) {
@@ -437,7 +437,7 @@ func (f *FCGIClient) PostFile(p map[string]string, data url.Values, file map[str
 	for key, val := range file {
 		fd, e := os.Open(val)
 		if e != nil {
-			return nil, e
+			return nil, errors.WithStack(e)
 		}
 		defer fd.Close()
 

@@ -65,12 +65,12 @@ func CheckRequirements() (bool, error) {
 	// PHP
 	minv, err := version.NewVersion("8.1.0")
 	if err != nil {
-		return false, err
+		return false, errors.WithStack(err)
 	}
 	store := phpstore.New(util.GetHomeDir(), true, nil)
 	wd, err := os.Getwd()
 	if err != nil {
-		return false, err
+		return false, errors.WithStack(err)
 	}
 	v, _, _, _ := store.BestVersionForDir(wd)
 	if v == nil {

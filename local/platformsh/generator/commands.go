@@ -105,7 +105,7 @@ func generateCommands() {
 	if err != nil {
 		panic(err)
 	}
-	f.Write(buf.Bytes())
+	_, _ = f.Write(buf.Bytes())
 
 }
 
@@ -134,7 +134,7 @@ func parseCommands(home string) (string, error) {
 
 	var definition application
 	if err := json.Unmarshal(cleanOutput, &definition); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 
 	allCommandNames := map[string]bool{}

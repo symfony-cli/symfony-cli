@@ -84,7 +84,7 @@ var localServerStartCmd = &console.Command{
 		ui := terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin)
 		projectDir, err := getProjectDir(c.String("dir"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		pidFile := pid.New(projectDir, nil)
 		pidFile.CustomName = "Web Server"
@@ -93,7 +93,7 @@ var localServerStartCmd = &console.Command{
 			return errors.WithStack(printWebServerStatus(projectDir))
 		}
 		if err := cleanupWebServerFiles(projectDir, pidFile); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		homeDir := util.GetHomeDir()
@@ -113,7 +113,7 @@ var localServerStartCmd = &console.Command{
 		}
 
 		if err = reexec.NotifyForeground("config"); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		config, fileConfig, err := project.NewConfigFromContext(c, projectDir)
 		if err != nil {
@@ -128,7 +128,7 @@ var localServerStartCmd = &console.Command{
 			}
 			if err := reexec.Background(varDir); err != nil {
 				if _, isExitCoder := err.(console.ExitCoder); isExitCoder {
-					return err
+					return errors.WithStack(err)
 				}
 				terminal.Eprintln("Impossible to go to the background")
 				terminal.Eprintln("Continue in foreground")
@@ -140,7 +140,7 @@ var localServerStartCmd = &console.Command{
 		}
 
 		if err = reexec.NotifyForeground("proxy"); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		proxyConfig, err := proxy.Load(homeDir)
 		if err != nil {
@@ -153,7 +153,7 @@ var localServerStartCmd = &console.Command{
 		}
 
 		if err = reexec.NotifyForeground("tls"); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		if !config.NoTLS && config.PKCS12 == "" {
 			ca, err := cert.NewCA(filepath.Join(homeDir, "certs"))
@@ -192,12 +192,12 @@ var localServerStartCmd = &console.Command{
 
 		lw, err := pidFile.LogWriter()
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		config.Logger = zerolog.New(lw).With().Str("source", "server").Timestamp().Logger()
 		p, err := project.New(config)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -213,17 +213,17 @@ var localServerStartCmd = &console.Command{
 
 		if !reexec.IsChild() {
 			if err = tailer.Watch(pidFile); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		}
 
 		if p.PHPServer != nil {
 			if err = reexec.NotifyForeground("php"); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 			phpPidFile, phpStartCallback, err := p.PHPServer.Start(ctx, pidFile)
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 
 			// We retrieve a reader on logs as soon as possible to be able to
@@ -231,7 +231,7 @@ var localServerStartCmd = &console.Command{
 			// later as the log file will already be deleted.
 			logs, err := phpPidFile.LogReader()
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 
 			if !reexec.IsChild() {
@@ -264,24 +264,24 @@ var localServerStartCmd = &console.Command{
 				ui.Error(buf.String())
 
 				if err != nil {
-					return err
+					return errors.WithStack(err)
 				}
 				return nil
 			case err := <-phpPidFile.WaitForPid():
 				// PHP started, we can close logs and go ahead
 				logs.Close()
 				if err != nil {
-					return err
+					return errors.WithStack(err)
 				}
 			}
 		}
 
 		if err = reexec.NotifyForeground("http"); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		port, err := p.HTTP.Start(errChan)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		scheme := "https"
@@ -303,15 +303,15 @@ var localServerStartCmd = &console.Command{
 		select {
 		case err := <-errChan:
 			if err != cmux.ErrListenerClosed && err != http.ErrServerClosed {
-				return err
+				return errors.WithStack(err)
 			}
 		default:
 			if err := pidFile.Write(os.Getpid(), port, scheme); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 
 			if err = reexec.NotifyForeground("listening"); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 			ui.Warning(localWebServerProdWarningMsg)
 			ui.Success(msg)
@@ -325,7 +325,7 @@ var localServerStartCmd = &console.Command{
 
 		if fileConfig != nil {
 			if err = reexec.NotifyForeground("workers"); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 			for name, worker := range fileConfig.Workers {
 				pidFile := pid.New(projectDir, worker.Cmd)
@@ -366,7 +366,7 @@ var localServerStartCmd = &console.Command{
 		}
 
 		if err = reexec.NotifyForeground(reexec.UP); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		if reexec.IsChild() {
 			terminal.RemapOutput(lw, lw).SetDecorated(true)
@@ -374,12 +374,12 @@ var localServerStartCmd = &console.Command{
 
 		select {
 		case err := <-errChan:
-			return err
+			return errors.WithStack(err)
 		case <-shutdownCh:
 			terminal.Eprintln("")
 			terminal.Eprintln("Shutting down!")
 			if err := cleanupWebServerFiles(projectDir, pidFile); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 			terminal.Eprintln("")
 			ui.Success("Stopped all processes successfully")
@@ -397,10 +397,10 @@ func cleanupWebServerFiles(projectDir string, pidFile *pid.PidFile) error {
 		}
 	}
 	if err := g.Wait(); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	if err := pidFile.Remove(); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	return nil
 }

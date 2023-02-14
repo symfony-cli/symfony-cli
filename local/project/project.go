@@ -78,7 +78,7 @@ func New(c *Config) (*Project, error) {
 	} else {
 		p.PHPServer, err = php.NewServer(c.HomeDir, c.ProjectDir, documentRoot, passthru, c.Logger)
 		if err != nil {
-			return nil, err
+			return nil, errors.WithStack(err)
 		}
 		p.HTTP.Callback = p.PHPServer.Serve
 	}

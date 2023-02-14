@@ -91,7 +91,7 @@ func (r *Runner) Run() error {
 			}
 
 			if _, isExitCoder := err.(console.ExitCoder); isExitCoder {
-				return err
+				return errors.WithStack(err)
 			}
 			terminal.Printfln("Impossible to go to the background: %s", err)
 			terminal.Println("Continue in foreground")
@@ -176,7 +176,7 @@ func (r *Runner) Run() error {
 
 			if r.mode == RunnerModeLoopDetached {
 				if err = reexec.NotifyForeground("started"); err != nil {
-					return err
+					return errors.WithStack(err)
 				}
 			}
 
@@ -206,7 +206,7 @@ func (r *Runner) Run() error {
 		if firstBoot && r.mode == RunnerModeLoopDetached {
 			terminal.RemapOutput(cmd.Stdout, cmd.Stderr).SetDecorated(true)
 			if err = reexec.NotifyForeground(reexec.UP); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		}
 
@@ -217,9 +217,9 @@ func (r *Runner) Run() error {
 			terminal.Logger.Info().Msgf("Signal \"%s\" received, forwarding to command and exiting\n", sig)
 			err := cmd.Process.Signal(sig)
 			if err != nil && runtime.GOOS == "windows" && strings.Contains(err.Error(), "not supported by windows") {
-				return exec.Command("CMD", "/C", "TASKKILL", "/F", "/PID", strconv.Itoa(cmd.Process.Pid)).Run()
+				return errors.WithStack(exec.Command("CMD", "/C", "TASKKILL", "/F", "/PID", strconv.Itoa(cmd.Process.Pid)).Run())
 			}
-			return err
+			return errors.WithStack(err)
 		case <-restartChan:
 			// We use SIGTERM here because it's nicer and thus when we use our
 			// wrappers, signal will be nicely forwarded
@@ -245,7 +245,7 @@ func (r *Runner) Run() error {
 				return r.pidFile.Remove()
 			}
 
-			return err
+			return errors.WithStack(err)
 		}
 
 		terminal.Logger.Info().Msgf(`Restarting command "%s"`, r.pidFile)

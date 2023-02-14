@@ -30,6 +30,7 @@ import (
 	"strconv"
 
 	"github.com/mitchellh/go-homedir"
+	"github.com/pkg/errors"
 	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	"github.com/symfony-cli/symfony-cli/util"
 )
@@ -116,17 +117,16 @@ func (t *Tunnel) Expose(expose bool) error {
 	path := t.path()
 	if expose {
 		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		file, err := os.Create(path)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
-		return file.Close()
+		return errors.WithStack(file.Close())
 	}
 
-	os.Remove(path)
-	return nil
+	return errors.WithStack(os.Remove(path))
 }
 
 // Path returns the path to the Platform.sh local tunnel state file

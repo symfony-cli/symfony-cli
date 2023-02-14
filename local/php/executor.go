@@ -173,7 +173,7 @@ func (e *Executor) Config(loadDotEnv bool) error {
 	}
 
 	if _, err := e.DetectScriptDir(); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	vars := make(map[string]string)
@@ -210,7 +210,7 @@ func (e *Executor) Config(loadDotEnv bool) error {
 	if v, path, phpiniArgs, err = e.lookupPHP(cliDir, false); err != nil {
 		// try again after reloading PHP versions
 		if v, path, phpiniArgs, err = e.lookupPHP(cliDir, true); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	}
 	e.environ = append(e.environ, fmt.Sprintf("PHP_BINARY=%s", v.PHPPath))
@@ -223,40 +223,40 @@ func (e *Executor) Config(loadDotEnv bool) error {
 	phpDir := filepath.Join(cliDir, "tmp", xid.New().String(), "bin")
 	e.tempDir = phpDir
 	if err := os.MkdirAll(phpDir, 0755); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	// always symlink (copy on Windows) these binaries as they can be called internally (like pecl for instance)
 	if v.PHPConfigPath != "" {
 		if err := symlink(v.PHPConfigPath, filepath.Join(phpDir, "php-config")); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		// we also alias a version with the prefix/suffix as required by pecl
 		if filepath.Base(v.PHPConfigPath) != "php-config" {
 			if err := symlink(v.PHPConfigPath, filepath.Join(phpDir, filepath.Base(v.PHPConfigPath))); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		}
 	}
 	if v.PHPizePath != "" {
 		if err := symlink(v.PHPizePath, filepath.Join(phpDir, "phpize")); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		// we also alias a version with the prefix/suffix as required by pecl
 		if filepath.Base(v.PHPizePath) != "phpize" {
 			if err := symlink(v.PHPizePath, filepath.Join(phpDir, filepath.Base(v.PHPizePath))); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		}
 	}
 	if v.PHPdbgPath != "" {
 		if err := symlink(v.PHPdbgPath, filepath.Join(phpDir, "phpdbg")); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	}
 	// if the bin is not one of the previous created symlink, create the symlink now
 	if _, err := os.Stat(filepath.Join(phpDir, e.BinName)); os.IsNotExist(err) {
 		if err := symlink(path, filepath.Join(phpDir, e.BinName)); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	}
 	e.Paths = append([]string{filepath.Dir(path), phpDir}, e.Paths...)
@@ -281,7 +281,7 @@ func (e *Executor) Config(loadDotEnv bool) error {
 	// but as we change the path, we should update args[0] accordingly
 	e.Args[0] = path
 
-	return err
+	return errors.WithStack(err)
 }
 
 // Find composer depending on the configuration
@@ -394,7 +394,9 @@ func (e *Executor) Execute(loadDotEnv bool) int {
 func LookPath(file string) (string, error) {
 	if util.InCloud() {
 		// does not make sense to look for the php store, fall back
-		return exec.LookPath(file)
+		path, err := exec.LookPath(file)
+
+		return path, errors.WithStack(err)
 	}
 	phpStore := phpstore.New(util.GetHomeDir(), false, nil)
 	wd, _ := os.Getwd()
@@ -404,21 +406,26 @@ func LookPath(file string) (string, error) {
 	}
 	if v == nil {
 		// unable to find the current PHP version, fall back
-		return exec.LookPath(file)
+		path, err := exec.LookPath(file)
+
+		return path, errors.WithStack(err)
 	}
 
 	path := filepath.Join(filepath.Dir(v.PHPPath), file)
 	d, err := os.Stat(path)
 	if err != nil {
 		// file does not exist, fall back
-		return exec.LookPath(file)
+		path, err := exec.LookPath(file)
+		return path, errors.WithStack(err)
 	}
 	if m := d.Mode(); !m.IsDir() && m&0111 != 0 {
 		// Yep!
 		return path, nil
 	}
 	// found, but not executable, fall back
-	return exec.LookPath(file)
+	path, err = exec.LookPath(file)
+
+	return path, errors.WithStack(err)
 }
 
 // detectScriptDir tries to get the script directory from args

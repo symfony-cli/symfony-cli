@@ -140,49 +140,49 @@ var localNewCmd = &console.Command{
 
 		minorPHPVersion, err := forcePHPVersion(c.String("php"), dir)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		if err := createProjectWithComposer(c, dir, symfonyVersion); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		if c.String("php") != "" && !c.Bool("cloud") {
 			if err := createPhpVersionFile(c.String("php"), dir); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		}
 
 		if !c.Bool("no-git") {
 			if _, err := exec.LookPath("git"); err == nil {
 				if err := initProjectGit(c, s, dir); err != nil {
-					return err
+					return errors.WithStack(err)
 				}
 			}
 		}
 
 		if c.Bool("webapp") {
 			if err := runComposer(c, dir, []string{"require", "webapp"}, c.Bool("debug")); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 			buf, err := git.AddAndCommit(dir, []string{"."}, "Add webapp packages", c.Bool("debug"))
 			if err != nil {
 				fmt.Print(buf.String())
-				return err
+				return errors.WithStack(err)
 			}
 		}
 
 		if c.Bool("cloud") {
 			if err := runComposer(c, dir, []string{"require", "platformsh"}, c.Bool("debug")); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 			buf, err := git.AddAndCommit(dir, []string{"."}, "Add more packages", c.Bool("debug"))
 			if err != nil {
 				fmt.Print(buf.String())
-				return err
+				return errors.WithStack(err)
 			}
 			if err := initCloud(c, s, minorPHPVersion, dir); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		}
 
@@ -199,7 +199,7 @@ var localNewCmd = &console.Command{
 func isEmpty(dir string) (bool, error) {
 	f, err := os.Open(dir)
 	if err != nil {
-		return false, err
+		return false, errors.WithStack(err)
 	}
 	defer f.Close()
 
@@ -207,7 +207,7 @@ func isEmpty(dir string) (bool, error) {
 	if err == io.EOF {
 		return true, nil
 	}
-	return false, err
+	return false, errors.WithStack(err)
 }
 
 func initCloud(c *console.Context, s *terminal.Spinner, minorPHPVersion, dir string) error {
@@ -215,27 +215,27 @@ func initCloud(c *console.Context, s *terminal.Spinner, minorPHPVersion, dir str
 
 	cloudServices, err := parseCloudServices(dir, c.StringSlice("service"))
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	// FIXME: display or hide output based on debug flag
 	_, err = createRequiredFilesProject(dir, "app", "", minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	buf, err := git.AddAndCommit(dir, []string{"."}, "Add Platform.sh configuration", c.Bool("debug"))
 	if err != nil {
 		fmt.Print(buf.String())
 	}
-	return err
+	return errors.WithStack(err)
 }
 
 func parseCloudServices(dir string, services []string) ([]*CloudService, error) {
 	// from CLI flag
 	cloudServices, err := parseCLIServices(services)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	// from Docker Compose configuration
@@ -322,13 +322,13 @@ func initProjectGit(c *console.Context, s *terminal.Spinner, dir string) error {
 	// onboarding simpler.
 	if buf, err := git.Init(dir, c.Bool("cloud"), c.Bool("debug")); err != nil {
 		fmt.Print(buf.String())
-		return err
+		return errors.WithStack(err)
 	}
 	buf, err := git.AddAndCommit(dir, []string{"."}, "Add initial set of files", c.Bool("debug"))
 	if err != nil {
 		fmt.Print(buf.String())
 	}
-	return err
+	return errors.WithStack(err)
 }
 
 func createProjectWithComposer(c *console.Context, dir, version string) error {
@@ -339,7 +339,7 @@ func createProjectWithComposer(c *console.Context, dir, version string) error {
 			var err error
 			version, err = getSpecialVersion(version)
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		}
 
@@ -384,7 +384,7 @@ func runComposer(c *console.Context, dir string, args []string, debug bool) erro
 
 	if err := php.Composer(dir, args, env, out, err, os.Stderr, terminal.Logger); err.ExitCode() != 0 {
 		terminal.Println(buf.String())
-		return err
+		return errors.WithStack(err)
 	}
 	return nil
 }
@@ -392,18 +392,18 @@ func runComposer(c *console.Context, dir string, args []string, debug bool) erro
 func getSpecialVersion(version string) (string, error) {
 	resp, err := http.Get("https://symfony.com/all-versions.json")
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 
 	var versions map[string]interface{}
 	if err := json.Unmarshal(body, &versions); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 
 	v := versions[version].(string)
@@ -419,7 +419,7 @@ func forcePHPVersion(v, dir string) (string, error) {
 	if v == "" {
 		minor, _, _, err := store.BestVersionForDir(dir)
 		if err != nil {
-			return "", err
+			return "", errors.WithStack(err)
 		}
 		return strings.Join(strings.Split(minor.Version, ".")[0:2], "."), nil
 	}

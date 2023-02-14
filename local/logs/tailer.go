@@ -98,7 +98,7 @@ func (tailer *Tailer) Watch(pidFile *pid.PidFile) error {
 	if !tailer.NoWorkerLogs {
 		workerDir := pidFile.WorkerPidDir()
 		if err := os.MkdirAll(workerDir, 0755); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		watcherChan := make(chan inotify.EventInfo, 1)
 		if err := inotify.Watch(workerDir, watcherChan, inotify.Create); err != nil {
@@ -142,7 +142,7 @@ func (tailer *Tailer) Watch(pidFile *pid.PidFile) error {
 
 			dir := filepath.Dir(applog)
 			if err := os.MkdirAll(dir, 0755); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 			if err := inotify.Watch(dir, watcherChan, inotify.Create); err != nil {
 				return errors.Wrap(err, "unable to watch the applog directory")
@@ -219,7 +219,7 @@ func (tailer *Tailer) Tail(w io.Writer) error {
 			buf.Write(humanizer.Prettify([]byte(content)))
 			buf.Write([]byte("\n"))
 		}
-		w.Write(buf.Bytes())
+		_, _ = w.Write(buf.Bytes())
 	}
 }
 
@@ -250,7 +250,7 @@ func tailFile(filename string, follow bool, nblines int64) (*tail.Tail, error) {
 		pos, _ = fls.LineFile(f).SeekLine(-nblines, io.SeekEnd)
 	}
 	f.Close()
-	return tail.TailFile(filename, tail.Config{
+	t, e := tail.TailFile(filename, tail.Config{
 		Location: &tail.SeekInfo{
 			Offset: pos,
 			Whence: io.SeekStart,
@@ -260,6 +260,8 @@ func tailFile(filename string, follow bool, nblines int64) (*tail.Tail, error) {
 		Poll:   true,
 		Logger: tail.DiscardingLogger,
 	})
+
+	return t, errors.WithStack(e)
 }
 
 // find the application log file(s) (only Symfony is supported for now)

@@ -28,6 +28,7 @@ import (
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/php"
@@ -44,7 +45,7 @@ type platformshCLI struct {
 func NewPlatformShCLI() (*platformshCLI, error) {
 	home, err := homedir.Dir()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	p := &platformshCLI{
 		path: filepath.Join(home, ".platformsh", "bin", "platform"),
@@ -95,7 +96,7 @@ func (p *platformshCLI) proxyPSHCmd(commandName string) console.ActionFunc {
 			if !util.InCloud() {
 				home, err := homedir.Dir()
 				if err != nil {
-					return err
+					return errors.WithStack(err)
 				}
 				if err := php.InstallPlatformPhar(home); err != nil {
 					return console.Exit(err.Error(), 1)
@@ -104,7 +105,7 @@ func (p *platformshCLI) proxyPSHCmd(commandName string) console.ActionFunc {
 
 			if hook, ok := platformshBeforeHooks["cloud:"+commandName]; ok && !console.IsHelp(c) {
 				if err := hook(c); err != nil {
-					return err
+					return errors.WithStack(err)
 				}
 			}
 

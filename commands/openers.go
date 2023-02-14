@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/envs"
@@ -46,7 +47,7 @@ var projectLocalOpenCmd = &console.Command{
 	Action: func(c *console.Context) error {
 		projectDir, err := getProjectDir(c.String("dir"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		pidFile := pid.New(projectDir, nil)
 		if !pidFile.IsRunning() {
@@ -78,11 +79,11 @@ var projectLocalMailCatcherOpenCmd = &console.Command{
 	Action: func(c *console.Context) error {
 		projectDir, err := getProjectDir(c.String("dir"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		env, err := envs.NewLocal(projectDir, terminal.IsDebug())
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		url, exists := env.FindServiceUrl("mailer")
 		if !exists {
@@ -103,11 +104,11 @@ var projectLocalRabbitMQManagementOpenCmd = &console.Command{
 	Action: func(c *console.Context) error {
 		projectDir, err := getProjectDir(c.String("dir"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		env, err := envs.NewLocal(projectDir, terminal.IsDebug())
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		url, exists := env.FindServiceUrl("amqp")
 		if !exists {

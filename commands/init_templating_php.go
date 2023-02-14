@@ -26,6 +26,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/symfony-cli/terminal"
 )
 
@@ -160,16 +161,16 @@ type composerLock struct {
 func parseComposerLock(directory string) (*composerLock, error) {
 	b, err := os.ReadFile(filepath.Join(directory, "composer.lock"))
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	var lock composerLock
 
 	if err := json.Unmarshal(b, &lock); err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
-	return &lock, err
+	return &lock, errors.WithStack(err)
 }
 
 type composerJSON struct {
@@ -183,12 +184,12 @@ type composerJSON struct {
 func parseComposerJSON(directory string) (*composerJSON, error) {
 	b, err := os.ReadFile(filepath.Join(directory, "composer.json"))
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	var composerJSON composerJSON
 	if err := json.Unmarshal(b, &composerJSON); err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	return &composerJSON, nil

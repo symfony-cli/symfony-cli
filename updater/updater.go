@@ -230,7 +230,7 @@ type cacheInnerTransport struct {
 func (rt *cacheInnerTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	resp, err := rt.RoundTripper.RoundTrip(req)
 	if resp == nil {
-		return resp, err
+		return resp, errors.WithStack(err)
 	}
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
@@ -241,5 +241,5 @@ func (rt *cacheInnerTransport) RoundTrip(req *http.Request) (*http.Response, err
 		resp.Header.Set("cache-control", "no-cache")
 	}
 
-	return resp, err
+	return resp, errors.WithStack(err)
 }

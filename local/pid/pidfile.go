@@ -73,11 +73,11 @@ func New(dir string, args []string) *PidFile {
 func Load(path string) (*PidFile, error) {
 	contents, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	var p *PidFile
 	if err := json.Unmarshal(contents, &p); err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	p.path = path
 	return p, nil
@@ -150,7 +150,7 @@ func (p *PidFile) WaitForLogs() error {
 	defer inotify.Stop(watcherChan)
 	logFile := p.LogFile()
 	if err := os.MkdirAll(filepath.Dir(logFile), 0755); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	if err := inotify.Watch(filepath.Dir(logFile), watcherChan, inotify.Create); err != nil {
 		return errors.Wrap(err, "unable to watch log file")
@@ -191,11 +191,11 @@ func (p *PidFile) WorkerPidDir() string {
 func (p *PidFile) LogReader() (io.ReadCloser, error) {
 	logFile := p.LogFile()
 	if err := os.MkdirAll(filepath.Dir(logFile), 0755); err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	r, err := os.OpenFile(logFile, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return r, nil
 }
@@ -203,11 +203,11 @@ func (p *PidFile) LogReader() (io.ReadCloser, error) {
 func (p *PidFile) LogWriter() (io.WriteCloser, error) {
 	logFile := p.LogFile()
 	if err := os.MkdirAll(filepath.Dir(logFile), 0755); err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	w, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return w, nil
 }
@@ -246,15 +246,15 @@ func (p *PidFile) Write(pid, port int, scheme string) error {
 	p.Scheme = scheme
 
 	if err := os.MkdirAll(filepath.Dir(p.path), 0755); err != nil && !os.IsExist(err) {
-		return err
+		return errors.WithStack(err)
 	}
 
 	b, err := json.MarshalIndent(p, "", "    ")
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
-	return os.WriteFile(p.path, b, 0644)
+	return errors.WithStack(os.WriteFile(p.path, b, 0644))
 }
 
 // Stop kills the current process
@@ -316,7 +316,7 @@ func (p *PidFile) Name() string {
 
 func name(dir string) string {
 	h := sha1.New()
-	io.WriteString(h, dir)
+	_, _ = io.WriteString(h, dir)
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 

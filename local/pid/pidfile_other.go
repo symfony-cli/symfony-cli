@@ -22,12 +22,16 @@
 
 package pid
 
-import "syscall"
+import (
+	"syscall"
+
+	"github.com/pkg/errors"
+)
 
 func kill(pid int) error {
 	pgid, err := syscall.Getpgid(pid)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
-	return syscall.Kill(-pgid, syscall.SIGTERM)
+	return errors.WithStack(syscall.Kill(-pgid, syscall.SIGTERM))
 }

@@ -36,7 +36,7 @@ func execGitQuiet(cwd string, args ...string) (*bytes.Buffer, error) {
 
 func execGit(cwd string, args ...string) error {
 	_, err := doExecGit(cwd, args, false)
-	return err
+	return errors.WithStack(err)
 }
 
 func doExecGit(cwd string, args []string, quiet bool) (*bytes.Buffer, error) {

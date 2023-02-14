@@ -70,7 +70,7 @@ func NewServer(homeDir, projectDir, documentRoot, passthru string, logger zerolo
 		logger.Warn().Str("source", "PHP").Msg(warning)
 	}
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	logger.Debug().Str("source", "PHP").Msgf("Using PHP version %s (from %s)", version.Version, source)
 	return &Server{
@@ -139,7 +139,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 		p.proxy = httputil.NewSingleHostReverseProxy(target)
 		p.proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 			w.WriteHeader(http.StatusBadGateway)
-			w.Write([]byte(html.WrapHTML(err.Error(), html.CreateErrorTerminal("# "+err.Error()), "")))
+			_, _ = w.Write([]byte(html.WrapHTML(err.Error(), html.CreateErrorTerminal("# "+err.Error()), "")))
 		}
 	}
 
@@ -168,7 +168,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 		cmd.Dir = workingDir
 
 		if err = e.Config(false); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		cmd.Env = append(cmd.Env, e.environ...)
@@ -206,7 +206,7 @@ func (p *Server) Serve(w http.ResponseWriter, r *http.Request, env map[string]st
 		}
 		err := errors.WithStack(os.WriteFile(envPath, []byte(envContent), 0644))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		defer os.Remove(envPath)
 		pw := httptest.NewRecorder()
@@ -260,7 +260,7 @@ func (p *Server) writeResponse(w http.ResponseWriter, r *http.Request, env map[s
 	if r.Method == http.MethodGet && r.Header.Get("x-requested-with") == "XMLHttpRequest" {
 		var err error
 		if resp.Body, err = p.tweakToolbar(resp.Body, env); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		bodyModified = true
 	}
@@ -279,13 +279,13 @@ func (p *Server) writeResponse(w http.ResponseWriter, r *http.Request, env map[s
 	}
 	w.WriteHeader(resp.StatusCode)
 	if r.Method != http.MethodHead {
-		io.Copy(w, resp.Body)
+		_, _ = io.Copy(w, resp.Body)
 	}
 	return nil
 }
 
 func name(dir string) string {
 	h := sha1.New()
-	io.WriteString(h, dir)
+	_, _ = io.WriteString(h, dir)
 	return fmt.Sprintf("%x", h.Sum(nil))
 }

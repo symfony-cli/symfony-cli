@@ -122,16 +122,16 @@ func newConfigFromFile(configFile string) (*FileConfig, error) {
 
 	contents, err := os.ReadFile(configFile)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	var fileConfig FileConfig
 	if err := yaml.Unmarshal(contents, &fileConfig); err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	if err := fileConfig.parseWorkers(); err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	return &fileConfig, nil

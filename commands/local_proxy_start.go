@@ -68,7 +68,7 @@ var localProxyStartCmd = &console.Command{
 			}
 			if err := reexec.Background(varDir); err != nil {
 				if _, isExitCoder := err.(console.ExitCoder); isExitCoder {
-					return err
+					return errors.WithStack(err)
 				}
 				terminal.Printfln("Impossible to go to the background: %s", err)
 				terminal.Println("Continue in foreground")
@@ -90,7 +90,7 @@ var localProxyStartCmd = &console.Command{
 		}
 		if ca != nil {
 			if err := ca.LoadCA(); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 			if ca.IsExpired() {
 				ui.Warning(fmt.Sprintf(`Your local CA is expired, run "%s %s --renew" first to renew it`, c.App.HelpName, localServerCAInstallCmd.FullName()))
@@ -117,13 +117,13 @@ var localProxyStartCmd = &console.Command{
 
 		config, err := proxy.Load(homeDir)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		if c.IsSet("host") {
 			config.Host = c.String("host")
 			if err = config.Save(); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		}
 
@@ -147,7 +147,7 @@ var localProxyStartCmd = &console.Command{
 		case err := <-errChan:
 			if err != nil {
 				timer.Stop()
-				return err
+				return errors.WithStack(err)
 			}
 		case <-timer.C:
 			spinner.Stop()
@@ -155,13 +155,13 @@ var localProxyStartCmd = &console.Command{
 		}
 
 		if err := pidFile.Write(os.Getpid(), config.Port, "http"); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		if !c.Bool("foreground") && reexec.IsChild() {
 			terminal.RemapOutput(lw, lw).SetDecorated(true)
 			if err = reexec.NotifyForeground(reexec.UP); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		} else {
 			defer func() {

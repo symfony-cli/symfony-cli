@@ -20,6 +20,7 @@
 package commands
 
 import (
+	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/pid"
 	"github.com/symfony-cli/terminal"
@@ -38,7 +39,7 @@ var localProxyStopCmd = &console.Command{
 			return nil
 		}
 		if err := p.Stop(); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		ui.Success("Stopped the proxy server successfully")
 		return nil

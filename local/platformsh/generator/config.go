@@ -14,6 +14,7 @@ import (
 	"text/template"
 
 	"github.com/hashicorp/go-version"
+	"github.com/pkg/errors"
 )
 
 type service struct {
@@ -83,22 +84,22 @@ func generateConfig() {
 	if err != nil {
 		panic(err)
 	}
-	f.Write(buf.Bytes())
+	_, _ = f.Write(buf.Bytes())
 }
 
 func parseServices() (string, error) {
 	resp, err := http.Get("https://raw.githubusercontent.com/platformsh/platformsh-docs/master/docs/data/registry.json")
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	defer resp.Body.Close()
 	var services map[string]*service
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	if err := json.Unmarshal(body, &services); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	serviceNames := []string{}
 	for name := range services {
@@ -111,11 +112,11 @@ func parseServices() (string, error) {
 		if !s.Runtime {
 			deprecatedVersions, err := sortVersions(s.Versions.Deprecated)
 			if err != nil {
-				return "", err
+				return "", errors.WithStack(err)
 			}
 			supportedVersions, err := sortVersions(s.Versions.Supported)
 			if err != nil {
-				return "", err
+				return "", errors.WithStack(err)
 			}
 
 			servicesAsString += "\t{\n"
@@ -141,7 +142,7 @@ func parseServices() (string, error) {
 func parsePHPExtensions() (string, error) {
 	resp, err := http.Get("https://raw.githubusercontent.com/platformsh/platformsh-docs/master/docs/src/languages/php/extensions.md")
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	defer resp.Body.Close()
 	var versions []string
@@ -179,7 +180,7 @@ func parsePHPExtensions() (string, error) {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	maxNameLen := 0
 	for name := range extensions {
@@ -228,7 +229,7 @@ func sortVersions(versions []string) ([]string, error) {
 	for i, raw := range versions {
 		v, err := version.NewVersion(raw)
 		if err != nil {
-			return nil, err
+			return nil, errors.WithStack(err)
 		}
 		parsedVersions[i] = v
 	}

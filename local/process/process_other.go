@@ -25,6 +25,8 @@ package process
 import (
 	"os/exec"
 	"syscall"
+
+	"github.com/pkg/errors"
 )
 
 func deathsig(sysProcAttr *syscall.SysProcAttr) {
@@ -34,5 +36,5 @@ func deathsig(sysProcAttr *syscall.SysProcAttr) {
 }
 
 func kill(cmd *exec.Cmd) error {
-	return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+	return errors.WithStack(syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL))
 }

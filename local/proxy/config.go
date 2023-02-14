@@ -101,7 +101,7 @@ func ToConfiguredProjects() (map[string]*projects.ConfiguredProject, error) {
 	homeDir := util.GetHomeDir()
 	proxyConf, err := Load(homeDir)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	dirs := proxyConf.Dirs()
 	for dir := range dirs {

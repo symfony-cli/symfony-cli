@@ -198,7 +198,7 @@ func getTemplates(rootDirectory, chosenTemplateName string, minorPHPVersion stri
 			var resp *http.Response
 			resp, err = http.Get(chosenTemplateName)
 			if err != nil {
-				return nil, err
+				return nil, errors.WithStack(err)
 			}
 			if resp.StatusCode >= 400 {
 				return nil, errors.Errorf("Got HTTP status code >= 400: %s", resp.Status)
