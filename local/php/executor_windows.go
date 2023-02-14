@@ -31,14 +31,14 @@ func shouldSignalBeIgnored(sig os.Signal) bool {
 func symlink(oldname, newname string) error {
 	source, err := os.Open(oldname)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	defer source.Close()
 	destination, err := os.Create(newname)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	defer destination.Close()
 	_, err = io.Copy(destination, source)
-	return errors.WithStack(err)
+	return err
 }
