@@ -77,7 +77,7 @@ func (l *Local) RelationshipsFromDocker() Relationships {
 		dialer := &net.Dialer{
 			Timeout: 2 * time.Second,
 		}
-		opts = append(opts, docker.WithDialer(dialer))
+		opts = append(opts, docker.WithDialContext(dialer.DialContext))
 	}
 	client, err := docker.NewClientWithOpts(opts...)
 	if err != nil {
