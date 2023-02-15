@@ -324,8 +324,13 @@ func (p *Proxy) servePacFile(w http.ResponseWriter, r *http.Request) {
 // Configuration file in ~/.symfony5/proxy.json
 function FindProxyForURL (url, host) {
 	if (dnsDomainIs(host, '.%s')) {
+		if (isResolvable(host)) {
+			return 'DIRECT';
+		}
+
 		return 'PROXY %s';
 	}
+
 	return 'DIRECT';
 }
 `, p.TLD, p.TLD, r.Host)))
