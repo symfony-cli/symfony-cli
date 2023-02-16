@@ -1,12 +1,10 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"sort"
@@ -14,6 +12,7 @@ import (
 	"text/template"
 
 	"github.com/hashicorp/go-version"
+	"gopkg.in/yaml.v2"
 )
 
 type service struct {
@@ -139,7 +138,7 @@ func parseServices() (string, error) {
 }
 
 func parsePHPExtensions() (string, error) {
-	resp, err := http.Get("https://raw.githubusercontent.com/platformsh/platformsh-docs/master/docs/src/languages/php/extensions.md")
+	resp, err := http.Get("https://raw.githubusercontent.com/platformsh/platformsh-docs/master/docs/data/php_extensions.yaml")
 	if err != nil {
 		return "", err
 	}
@@ -147,45 +146,33 @@ func parsePHPExtensions() (string, error) {
 	var versions []string
 	orderedExtensionNames := []string{}
 	extensions := make(map[string][]string)
-	started := false
-	scanner := bufio.NewScanner(resp.Body)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if started {
-			if strings.HasPrefix(line, "| ---") {
-				continue
-			}
-			if !strings.HasPrefix(line, "| ") {
-				break
-			}
-			name, available := parseLine(line)
-			name = strings.ToLower(strings.Trim(name, "`"))
-			if _, ok := extensions[name]; ok {
-				log.Printf("WARNING: The %s extension is listed twice, ignoring extra definition!\n", name)
-			} else {
-				orderedExtensionNames = append(orderedExtensionNames, name)
-				var vs []string
-				for i, v := range available {
-					if v != "" {
-						vs = append(vs, versions[i])
-					}
-				}
-				extensions[name] = vs
-			}
-		}
-		if strings.HasPrefix(line, "| Extension") {
-			started = true
-			_, versions = parseLine(line)
-		}
-	}
-	if err := scanner.Err(); err != nil {
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
 		return "", err
 	}
+	var fullConfig map[string]map[string]interface{}
+	if err := yaml.Unmarshal(body, &fullConfig); err != nil {
+		return "", err
+	}
+	for version, rawCfg := range fullConfig["grid"] {
+		cfg := rawCfg.(map[interface{}]interface{})
+		for _, ext := range append(cfg["available"].([]interface{}), cfg["default"].([]interface{})...) {
+			name := strings.ToLower(ext.(string))
+			if _, ok := extensions[name]; !ok {
+				orderedExtensionNames = append(orderedExtensionNames, name)
+			}
+			extensions[name] = append(extensions[name], version)
+		}
+	}
+
+	sort.Strings(orderedExtensionNames)
 	maxNameLen := 0
 	for name := range extensions {
 		if len(name) > maxNameLen {
 			maxNameLen = len(name)
 		}
+		sort.Strings(extensions[name])
 	}
 	extsAsString := ""
 
