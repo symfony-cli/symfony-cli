@@ -151,14 +151,18 @@ func parsePHPExtensions() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	var fullConfig map[string]map[string]interface{}
+	var fullConfig struct {
+		Grid map[string]struct {
+			Available []string
+			Default   []string
+		}
+	}
 	if err := yaml.Unmarshal(body, &fullConfig); err != nil {
 		return "", err
 	}
-	for version, rawCfg := range fullConfig["grid"] {
-		cfg := rawCfg.(map[interface{}]interface{})
-		for _, ext := range append(cfg["available"].([]interface{}), cfg["default"].([]interface{})...) {
-			name := strings.ToLower(ext.(string))
+	for version, cfg := range fullConfig.Grid {
+		for _, ext := range append(cfg.Available, cfg.Default...) {
+			name := strings.ToLower(ext)
 			if _, ok := extensions[name]; !ok {
 				orderedExtensionNames = append(orderedExtensionNames, name)
 			}
