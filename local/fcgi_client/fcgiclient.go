@@ -81,7 +81,7 @@ type header struct {
 	Reserved      uint8
 }
 
-// for padding so we don't have to allocate all the time
+// for padding, so we don't have to allocate all the time
 // not synchronized because we don't care what the contents are
 var pad [maxPad]byte
 
@@ -322,7 +322,7 @@ func (w *streamReader) Read(p []byte) (n int, err error) {
 	return
 }
 
-// Do made the request and returns a io.Reader that translates the data read
+// Do makes the request and returns an io.Reader that translates the data read
 // from fcgi responder out of fcgi packet before returning it.
 func (f *FCGIClient) Do(p map[string]string, req io.Reader) (r io.Reader, err error) {
 	err = f.writeBeginRequest(uint16(FCGI_RESPONDER), 0)
@@ -345,7 +345,7 @@ func (f *FCGIClient) Do(p map[string]string, req io.Reader) (r io.Reader, err er
 	return
 }
 
-// Request returns a HTTP Response with Header and Body
+// Request returns an HTTP Response with Header and Body
 // from fcgi responder
 func (f *FCGIClient) Request(p map[string]string, req io.Reader) (resp *http.Response, err error) {
 	r, err := f.Do(p, req)

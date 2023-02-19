@@ -111,7 +111,7 @@ func realPassthru(documentRoot, passthru string) (string, error) {
 }
 
 func guessDocumentRoot(path string) string {
-	// for Symfony: check if public-dir is setup in composer.json first
+	// for Symfony: check if public-dir is set up in composer.json first
 	if b, err := ioutil.ReadFile(filepath.Join(path, "composer.json")); err == nil {
 		var f map[string]interface{}
 		if err := json.Unmarshal(b, &f); err == nil {

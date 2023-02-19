@@ -226,7 +226,7 @@ func New(config *Config, ca *cert.CA, logger *log.Logger, debug bool) *Proxy {
 		backend := fmt.Sprintf("127.0.0.1:%d", pid.Port)
 
 		if hostPort != "443" {
-			// No TLS termination required, let's go trough regular proxy
+			// No TLS termination required, let's go through regular proxy
 			return goproxy.OkConnect, backend
 		}
 
