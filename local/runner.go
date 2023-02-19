@@ -186,7 +186,7 @@ func (r *Runner) Run() error {
 
 				timer.Stop()
 				// when the command is really fast to run, it will be already
-				// done here so we need to forward exit status as it has
+				// done here, so we need to forward exit status as it has
 				// finished later one
 				go func() { cmdExitChan <- err }()
 			case <-timer.C:

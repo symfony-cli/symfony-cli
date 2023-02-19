@@ -56,7 +56,7 @@ func New(dir string, args []string) *PidFile {
 		// server or proxy
 		path = filepath.Join(util.GetHomeDir(), "var", name(dir)+".pid")
 	} else {
-		// workers are stored in a sub-directory
+		// workers are stored in a subdirectory
 		path = filepath.Join(util.GetHomeDir(), "var", name(dir), name(command)+".pid")
 	}
 	// we need to load the existing file if there is one

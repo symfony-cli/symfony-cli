@@ -37,7 +37,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/symfony-cli/cert"
 	"github.com/symfony-cli/symfony-cli/local/pid"
-	. "gopkg.in/check.v1"
 )
 
 func (s *ProxySuite) TestProxy(c *C) {
@@ -114,7 +113,7 @@ func (s *ProxySuite) TestProxy(c *C) {
 		Timeout:   1 * time.Second,
 	}
 
-	// Test proxying a request to a non registered project
+	// Test proxying a request to a non-registered project
 	{
 		req, _ := http.NewRequest("GET", "https://foo.wip/", nil)
 		req.Close = true

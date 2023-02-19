@@ -58,7 +58,7 @@ func normalizeDockerComposeProjectName(projectName string) string {
 // Port of https://github.com/docker/compose/blob/4e0fdd70bdae4f8d85e4ef9d0129ce445f3ece3c/compose/cli/command.py#L129-L130
 // (prior to 615c01c50a51408a7fdfed66ecccf73781e87f2c)
 // This was used in Docker Compose prior to 1.21.0, some users might still use
-// versions older though, so we keep this BC in the mean time.
+// versions older though, so we keep this BC in the meantime.
 func normalizeDockerComposeProjectNameLegacy(projectName string) string {
 	return dockerComposeNormalizeRegexpLegacy.ReplaceAllString(strings.ToLower(projectName), "")
 }
