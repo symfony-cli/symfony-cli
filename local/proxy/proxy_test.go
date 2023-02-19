@@ -37,6 +37,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/symfony-cli/cert"
 	"github.com/symfony-cli/symfony-cli/local/pid"
+	. "gopkg.in/check.v1"
 )
 
 func (s *ProxySuite) TestProxy(c *C) {
