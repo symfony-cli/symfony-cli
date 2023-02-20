@@ -402,6 +402,50 @@ var Commands = []*console.Command{
 		},
 	},
 	{
+		Category: "cloud:blue-green",
+		Name:     "conclude",
+		Aliases:  []*console.Alias{
+			{Name: "blue-green:conclude", Hidden: true},
+		},
+		Usage:    "<fg=white;bg=red>[ ALPHA ]</> Conclude a blue/green deployment",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.StringFlag{Name: "host",},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+		},
+	},
+	{
+		Category: "cloud:blue-green",
+		Name:     "deploy",
+		Aliases:  []*console.Alias{
+			{Name: "blue-green:deploy", Hidden: true},
+		},
+		Usage:    "<fg=white;bg=red>[ ALPHA ]</> Perform a blue/green deployment",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.StringFlag{Name: "host",},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+			&console.StringFlag{Name: "routing-percentage",},
+		},
+	},
+	{
+		Category: "cloud:blue-green",
+		Name:     "enable",
+		Aliases:  []*console.Alias{
+			{Name: "blue-green:enable", Hidden: true},
+		},
+		Usage:    "<fg=white;bg=red>[ ALPHA ]</> Enable blue/green deployments",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.StringFlag{Name: "host",},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+			&console.StringFlag{Name: "routing-percentage", Aliases: []string{"%"},},
+		},
+	},
+	{
 		Category: "cloud:certificate",
 		Name:     "add",
 		Aliases:  []*console.Alias{
@@ -1995,12 +2039,30 @@ var Commands = []*console.Command{
 	},
 	{
 		Category: "cloud:source-operation",
+		Name:     "list",
+		Aliases:  []*console.Alias{
+			{Name: "source-operation:list", Hidden: true},
+			{Name: "cloud:source-ops"},
+			{Name: "source-ops", Hidden: true},
+		},
+		Usage:    "List source operations on an environment",
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.StringFlag{Name: "format", DefaultValue: "table",},
+			&console.BoolFlag{Name: "full",},
+			&console.StringFlag{Name: "host",},
+			&console.BoolFlag{Name: "no-header",},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+		},
+	},
+	{
+		Category: "cloud:source-operation",
 		Name:     "run",
 		Aliases:  []*console.Alias{
 			{Name: "source-operation:run", Hidden: true},
 		},
-		Usage:    "<fg=white;bg=red>[ BETA ]</> Run a source operation",
-		Hidden:   console.Hide,
+		Usage:    "Run a source operation",
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "host",},
@@ -2362,6 +2424,25 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "visible-build",},
 			&console.BoolFlag{Name: "visible-runtime", DefaultValue: true,},
 			&console.BoolFlag{Name: "wait",},
+		},
+	},
+	{
+		Category: "cloud:version",
+		Name:     "list",
+		Aliases:  []*console.Alias{
+			{Name: "version:list", Hidden: true},
+			{Name: "cloud:versions"},
+			{Name: "versions", Hidden: true},
+		},
+		Usage:    "<fg=white;bg=red>[ ALPHA ]</> List environment versions",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.StringFlag{Name: "format", DefaultValue: "table",},
+			&console.StringFlag{Name: "host",},
+			&console.BoolFlag{Name: "no-header",},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
 		},
 	},
 	{
