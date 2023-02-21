@@ -256,7 +256,20 @@ func (s *RemoteSuite) TestDefaultRoute(c *C) {
 
 func (s *RemoteSuite) TestRelationships(c *C) {
 	r := &Remote{}
-	c.Assert(extractRelationshipsEnvs(r), DeepEquals, Envs{})
+	// build hook on psh
+	c.Assert(extractRelationshipsEnvs(r), DeepEquals, Envs{
+		"DATABASE_DATABASE": "nowhere",
+		"DATABASE_DRIVER":   "mysql",
+		"DATABASE_HOST":     "127.0.0.1",
+		"DATABASE_NAME":     "nowhere",
+		"DATABASE_PASSWORD": "as-db-is-never-available-yet",
+		"DATABASE_PORT":     "3306",
+		"DATABASE_SERVER":   "mysql://127.0.0.1:3306",
+		"DATABASE_URL":      "mysql://fake-dsn-for-build-hook:as-db-is-never-available-yet@127.0.0.1:3306/nowhere?sslmode=disable&charset=utf8mb4&serverVersion=mariadb-1337.0",
+		"DATABASE_USER":     "fake-dsn-for-build-hook",
+		"DATABASE_USERNAME": "fake-dsn-for-build-hook",
+		"DATABASE_VERSION":  "mariadb-1337.0",
+	})
 
 	os.Setenv("PLATFORM_RELATIONSHIPS", "eyJzZWN1cml0eS1zZXJ2ZXIiOiBbeyJpcCI6ICIxNjkuMjU0LjI2LjIzMSIsICJob3N0IjogInNlY3VyaXR5LXNlcnZlci5pbnRlcm5hbCIsICJzY2hlbWUiOiAiaHR0cCIsICJwb3J0IjogODAsICJyZWwiOiAiaHR0cCJ9XSwgImRhdGFiYXNlIjogW3sidXNlcm5hbWUiOiAibWFpbiIsICJzY2hlbWUiOiAicGdzcWwiLCAiaXAiOiAiMTY5LjI1NC4xMjAuNDgiLCAiaG9zdCI6ICJkYXRhYmFzZS5pbnRlcm5hbCIsICJyZWwiOiAicG9zdGdyZXNxbCIsICJwYXRoIjogIm1haW4iLCAicXVlcnkiOiB7ImlzX21hc3RlciI6IHRydWV9LCAicGFzc3dvcmQiOiAibWFpbiIsICJwb3J0IjogNTQzMn1dfQ==")
 	c.Assert(extractRelationshipsEnvs(r), DeepEquals, Envs{

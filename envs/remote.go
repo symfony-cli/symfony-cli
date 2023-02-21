@@ -55,7 +55,25 @@ func (r *Remote) Relationships() Relationships {
 		if r.Debug {
 			fmt.Fprint(os.Stderr, "PLATFORM_RELATIONSHIPS env var does not exist\n")
 		}
-		return nil
+
+		// during the build hook, force a database version to avoid having Doctrine
+		// trying to connect to the DB to guess it (as the DB is not available yet).
+		res := make(Relationships)
+		res["database"] = []map[string]interface{}{{
+			"host":     "127.0.0.1",
+			"ip":       "127.0.0.1",
+			"username": "fake-dsn-for-build-hook",
+			"password": "as-db-is-never-available-yet",
+			"path":     "nowhere",
+			"port":     "3306",
+			"query": map[string]bool{
+				"is_master": true,
+			},
+			"rel":    "mysql",
+			"scheme": "mysql",
+			"type":   "mysql:1337",
+		}}
+		return res
 	}
 
 	var err error
