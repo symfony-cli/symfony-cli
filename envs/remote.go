@@ -71,7 +71,7 @@ func (r *Remote) Relationships() Relationships {
 			},
 			"rel":    "mysql",
 			"scheme": "mysql",
-			"type":   "mysql:1337",
+			"type":   "mysql:13.37",
 		}}
 		return res
 	}
