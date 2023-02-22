@@ -121,8 +121,8 @@ github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.8.1 h1:w7B6lhMri9wdJUVmEZPGGhZzrYTPvgJArz7wNPgYKsk=
 github.com/symfony-cli/cert v1.0.1 h1:ETYVBshgY+SaydBJmMkU0PaoDrWm6zsGNB/799ZQYCE=
 github.com/symfony-cli/cert v1.0.1/go.mod h1:g4WrLT6EQsEPmA19xh5Jv9Jnpg5EvtFqArJf2AG2S+w=
-github.com/symfony-cli/console v1.0.2 h1:u8KJm9jFbfzmN0y7fcfjjal3wWOLflNomu29PLgYQjQ=
-github.com/symfony-cli/console v1.0.2/go.mod h1:z2dLSNdPW3rWdSxj8DlZocMtMYN5EF6OeIYjVioXVqE=
+github.com/symfony-cli/console v1.0.3 h1:iQli0SgvfW7v5DjH2dc36UpLKVM+OCxoWA5XU/ZGaa0=
+github.com/symfony-cli/console v1.0.3/go.mod h1:z2dLSNdPW3rWdSxj8DlZocMtMYN5EF6OeIYjVioXVqE=
 github.com/symfony-cli/phpstore v1.0.6 h1:ehkEaG05e4vIG2J06sVcdg6cmc7/u68+DhGcjDsOX/k=
 github.com/symfony-cli/phpstore v1.0.6/go.mod h1:Pug4pGst4b5DcGUwYz2DB1LjltohPgvE4OusDe1z2Xg=
 github.com/symfony-cli/terminal v1.0.4 h1:jam7aN7g7WQ9uOwV9UC+iVGBLTlzK8kAC5EKcxq21Z8=
