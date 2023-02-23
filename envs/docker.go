@@ -391,18 +391,26 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 			}
 			return rels
 		} else if p.PrivatePort == 27017 {
+			username := ""
+			password := ""
 			path := ""
 			for _, env := range c.Config.Env {
 				// that's our local convention
 				if strings.HasPrefix(env, "MONGO_DATABASE") {
 					path = getEnvValue(env, "MONGO_DATABASE")
+				} else if strings.HasPrefix(env, "MONGO_INITDB_DATABASE") {
+					path = getEnvValue(env, "MONGO_INITDB_DATABASE")
+				} else if strings.HasPrefix(env, "MONGO_INITDB_ROOT_USERNAME") {
+					username = getEnvValue(env, "MONGO_INITDB_ROOT_USERNAME")
+				} else if strings.HasPrefix(env, "MONGO_INITDB_ROOT_PASSWORD") {
+					password = getEnvValue(env, "MONGO_INITDB_ROOT_PASSWORD")
 				}
 			}
 			rels[""] = map[string]interface{}{
 				"host":     host,
 				"ip":       host,
-				"username": "",
-				"password": "",
+				"username": username,
+				"password": password,
 				"path":     path,
 				"port":     formatDockerPort(p.PublicPort),
 				"rel":      "mongodb",
