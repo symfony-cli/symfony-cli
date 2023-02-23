@@ -20,12 +20,20 @@ builds:
     goarch:
       - 386
       - amd64
+      - arm
       - arm64
+    goarm:
+      - 6
+      - 7
     ignore:
+      - goos: windows
+        goarch: arm
       - goos: windows
         goarch: arm64
       - goos: darwin
         goarch: 386
+      - goos: darwin
+        goarch: arm
     main: ./
     binary: symfony
     ldflags: -s -w -X 'main.channel={{ if index .Env "AUTOUPDATE_CHANNEL" }}{{ .Env.AUTOUPDATE_CHANNEL }}{{ else }}dev{{ end }}' -X 'main.buildDate={{ .Date }}' -X 'main.version={{ .Version }}'
@@ -84,7 +92,9 @@ brews:
       name: Fabien Potencier
       email: fabien@symfony.com
     folder: Formula
-    goarm: "7"
+    # Homebrew supports only a single GOARM variant and ARMv6 is upwards
+    # compatible with ARMv7 so let's keep ARMv6 here (default value anyway)
+    goarm: "6"
     homepage: https://symfony.com
     description: Symfony CLI helps Symfony developers manage projects, from local code to remote infrastructure
     license: AGPL-3.0
@@ -133,12 +143,34 @@ dockers:
       - "--label=org.opencontainers.image.source=https://github.com/symfony-cli/symfony-cli"
       - "--label=org.opencontainers.image.created={{.Date}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
+  - image_templates: [ "ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-arm32v6" ]
+    goarch: arm
+    goarm: '6'
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/arm/v6"
+      - "--label=org.opencontainers.image.source=https://github.com/symfony-cli/symfony-cli"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+  - image_templates: [ "ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-arm32v7" ]
+    goarch: arm
+    goarm: '7'
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/arm/v7"
+      - "--label=org.opencontainers.image.source=https://github.com/symfony-cli/symfony-cli"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
 
 docker_manifests:
   - name_template: ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}
     image_templates: &docker_images
       - ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-amd64
       - ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-arm64
+      - ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-arm32v6
+      - ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-arm32v7
   - name_template: ghcr.io/symfony-cli/{{ .ProjectName }}:v{{ .Major }}
     image_templates: *docker_images
   - name_template: ghcr.io/symfony-cli/{{ .ProjectName }}:v{{ .Major }}.{{ .Minor }}
