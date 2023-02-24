@@ -125,8 +125,11 @@ esac
 
 machine=$(uname -m 2>/dev/null || /usr/bin/uname -m)
 case ${machine} in
-    arm|armv7*)
-        machine="arm"
+    arm|armv6*)
+        machine="armv6"
+        ;;
+    armv7*)
+        machine="armv7"
         ;;
     aarch64*|armv8*|arm64)
         machine="arm64"
