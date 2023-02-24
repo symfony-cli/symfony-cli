@@ -129,7 +129,8 @@ case ${machine} in
         machine="armv6"
         ;;
     armv7*)
-        machine="armv7"
+        # ARMv6 is upwards compatible with ARMv7
+        machine="armv6"
         ;;
     aarch64*|armv8*|arm64)
         machine="arm64"

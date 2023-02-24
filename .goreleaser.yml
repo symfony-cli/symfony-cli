@@ -23,8 +23,11 @@ builds:
       - arm
       - arm64
     goarm:
+      # Because of a limitation in DEB packaging we can only build and package
+      # a single ARMv6 or v7 variant at a single time. As ARMv6 is upwards
+      # compatible with ARMv7 so let's only build ARMv6 here (default value
+      # anyway)
       - 6
-      - 7
     ignore:
       - goos: windows
         goarch: arm
@@ -155,7 +158,8 @@ dockers:
       - "--label=org.opencontainers.image.version={{.Version}}"
   - image_templates: [ "ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-arm32v7" ]
     goarch: arm
-    goarm: '7'
+    # ARMv6 is upwards compatible with ARMv7
+    goarm: '6'
     use: buildx
     build_flag_templates:
       - "--pull"
