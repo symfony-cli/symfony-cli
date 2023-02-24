@@ -38,7 +38,7 @@ func (p *Server) generateEnv(req *http.Request) map[string]string {
 
 	pathInfo := req.URL.Path
 	if pos := strings.Index(strings.ToLower(pathInfo), ".php"); pos != -1 {
-		file := pathInfo[:pos+4]
+		file := filepath.Clean(pathInfo[:pos+4])
 		if _, err := os.Stat(filepath.Join(p.documentRoot, file)); err == nil {
 			scriptName = file
 			pathInfo = pathInfo[pos+4:]
