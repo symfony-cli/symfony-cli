@@ -303,6 +303,17 @@ func (s *PHPFPMSuite) TestGenerateEnv(c *C) {
 				"SCRIPT_NAME":     "/subdirectory/subdirectory/index.php",
 			},
 		},
+		{
+			passthru: "/index.php",
+			uri:      "/foo/../update.php",
+			expected: map[string]string{
+				"PATH_INFO":       "/foo/../update.php",
+				"REQUEST_URI":     "/foo/../update.php",
+				"QUERY_STRING":    "",
+				"SCRIPT_FILENAME": testdataDir + "/public/index.php",
+				"SCRIPT_NAME":     "/index.php",
+			},
+		},
 	}
 	for _, test := range tests {
 		process := &Server{
