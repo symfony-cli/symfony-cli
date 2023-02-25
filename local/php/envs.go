@@ -32,22 +32,44 @@ import (
 func (p *Server) resolveScriptName(pathInfo string) (string, string) {
 	if pos := strings.Index(strings.ToLower(pathInfo), ".php"); pos != -1 {
 		file := pathInfo[:pos+4]
-		if _, err := os.Stat(filepath.Join(p.documentRoot, file)); err == nil {
-			return file, pathInfo[pos+4:]
+		if file == filepath.Clean(file) {
+			if _, err := os.Stat(filepath.Join(p.documentRoot, file)); err == nil {
+				return file, pathInfo[pos+4:]
+			}
 		}
 	}
+	// quick return if it's short or path starts with //
+	if len(pathInfo) <= 1 || pathInfo[0:2] == "//" {
+		return p.passthru, pathInfo
+	}
 
-	paths := strings.Split(strings.Trim(pathInfo, "/"), "/")
+	// removes first slash to make sure we don't loop through it as it always need to be there.
+	paths := strings.Split(pathInfo[1:], "/")
+
 	for n := len(paths); n > 0; n-- {
 		pathPart := paths[n-1]
 		if pathPart == "" {
 			continue
 		}
 
-		file := filepath.Join(append(paths[:n], p.passthru)...)
-		if _, err := os.Stat(filepath.Join(p.documentRoot, file)); err == nil {
-			return "/" + file, pathInfo[strings.LastIndex(pathInfo, pathPart)+len(pathPart):]
+		// we on purpose don't use filepath join as it resolves the paths. This way if clean filepath is different we break
+		folder := string(filepath.Separator) + strings.Join(paths[:n], string(filepath.Separator))
+
+		if folder != filepath.Clean(folder) {
+			continue
 		}
+
+		file := filepath.Join(folder, p.passthru)
+		path := strings.Join(paths[n:], "/")
+
+		if _, err := os.Stat(filepath.Join(p.documentRoot, file)); err == nil {
+			// I am not sure how we can get rid of this if statements. It's complete abomination, but it's because subdirectory and subdirectory/ should go to this same file, but have different pathinfo
+			if path == "" && pathInfo[len(pathInfo)-1:] != "/" {
+				return file, ""
+			}
+			return file, "/" + path
+		}
+
 	}
 
 	return p.passthru, pathInfo
@@ -55,6 +77,8 @@ func (p *Server) resolveScriptName(pathInfo string) (string, string) {
 
 func (p *Server) generateEnv(req *http.Request) map[string]string {
 	scriptName, pathInfo := p.resolveScriptName(req.URL.Path)
+
+	//fmt.Println(req.URL.Path + " | " + scriptName + " | " + pathInfo + " | " + filepath.Clean(scriptName))
 
 	https := ""
 	if req.TLS != nil {
