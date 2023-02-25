@@ -78,8 +78,6 @@ func (p *Server) resolveScriptName(pathInfo string) (string, string) {
 func (p *Server) generateEnv(req *http.Request) map[string]string {
 	scriptName, pathInfo := p.resolveScriptName(req.URL.Path)
 
-	//fmt.Println(req.URL.Path + " | " + scriptName + " | " + pathInfo + " | " + filepath.Clean(scriptName))
-
 	https := ""
 	if req.TLS != nil {
 		https = "On"
