@@ -1006,7 +1006,7 @@ var Commands = []*console.Command{
 			{Name: "cloud:scp"},
 			{Name: "scp", Hidden: true},
 		},
-		Usage:    "Copy files to and from current environment using scp",
+		Usage:    "Copy files to and from an environment using scp",
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "app", Aliases: []string{"A"},},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
