@@ -23,6 +23,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -30,6 +31,9 @@ import (
 )
 
 func (p *Server) resolveScriptName(pathInfo string) (string, string) {
+
+	pathInfo = path.Clean(pathInfo)
+
 	if pos := strings.Index(strings.ToLower(pathInfo), ".php"); pos != -1 {
 		file := pathInfo[:pos+4]
 		if file == filepath.Clean(file) {
@@ -38,36 +42,21 @@ func (p *Server) resolveScriptName(pathInfo string) (string, string) {
 			}
 		}
 	}
-	// quick return if it's short or path starts with //
-	if len(pathInfo) <= 1 || pathInfo[0:2] == "//" {
+
+	if len(pathInfo) <= 1 {
 		return p.passthru, pathInfo
 	}
 
-	// removes first slash to make sure we don't loop through it as it always need to be there.
-	paths := strings.Split(pathInfo[1:], "/")
+	paths := strings.Split(pathInfo, "/")
 
 	for n := len(paths); n > 0; n-- {
-		pathPart := paths[n-1]
-		if pathPart == "" {
-			continue
-		}
-
-		// we on purpose don't use filepath join as it resolves the paths. This way if clean filepath is different we break
-		folder := string(filepath.Separator) + strings.Join(paths[:n], string(filepath.Separator))
-
-		if folder != filepath.Clean(folder) {
-			continue
-		}
-
-		file := filepath.Join(folder, p.passthru)
-		path := strings.Join(paths[n:], "/")
-
+		file := filepath.Clean(filepath.Join(paths[:n]...))
 		if _, err := os.Stat(filepath.Join(p.documentRoot, file)); err == nil {
-			// I am not sure how we can get rid of this if statements. It's complete abomination, but it's because subdirectory and subdirectory/ should go to this same file, but have different pathinfo
-			if path == "" && pathInfo[len(pathInfo)-1:] != "/" {
+			serverPath := path.Join(paths[n:]...)
+			if serverPath == "" && pathInfo[len(pathInfo)-1:] != "/" {
 				return file, ""
 			}
-			return file, "/" + path
+			return file, "/" + serverPath
 		}
 
 	}

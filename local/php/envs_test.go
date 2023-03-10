@@ -263,11 +263,11 @@ func (s *PHPFPMSuite) TestGenerateEnv(c *C) {
 			passthru: "/index.php",
 			uri:      "/subdirectory///subdirectory//foo/",
 			expected: map[string]string{
-				"PATH_INFO":       "///subdirectory//foo/",
-				"REQUEST_URI":     "/subdirectory///subdirectory//foo/",
+				"PATH_INFO":       "/subdirectory/foo/",
+				"REQUEST_URI":     "/subdirectory/subdirectory/foo/",
 				"QUERY_STRING":    "",
-				"SCRIPT_FILENAME": testdataDir + "/public/subdirectory/index.php",
-				"SCRIPT_NAME":     "/subdirectory/index.php",
+				"SCRIPT_FILENAME": testdataDir + "/public/subdirectory/subdirectory/index.php",
+				"SCRIPT_NAME":     "/subdirectory/subdirectory/index.php",
 			},
 		},
 		{
