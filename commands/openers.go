@@ -94,9 +94,7 @@ var projectLocalMailCatcherOpenCmd = &console.Command{
 		if err != nil {
 			return err
 		}
-		prefix := env.FindRelationshipPrefix("mailer", "http")
-		values := envs.AsMap(env)
-		url, exists := values[prefix+"URL"]
+		url, exists := env.FindServiceUrl("mailer")
 		if !exists {
 			return console.Exit("Mailcatcher Web interface not found", 1)
 		}
@@ -121,9 +119,7 @@ var projectLocalRabbitMQManagementOpenCmd = &console.Command{
 		if err != nil {
 			return err
 		}
-		prefix := env.FindRelationshipPrefix("amqp", "http")
-		values := envs.AsMap(env)
-		url, exists := values[prefix+"URL"]
+		url, exists := env.FindServiceUrl("amqp")
 		if !exists {
 			return console.Exit("RabbitMQ management not found", 1)
 		}
@@ -132,10 +128,40 @@ var projectLocalRabbitMQManagementOpenCmd = &console.Command{
 	},
 }
 
+var projectLocalServiceOpenCmd = &console.Command{
+	Category: "open",
+	Name:     "local:service",
+	Usage:    "Open a local service web interface in a browser",
+	Flags: []console.Flag{
+		dirFlag,
+	},
+	Args: []*console.Arg{
+		{Name: "service", Description: "The service name (or type) to open"},
+	},
+	Action: func(c *console.Context) error {
+		projectDir, err := getProjectDir(c.String("dir"))
+		if err != nil {
+			return err
+		}
+		env, err := envs.NewLocal(projectDir, terminal.IsDebug())
+		if err != nil {
+			return err
+		}
+		service := c.Args().Get("service")
+		url, exists := env.FindServiceUrl(service)
+		if !exists {
+			return console.Exit(fmt.Sprintf("Service \"%s\" not found", service), 1)
+		}
+
+		abstractOpenCmd(url)
+		return nil
+	},
+}
+
 func abstractOpenCmd(url string) {
 	if err := open.Run(url); err != nil {
 		terminal.Eprintln("<error>Error while opening:", err, "</>")
-		terminal.Eprintfln("Please visit <href=%>%s</> manually.", url)
+		terminal.Eprintfln("Please visit <href=%s>%s</> manually.", url, url)
 	} else {
 		terminal.Eprintfln("Opened: <href=%s>%s</>", url, url)
 	}

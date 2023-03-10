@@ -80,7 +80,7 @@ a specific "composer.lock" file.`,
 			}
 			defer f.Close()
 
-			// Ran inside a Github action, export vulns
+			// Ran inside a GitHub action, export vulns
 			output, _ := security.Format(vulns, "raw_json")
 			if _, err = f.WriteString("vulns=" + string(output) + "\n"); err != nil {
 				return console.Exit(fmt.Sprintf("unable to write into github output: %s", err), 127)

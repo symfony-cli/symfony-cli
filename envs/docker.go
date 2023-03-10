@@ -58,7 +58,7 @@ func normalizeDockerComposeProjectName(projectName string) string {
 // Port of https://github.com/docker/compose/blob/4e0fdd70bdae4f8d85e4ef9d0129ce445f3ece3c/compose/cli/command.py#L129-L130
 // (prior to 615c01c50a51408a7fdfed66ecccf73781e87f2c)
 // This was used in Docker Compose prior to 1.21.0, some users might still use
-// versions older though, so we keep this BC in the mean time.
+// versions older though, so we keep this BC in the meantime.
 func normalizeDockerComposeProjectNameLegacy(projectName string) string {
 	return dockerComposeNormalizeRegexpLegacy.ReplaceAllString(strings.ToLower(projectName), "")
 }
@@ -77,7 +77,7 @@ func (l *Local) RelationshipsFromDocker() Relationships {
 		dialer := &net.Dialer{
 			Timeout: 2 * time.Second,
 		}
-		opts = append(opts, docker.WithDialer(dialer))
+		opts = append(opts, docker.WithDialContext(dialer.DialContext))
 	}
 	client, err := docker.NewClientWithOpts(opts...)
 	if err != nil {
@@ -380,19 +380,37 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 				"scheme": "http",
 			}
 			return rels
+		} else if p.PrivatePort == 5601 {
+			rels[""] = map[string]interface{}{
+				"host":   host,
+				"ip":     host,
+				"port":   formatDockerPort(p.PublicPort),
+				"path":   "/",
+				"rel":    "kibana",
+				"scheme": "http",
+			}
+			return rels
 		} else if p.PrivatePort == 27017 {
+			username := ""
+			password := ""
 			path := ""
 			for _, env := range c.Config.Env {
 				// that's our local convention
 				if strings.HasPrefix(env, "MONGO_DATABASE") {
 					path = getEnvValue(env, "MONGO_DATABASE")
+				} else if strings.HasPrefix(env, "MONGO_INITDB_DATABASE") {
+					path = getEnvValue(env, "MONGO_INITDB_DATABASE")
+				} else if strings.HasPrefix(env, "MONGO_INITDB_ROOT_USERNAME") {
+					username = getEnvValue(env, "MONGO_INITDB_ROOT_USERNAME")
+				} else if strings.HasPrefix(env, "MONGO_INITDB_ROOT_PASSWORD") {
+					password = getEnvValue(env, "MONGO_INITDB_ROOT_PASSWORD")
 				}
 			}
 			rels[""] = map[string]interface{}{
 				"host":     host,
 				"ip":       host,
-				"username": "",
-				"password": "",
+				"username": username,
+				"password": password,
 				"path":     path,
 				"port":     formatDockerPort(p.PublicPort),
 				"rel":      "mongodb",
@@ -428,6 +446,12 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 			"ip":   host,
 			"port": formatDockerPort(p.PublicPort),
 			"rel":  "simple",
+		}
+		// Official HTTP(s) ports or well know alternatives
+		if p.PrivatePort == 80 || p.PrivatePort == 8008 || p.PrivatePort == 8080 || p.PrivatePort == 8081 {
+			rels[""]["scheme"] = "http"
+		} else if p.PrivatePort == 443 || p.PrivatePort == 8443 {
+			rels[""]["scheme"] = "https"
 		}
 		return rels
 	}

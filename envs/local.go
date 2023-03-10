@@ -75,6 +75,73 @@ func (l *Local) FindRelationshipPrefix(frel, fscheme string) string {
 	return ""
 }
 
+func (l *Local) FindHttpServices() []string {
+	services := []string{}
+
+	for key, endpoints := range l.Relationships() {
+		for _, endpoint := range endpoints {
+			if scheme, ok := endpoint["scheme"].(string); !ok {
+				continue
+			} else if scheme != "http" && scheme != "https" {
+				continue
+			}
+
+			services = append(services, key)
+		}
+	}
+
+	return services
+}
+
+func (l *Local) FindServiceUrl(serviceOrRelationship string) (string, bool) {
+	relationships := l.Relationships()
+	env := AsMap(l)
+
+	if endpoints, serviceIsDefined := relationships[serviceOrRelationship]; serviceIsDefined {
+		for i, endpoint := range endpoints {
+			if scheme, ok := endpoint["scheme"].(string); !ok {
+				continue
+			} else if scheme != "http" && scheme != "https" {
+				continue
+			}
+
+			prefix := fmt.Sprintf("%s_", strings.Replace(strings.ToUpper(serviceOrRelationship), "-", "_", -1))
+			if i != 0 {
+				prefix += fmt.Sprintf("%d_", i)
+			}
+
+			if url, exists := env[prefix+"URL"]; exists {
+				return url, true
+			}
+		}
+	}
+
+	for key, endpoints := range relationships {
+		for i, endpoint := range endpoints {
+			if endpoint["rel"].(string) != serviceOrRelationship {
+				continue
+			}
+
+			if scheme, ok := endpoint["scheme"].(string); !ok {
+				continue
+			} else if scheme != "http" && scheme != "https" {
+				continue
+			}
+
+			prefix := fmt.Sprintf("%s_", strings.Replace(strings.ToUpper(key), "-", "_", -1))
+			if i != 0 {
+				prefix += fmt.Sprintf("%d_", i)
+			}
+
+			if url, exists := env[prefix+"URL"]; exists {
+				return url, true
+			}
+		}
+	}
+
+	return "", false
+}
+
 // Path returns the project's path
 func (l *Local) Path() string {
 	return l.Dir

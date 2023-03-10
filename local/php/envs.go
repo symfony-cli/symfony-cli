@@ -35,12 +35,12 @@ func (p *Server) resolveScriptName(pathInfo string) (string, string) {
 	pathInfo = path.Clean(pathInfo)
 
 	if pos := strings.Index(strings.ToLower(pathInfo), ".php"); pos != -1 {
-		file := pathInfo[:pos+4]
-		if file == filepath.Clean(file) {
+		file := path.Clean(pathInfo[:pos+4])
+
 			if _, err := os.Stat(filepath.Join(p.documentRoot, file)); err == nil {
 				return file, pathInfo[pos+4:]
 			}
-		}
+
 	}
 
 	if len(pathInfo) <= 1 {

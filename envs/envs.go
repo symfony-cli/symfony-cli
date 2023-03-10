@@ -223,12 +223,14 @@ func extractRelationshipsEnvs(env Environment) Envs {
 				if !isMaster(endpoint) {
 					continue
 				}
+				values[fmt.Sprintf("%sURL", prefix)] = fmt.Sprintf("%s://%s:%s@%s:%s/?authSource=%s", endpoint["scheme"].(string), endpoint["username"].(string), endpoint["password"].(string), endpoint["host"].(string), formatInt(endpoint["port"]), endpoint["path"].(string))
 				values[fmt.Sprintf("%sSERVER", prefix)] = formatServer(endpoint)
 				values[fmt.Sprintf("%sHOST", prefix)] = endpoint["host"].(string)
 				values[fmt.Sprintf("%sPORT", prefix)] = formatInt(endpoint["port"])
 				values[fmt.Sprintf("%sSCHEME", prefix)] = endpoint["scheme"].(string)
 				values[fmt.Sprintf("%sNAME", prefix)] = endpoint["path"].(string)
 				values[fmt.Sprintf("%sDATABASE", prefix)] = endpoint["path"].(string)
+				values[fmt.Sprintf("%sDB", prefix)] = endpoint["path"].(string)
 				values[fmt.Sprintf("%sUSER", prefix)] = endpoint["username"].(string)
 				values[fmt.Sprintf("%sUSERNAME", prefix)] = endpoint["username"].(string)
 				values[fmt.Sprintf("%sPASSWORD", prefix)] = endpoint["password"].(string)
@@ -269,7 +271,7 @@ func extractRelationshipsEnvs(env Environment) Envs {
 			} else if rel == "mercure" {
 				values["MERCURE_URL"] = fmt.Sprintf("%s://%s:%s/.well-known/mercure", endpoint["scheme"].(string), endpoint["host"].(string), formatInt(endpoint["port"]))
 				values["MERCURE_PUBLIC_URL"] = values["MERCURE_URL"]
-			} else if scheme == "http" {
+			} else if scheme == "http" || scheme == "https" {
 				username, hasUsername := endpoint["username"].(string)
 				password, hasPassword := endpoint["password"].(string)
 				if hasUsername || hasPassword {

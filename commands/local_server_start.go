@@ -50,6 +50,7 @@ import (
 )
 
 var localWebServerProdWarningMsg = "The local web server is optimized for local development and MUST never be used in a production setup."
+var localWebServerTlsKeyLogWarningMsg = "Logging TLS master key is enabled. It means TLS connections between the client and this server will be INSECURE. This is NOT recommended unless you are debugging the connections."
 
 var localServerStartCmd = &console.Command{
 	Category:    "local",
@@ -68,6 +69,16 @@ var localServerStartCmd = &console.Command{
 		&console.StringFlag{Name: "p12", Usage: "Name of the file containing the TLS certificate to use in p12 format"},
 		&console.BoolFlag{Name: "no-tls", Usage: "Use HTTP instead of HTTPS"},
 		&console.BoolFlag{Name: "use-gzip", Usage: "Use GZIP"},
+		&console.StringFlag{
+			Name:  "tls-key-log-file",
+			Usage: "Destination for TLS master secrets in NSS key log format",
+			// If 'SSLKEYLOGFILE' environment variable is set, uses this as a
+			// destination of TLS key log. In this context, the name
+			// 'SSLKEYLOGFILE' is common, so using 'SSL' instead of 'TLS' name.
+			// This environment variable is preferred than the key log file
+			// from the console argument.
+			EnvVars: []string{"SSLKEYLOGFILE"},
+		},
 	},
 	Action: func(c *console.Context) error {
 		ui := terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin)
@@ -167,6 +178,10 @@ var localServerStartCmd = &console.Command{
 				}
 				config.PKCS12 = p12
 			}
+		}
+
+		if config.TlsKeyLogFile != "" {
+			ui.Warning(localWebServerTlsKeyLogWarningMsg)
 		}
 
 		lw, err := pidFile.LogWriter()

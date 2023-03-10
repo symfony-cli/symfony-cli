@@ -22,6 +22,7 @@ package http
 import (
 	"crypto/tls"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -53,6 +54,7 @@ type Server struct {
 	Logger        zerolog.Logger
 	Appversion    string
 	UseGzip       bool
+	TlsKeyLogFile string
 
 	httpserver  *http.Server
 	httpsserver *http.Server
@@ -111,6 +113,16 @@ func (s *Server) Start(errChan chan error) (int, error) {
 		return port, errors.WithStack(err)
 	}
 
+	var keyLogWriter io.Writer
+	if s.TlsKeyLogFile != "" {
+		w, err := os.OpenFile(s.TlsKeyLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+		if err != nil {
+			return port, errors.WithStack(err)
+		}
+
+		keyLogWriter = w
+	}
+
 	s.httpsserver = &http.Server{
 		Handler: proxyHandler,
 		TLSConfig: &tls.Config{
@@ -118,6 +130,7 @@ func (s *Server) Start(errChan chan error) (int, error) {
 			CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
 			Certificates:             []tls.Certificate{cert},
 			NextProtos:               []string{"h2", "http/1.1"},
+			KeyLogWriter:             keyLogWriter,
 		},
 	}
 

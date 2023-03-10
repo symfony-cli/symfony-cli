@@ -109,8 +109,8 @@ func Background(homeDir string) error {
 	os.Setenv("REEXEC_WATCH_PID", fmt.Sprint(Getppid()))
 	// We are in a reexec.Restart call (probably after an upgrade), watch
 	// REEXEC_SHELL_PID instead of direct parent.
-	// For interactive sessions, this is not an issue, but for long running
-	// processes like tunnel:open, if we don't do that, they will exits right
+	// For interactive sessions, this is not an issue, but for long-running
+	// processes like tunnel:open, if we don't do that, they will exit right
 	// after returning back to the shell because the direct parent (the initial
 	// process that got upgraded) is the one watched.
 	if shellPID := os.Getenv("REEXEC_SHELL_PID"); shellPID != "" {
