@@ -49,6 +49,7 @@ type Config struct {
 	UseGzip       bool   `yaml:"use_gzip"`
 	TlsKeyLogFile string `yaml:"tls_key_log_file"`
 	NoWorkers     bool   `yaml:"no_workers"`
+	AllowCORS     bool   `yaml:"allow_cors"`
 }
 
 type FileConfig struct {
@@ -121,6 +122,9 @@ func NewConfigFromContext(c *console.Context, projectDir string) (*Config, *File
 	}
 	if c.IsSet("no-workers") {
 		config.NoWorkers = c.Bool("no-workers")
+	}
+	if c.IsSet("allow-cors") {
+		config.AllowCORS = c.Bool("allow-cors")
 	}
 
 	return config, fileConfig, nil
