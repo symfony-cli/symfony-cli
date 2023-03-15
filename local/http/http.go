@@ -55,6 +55,7 @@ type Server struct {
 	Appversion    string
 	UseGzip       bool
 	TlsKeyLogFile string
+	AllowCORS     bool
 
 	httpserver  *http.Server
 	httpsserver *http.Server
@@ -95,6 +96,10 @@ func (s *Server) Start(errChan chan error) (int, error) {
 			return port, errors.WithStack(err)
 		}
 		proxyHandler = gzipWrapper(proxyHandler)
+	}
+
+	if s.AllowCORS {
+		proxyHandler = corsWrapper(proxyHandler)
 	}
 
 	s.httpserver = &http.Server{
