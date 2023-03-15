@@ -63,6 +63,7 @@ func New(c *Config) (*Project, error) {
 			UseGzip:       c.UseGzip,
 			Appversion:    c.AppVersion,
 			TlsKeyLogFile: c.TlsKeyLogFile,
+			AllowCORS:     c.AllowCORS,
 		},
 	}
 	if err != nil {
