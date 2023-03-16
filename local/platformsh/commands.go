@@ -640,10 +640,12 @@ var Commands = []*console.Command{
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "cert",},
 			&console.StringFlag{Name: "chain",},
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "host",},
 			&console.StringFlag{Name: "key",},
 			&console.BoolFlag{Name: "no-wait", Aliases: []string{"W"},},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+			&console.StringFlag{Name: "replace", Aliases: []string{"r"},},
 			&console.BoolFlag{Name: "wait",},
 		},
 	},
@@ -655,6 +657,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "Delete a domain from the project",
 		Flags:    []console.Flag{
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "host",},
 			&console.BoolFlag{Name: "no-wait", Aliases: []string{"W"},},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
@@ -671,6 +674,7 @@ var Commands = []*console.Command{
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
 			&console.BoolFlag{Name: "no-header",},
@@ -689,6 +693,7 @@ var Commands = []*console.Command{
 		Usage:    "Get a list of all domains",
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.StringFlag{Name: "host",},
 			&console.BoolFlag{Name: "no-header",},
@@ -705,6 +710,7 @@ var Commands = []*console.Command{
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "cert",},
 			&console.StringFlag{Name: "chain",},
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "host",},
 			&console.StringFlag{Name: "key",},
 			&console.BoolFlag{Name: "no-wait", Aliases: []string{"W"},},
@@ -1637,6 +1643,26 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.BoolFlag{Name: "no-header",},
 			&console.StringFlag{Name: "org", Aliases: []string{"o"},},
+		},
+	},
+	{
+		Category: "cloud:organization",
+		Name:     "user:projects",
+		Aliases:  []*console.Alias{
+			{Name: "organization:user:projects", Hidden: true},
+			{Name: "cloud:oups"},
+			{Name: "oups", Hidden: true},
+		},
+		Usage:    "List the projects a user can access",
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
+			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
+			&console.StringFlag{Name: "format", DefaultValue: "table",},
+			&console.BoolFlag{Name: "list-all",},
+			&console.BoolFlag{Name: "no-header",},
+			&console.StringFlag{Name: "org", Aliases: []string{"o"},},
+			&console.BoolFlag{Name: "reverse",},
+			&console.BoolFlag{Name: "sort-granted",},
 		},
 	},
 	{
