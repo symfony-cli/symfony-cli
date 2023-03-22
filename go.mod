@@ -2,13 +2,13 @@ module github.com/symfony-cli/symfony-cli
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1
-	github.com/compose-spec/compose-go v1.11.0
+	github.com/compose-spec/compose-go v1.13.0
 	github.com/docker/docker v23.0.1+incompatible
 	github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819
 	github.com/fabpot/local-php-security-checker/v2 v2.0.6
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/hashicorp/go-version v1.6.0
-	github.com/hashicorp/golang-lru v0.6.0
+	github.com/hashicorp/golang-lru/v2 v2.0.2
 	github.com/hpcloud/tail v1.0.0
 	github.com/joho/godotenv v1.5.1
 	github.com/mitchellh/go-homedir v1.1.0
@@ -19,13 +19,13 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/soheilhy/cmux v0.1.5
 	github.com/stoicperlman/fls v0.0.0-20171222144224-f073b7a01081
-	github.com/symfony-cli/cert v1.0.1
+	github.com/symfony-cli/cert v1.0.2
 	github.com/symfony-cli/console v1.0.3
 	github.com/symfony-cli/phpstore v1.0.7
 	github.com/symfony-cli/terminal v1.0.4
 	github.com/syncthing/notify v0.0.0-20210616190510-c6b7342338d2
 	golang.org/x/sync v0.1.0
-	golang.org/x/text v0.7.0
+	golang.org/x/text v0.8.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
 	gopkg.in/yaml.v2 v2.4.0
 )
