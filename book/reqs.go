@@ -81,7 +81,7 @@ func CheckRequirements() (bool, error) {
 			terminal.Printfln("<info>[OK]</> PHP installed version %s (%s)", v.FullVersion, v.PHPPath)
 		} else {
 			ready = false
-			terminal.Printfln("<error>[KO]</> PHP installed; version %s found but we need version 7.2.5+ (%s)", v.FullVersion, v.PHPPath)
+			terminal.Printfln("<error>[KO]</> PHP installed; version %s found but we need version %s+ (%s)", v.FullVersion, minv.String(), v.PHPPath)
 		}
 	}
 
