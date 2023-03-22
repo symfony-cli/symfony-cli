@@ -58,6 +58,9 @@ func (c ComposerResult) ExitCode() int {
 }
 
 func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, debugLogger zerolog.Logger) ComposerResult {
+	if os.Getenv("COMPOSER_MEMORY_LIMIT") == "" {
+		env = append(env, "COMPOSER_MEMORY_LIMIT=-1")
+	}
 	e := &Executor{
 		Dir:        dir,
 		BinName:    "php",
