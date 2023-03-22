@@ -23,7 +23,7 @@ import (
 	"crypto/tls"
 	"sync"
 
-	lru "github.com/hashicorp/golang-lru"
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/symfony-cli/cert"
 )
 
@@ -31,12 +31,12 @@ type certStore struct {
 	proxyCfg *Config
 	ca       *cert.CA
 	lock     sync.Mutex
-	cache    *lru.ARCCache
+	cache    *lru.ARCCache[string, tls.Certificate]
 }
 
 // newCertStore creates a store to keep SSL certificates in memory
 func (p *Proxy) newCertStore(ca *cert.CA) *certStore {
-	cache, _ := lru.NewARC(1024)
+	cache, _ := lru.NewARC[string, tls.Certificate](1024)
 	return &certStore{
 		proxyCfg: p.Config,
 		ca:       ca,
@@ -50,7 +50,7 @@ func (c *certStore) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certi
 	defer c.lock.Unlock()
 	name := c.proxyCfg.NormalizeDomain(clientHello.ServerName)
 	if val, ok := c.cache.Get(name); ok {
-		cert := val.(tls.Certificate)
+		cert := val
 		return &cert, nil
 	}
 	cert, err := c.ca.CreateCert([]string{name})
