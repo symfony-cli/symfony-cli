@@ -357,6 +357,36 @@ var Commands = []*console.Command{
 	},
 	{
 		Category: "cloud:backup",
+		Name:     "delete",
+		Aliases:  []*console.Alias{
+			{Name: "backup:delete", Hidden: true},
+		},
+		Usage:    "Delete an environment backup",
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.StringFlag{Name: "host",},
+			&console.BoolFlag{Name: "no-wait", Aliases: []string{"W"},},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+			&console.BoolFlag{Name: "wait",},
+		},
+	},
+	{
+		Category: "cloud:backup",
+		Name:     "get",
+		Aliases:  []*console.Alias{
+			{Name: "backup:get", Hidden: true},
+		},
+		Usage:    "View an environment backup",
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.StringFlag{Name: "host",},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+			&console.StringFlag{Name: "property", Aliases: []string{"P"},},
+		},
+	},
+	{
+		Category: "cloud:backup",
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "backup:list", Hidden: true},
