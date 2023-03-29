@@ -20,9 +20,12 @@
 package commands
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -112,19 +115,65 @@ func GetPSH() (*platformshCLI, error) {
 }
 
 func InitAppFunc(c *console.Context) error {
-	if c.App.Channel == "stable" {
-		// do not run auto-update in the cloud, CI or background jobs
-		if !util.InCloud() && terminal.Stdin.IsInteractive() && !reexec.IsChild() {
-			debug := false
-			if os.Getenv("SC_DEBUG") == "1" {
-				debug = true
-			}
-			updater := updater.NewUpdater(filepath.Join(util.GetHomeDir(), "update"), c.App.ErrWriter, debug)
-			updater.CheckForNewVersion(c.App.Version)
+	if !displayAutoUpdateMessage(c) {
+		return nil
+	}
+
+	debug := false
+	if os.Getenv("SC_DEBUG") == "1" {
+		debug = true
+	}
+	updater := updater.NewUpdater(filepath.Join(util.GetHomeDir(), "update"), c.App.ErrWriter, debug)
+	updater.CheckForNewVersion(c.App.Version)
+
+	return nil
+}
+
+func displayAutoUpdateMessage(c *console.Context) bool {
+	if c.App.Channel != "stable" {
+		return false
+	}
+
+	// do not run auto-update in the cloud, CI or background jobs
+	if util.InCloud() || terminal.Stdin.IsInteractive() || reexec.IsChild() {
+		return false
+	}
+
+	// no auto update message when installed via a package manager
+	return !isExecutableFromPackageManager()
+}
+
+func isExecutableFromPackageManager() bool {
+	execPath, err := os.Executable()
+	if err != nil {
+		return false
+	}
+	absPath, err := filepath.Abs(execPath)
+	if err != nil {
+		return false
+	}
+	currentUser, err := user.Current()
+	if err != nil {
+		return false
+	}
+
+	paths := []string{
+		// Linuxbrew (single-user)
+		fmt.Sprintf("%s/.linuxbrew/bin", currentUser.HomeDir),
+		// Linuxbrew (multi-user)
+		"/usr/local/linuxbrew/bin/",
+		// Homebrew (macOS)
+		"/usr/local/Cellar/",
+		// Scoop (Windows)
+		fmt.Sprintf("%s/scoop/apps/", os.Getenv("USERPROFILE")),
+	}
+	for _, path := range paths {
+		if strings.HasPrefix(absPath, path) {
+			return false
 		}
 	}
 
-	return nil
+	return true
 }
 
 // WelcomeAction displays a message when no command
