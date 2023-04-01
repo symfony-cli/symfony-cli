@@ -115,14 +115,15 @@ func InitAppFunc(c *console.Context) error {
 	if c.App.Channel == "stable" {
 		// do not run auto-update in the cloud, CI or background jobs
 		if !util.InCloud() && terminal.Stdin.IsInteractive() && !reexec.IsChild() {
-			if os.Getenv("SYMFONY_IGNORE_NEW_VERSION") != "1" {
-				debug := false
-				if os.Getenv("SC_DEBUG") == "1" {
-					debug = true
-				}
-				updater := updater.NewUpdater(filepath.Join(util.GetHomeDir(), "update"), c.App.ErrWriter, debug)
-				updater.CheckForNewVersion(c.App.Version)
+			if os.Getenv("SYMFONY_IGNORE_NEW_VERSION") == "1" {
+				return nil
 			}
+			debug := false
+			if os.Getenv("SC_DEBUG") == "1" {
+				debug = true
+			}
+			updater := updater.NewUpdater(filepath.Join(util.GetHomeDir(), "update"), c.App.ErrWriter, debug)
+			updater.CheckForNewVersion(c.App.Version)
 		}
 	}
 
