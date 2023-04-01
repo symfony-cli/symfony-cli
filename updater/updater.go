@@ -76,6 +76,11 @@ func (updater *Updater) CheckForNewVersion(currentVersionStr string) {
 		return
 	}
 
+	ignore := os.Getenv("SYMFONY_IGNORE_NEW_VERSION")
+	if ignore == "1" {
+		return
+	}
+
 	currentVersion, err := version.NewVersion(currentVersionStr)
 	if err != nil {
 		return
