@@ -234,7 +234,7 @@ func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 		"SERVER_PORT":     s.serverPort,
 		"SERVER_NAME":     r.Host,
 		"SERVER_PROTOCOL": r.Proto,
-		"SERVER_SOFTWARE": fmt.Sprintf("Symfony Local Server %s", s.Appversion),
+		"SERVER_SOFTWARE": fmt.Sprintf("Symfony-Local-Server/%s", s.Appversion),
 	}
 	env["X_FORWARDED_PORT"] = r.Header.Get("X-Forwarded-Port")
 	if env["X_FORWARDED_PORT"] == "" {
