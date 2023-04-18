@@ -111,13 +111,16 @@ func GetPSH() (*platformshCLI, error) {
 }
 
 func InitAppFunc(c *console.Context) error {
-	if c.App.Channel == "stable" {
-		// do not run auto-update in the cloud, CI or background jobs
-		if !util.InCloud() && terminal.Stdin.IsInteractive() && !reexec.IsChild() {
-			updater := updater.NewUpdater(filepath.Join(util.GetHomeDir(), "update"), c.App.ErrWriter, terminal.IsDebug())
-			updater.CheckForNewVersion(c.App.Version)
-		}
+	if c.App.Channel != "stable" {
+		return nil
 	}
+	// do not run auto-update in the cloud, CI or background jobs
+	if util.InCloud() || !terminal.Stdin.IsInteractive() || reexec.IsChild() {
+		return nil
+	}
+
+	updater := updater.NewUpdater(filepath.Join(util.GetHomeDir(), "update"), c.App.ErrWriter, terminal.IsDebug())
+	updater.CheckForNewVersion(c.App.Version)
 
 	return nil
 }
