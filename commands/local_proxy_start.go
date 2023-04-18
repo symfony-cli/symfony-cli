@@ -134,7 +134,7 @@ var localProxyStartCmd = &console.Command{
 			logger = zerolog.New(lw).With().Timestamp().Logger()
 		}
 
-		proxy := proxy.New(config, ca, log.New(logger, "", 0), terminal.GetLogLevel() >= 5)
+		proxy := proxy.New(config, ca, log.New(logger, "", 0), terminal.IsDebug())
 		errChan := make(chan error)
 		go func() {
 			errChan <- proxy.Start()
