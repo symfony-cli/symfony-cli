@@ -186,7 +186,7 @@ func (r *Runner) Run() error {
 
 				timer.Stop()
 				// when the command is really fast to run, it will be already
-				// done here, so we need to forward exit status as it has
+				// done here, so we need to forward exit status as if it has
 				// finished later one
 				go func() { cmdExitChan <- err }()
 			case <-timer.C:
@@ -225,23 +225,35 @@ func (r *Runner) Run() error {
 		case err := <-cmdExitChan:
 			err = errors.Wrapf(err, `command "%s" failed`, r.pidFile)
 
-			if looping {
-				// Command exited, let's wait for a change or 5 seconds to restart the command or a signal to exit
-				if err != nil {
-					terminal.Logger.Error().Msgf("%s, waiting 5 seconds before restarting it", err)
-					timer.Reset(5 * time.Second)
-				} else if r.AlwaysRestartOnExit {
-					terminal.Logger.Error().Msgf(`command "%s" exited, restarting it immediately`, r.pidFile)
+			if !looping {
+				if err == nil {
+					err = r.pidFile.Remove()
 				}
 
+				return err
+			}
+
+			if r.AlwaysRestartOnExit {
+				terminal.Logger.Error().Msgf(`command "%s" exited, restarting it immediately`, r.pidFile)
 				continue
 			}
 
-			if err == nil {
-				return r.pidFile.Remove()
+			// Command exited: let's wait for a signal to just exit on a change
+			// on the filesystem, or 5 seconds in case of error, before
+			// restarting the command.
+			if err != nil {
+				terminal.Logger.Error().Msgf("%s, waiting 5 seconds before restarting it", err)
+				timer.Reset(5 * time.Second)
 			}
 
-			return err
+			select {
+			case sig := <-sigChan:
+				terminal.Logger.Info().Msgf(`Signal "%s" received, exiting`, sig)
+				return nil
+			case <-restartChan:
+				timer.Stop()
+			case <-timer.C:
+			}
 		}
 
 		terminal.Logger.Info().Msgf(`Restarting command "%s"`, r.pidFile)
