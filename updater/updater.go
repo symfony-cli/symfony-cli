@@ -96,8 +96,8 @@ func (updater *Updater) CheckForNewVersion(currentVersionStr string) {
 	case <-updater.timer.C:
 		updater.logger.Printf("<comment>Checking for updates timeout expired</>")
 	case newVersionFound := <-newVersionCh:
+		updater.silence()
 		if newVersionFound == nil {
-			updater.silence()
 			return
 		}
 		fmt.Fprintf(updater.Output, "\n<error> INFO </> <info>A new Symfony CLI version is available</> (<info>%s</>, currently running <info>%s</>).\n\n", newVersionFound, currentVersion)
