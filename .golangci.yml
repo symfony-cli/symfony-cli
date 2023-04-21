@@ -1,0 +1,16 @@
+run:
+  timeout: 30s
+  issues-exit-code: 1
+
+linters:
+  enable:
+    - gci
+    - wrapcheck
+
+linters-settings:
+  wrapcheck:
+    ignorePackageGlobs:
+      # We already make sure your own packages wrap errors properly
+      - github.com/symfony-cli/*
+  errcheck:
+      ignore: github.com/symfony-cli/terminal:^(Ep|P)rint

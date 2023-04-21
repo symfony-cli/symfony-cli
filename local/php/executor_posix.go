@@ -25,6 +25,8 @@ package php
 import (
 	"os"
 	"syscall"
+
+	"github.com/pkg/errors"
 )
 
 func shouldSignalBeIgnored(sig os.Signal) bool {
@@ -34,5 +36,5 @@ func shouldSignalBeIgnored(sig os.Signal) bool {
 }
 
 func symlink(oldname, newname string) error {
-	return os.Symlink(oldname, newname)
+	return errors.WithStack(os.Symlink(oldname, newname))
 }

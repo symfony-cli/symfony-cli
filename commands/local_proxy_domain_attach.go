@@ -20,6 +20,7 @@
 package commands
 
 import (
+	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/proxy"
 	"github.com/symfony-cli/symfony-cli/util"
@@ -40,16 +41,16 @@ var localProxyAttachDomainCmd = &console.Command{
 	Action: func(c *console.Context) error {
 		projectDir, err := getProjectDir(c.String("dir"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		homeDir := util.GetHomeDir()
 		config, err := proxy.Load(homeDir)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		if err := config.AddDirDomains(projectDir, c.Args().Tail()); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		terminal.Println("<info>The proxy is now configured with the following domains for this directory:</>")
 		for _, domain := range config.GetDomains(projectDir) {

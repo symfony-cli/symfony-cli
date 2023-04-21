@@ -27,7 +27,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -123,7 +122,7 @@ func composerVersion() int {
 	if err != nil {
 		return DefaultComposerVersion
 	}
-	contents, err := ioutil.ReadFile(filepath.Join(cwd, "composer.lock"))
+	contents, err := os.ReadFile(filepath.Join(cwd, "composer.lock"))
 	if err != nil {
 		return DefaultComposerVersion
 	}
@@ -158,7 +157,7 @@ func findComposer(extraBin string) (string, error) {
 
 func downloadComposer(dir string) (string, error) {
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	path := filepath.Join(dir, "composer.phar")
 	if _, err := os.Stat(path); err == nil {
@@ -167,11 +166,11 @@ func downloadComposer(dir string) (string, error) {
 
 	sig, err := downloadComposerInstallerSignature()
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	installer, err := downloadComposerInstaller()
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	h := sha512.New384()
 	h.Write(installer)
@@ -182,7 +181,7 @@ func downloadComposer(dir string) (string, error) {
 		return "", errors.New("signature was wrong when downloading Composer; please try again")
 	}
 	setupPath := filepath.Join(dir, "composer-setup.php")
-	ioutil.WriteFile(setupPath, installer, 0666)
+	_ = os.WriteFile(setupPath, installer, 0666)
 
 	var stdout bytes.Buffer
 	e := &Executor{
@@ -198,10 +197,10 @@ func downloadComposer(dir string) (string, error) {
 		return "", errors.New("unable to setup Composer")
 	}
 	if err := os.Chmod(path, 0755); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	if err := os.Remove(filepath.Join(dir, "composer-setup.php")); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 
 	return path, nil
@@ -210,17 +209,19 @@ func downloadComposer(dir string) (string, error) {
 func downloadComposerInstaller() ([]byte, error) {
 	resp, err := http.Get("https://getcomposer.org/installer")
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	defer resp.Body.Close()
-	return ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
+	return b, errors.WithStack(err)
 }
 
 func downloadComposerInstallerSignature() ([]byte, error) {
 	resp, err := http.Get("https://composer.github.io/installer.sig")
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	defer resp.Body.Close()
-	return ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
+	return b, errors.WithStack(err)
 }

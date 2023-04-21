@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/envs"
@@ -31,16 +32,6 @@ import (
 	"github.com/symfony-cli/symfony-cli/util"
 	"github.com/symfony-cli/terminal"
 )
-
-var openDocCmd = &console.Command{
-	Category: "open",
-	Name:     "docs",
-	Usage:    "Open the online Web documentation",
-	Action: func(c *console.Context) error {
-		abstractOpenCmd("https://symfony.com/doc/cloud")
-		return nil
-	},
-}
 
 var projectLocalOpenCmd = &console.Command{
 	Category: "open",
@@ -56,7 +47,7 @@ var projectLocalOpenCmd = &console.Command{
 	Action: func(c *console.Context) error {
 		projectDir, err := getProjectDir(c.String("dir"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		pidFile := pid.New(projectDir, nil)
 		if !pidFile.IsRunning() {
@@ -88,11 +79,11 @@ var projectLocalMailCatcherOpenCmd = &console.Command{
 	Action: func(c *console.Context) error {
 		projectDir, err := getProjectDir(c.String("dir"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		env, err := envs.NewLocal(projectDir, terminal.IsDebug())
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		url, exists := env.FindServiceUrl("mailer")
 		if !exists {
@@ -113,11 +104,11 @@ var projectLocalRabbitMQManagementOpenCmd = &console.Command{
 	Action: func(c *console.Context) error {
 		projectDir, err := getProjectDir(c.String("dir"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		env, err := envs.NewLocal(projectDir, terminal.IsDebug())
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		url, exists := env.FindServiceUrl("amqp")
 		if !exists {
@@ -141,11 +132,11 @@ var projectLocalServiceOpenCmd = &console.Command{
 	Action: func(c *console.Context) error {
 		projectDir, err := getProjectDir(c.String("dir"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		env, err := envs.NewLocal(projectDir, terminal.IsDebug())
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		service := c.Args().Get("service")
 		url, exists := env.FindServiceUrl(service)

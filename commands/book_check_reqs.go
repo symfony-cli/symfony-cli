@@ -20,6 +20,7 @@
 package commands
 
 import (
+	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/book"
 	"github.com/symfony-cli/terminal"
@@ -35,7 +36,7 @@ var bookCheckReqsCmd = &console.Command{
 
 		ready, err := book.CheckRequirements()
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		terminal.Println("")
 		if ready {

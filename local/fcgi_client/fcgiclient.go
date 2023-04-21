@@ -10,7 +10,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -256,7 +255,7 @@ func (w *bufWriter) Close() error {
 		w.closer.Close()
 		return errors.WithStack(err)
 	}
-	return w.closer.Close()
+	return errors.WithStack(w.closer.Close())
 }
 
 func newWriter(c *FCGIClient, recType uint8) *bufWriter {
@@ -337,7 +336,7 @@ func (f *FCGIClient) Do(p map[string]string, req io.Reader) (r io.Reader, err er
 
 	body := newWriter(f, FCGI_STDIN)
 	if req != nil {
-		io.Copy(body, req)
+		_, _ = io.Copy(body, req)
 	}
 	body.Close()
 
@@ -362,7 +361,7 @@ func (f *FCGIClient) Request(p map[string]string, req io.Reader) (resp *http.Res
 		if err == io.EOF {
 			err = io.ErrUnexpectedEOF
 		}
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	resp.Header = http.Header(mimeHeader)
 	// TODO: fixTransferEncoding?
@@ -372,13 +371,13 @@ func (f *FCGIClient) Request(p map[string]string, req io.Reader) (resp *http.Res
 	// status
 	err = errors.WithStack(extractStatus(resp))
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	if chunked(resp.TransferEncoding) {
-		resp.Body = ioutil.NopCloser(httputil.NewChunkedReader(rb))
+		resp.Body = io.NopCloser(httputil.NewChunkedReader(rb))
 	} else {
-		resp.Body = ioutil.NopCloser(rb)
+		resp.Body = io.NopCloser(rb)
 	}
 	return
 }
@@ -434,7 +433,7 @@ func (f *FCGIClient) PostFile(p map[string]string, data url.Values, file map[str
 	for key, val := range file {
 		fd, e := os.Open(val)
 		if e != nil {
-			return nil, e
+			return nil, errors.WithStack(e)
 		}
 		defer fd.Close()
 

@@ -43,9 +43,9 @@ func (s *LocalSuite) TestExtra(c *C) {
 
 func (s *LocalSuite) TestTunnelFilePath(c *C) {
 	l := &Local{Dir: "testdata/project"}
-	os.Rename("testdata/project/git", "testdata/project/.git")
+	_ = os.Rename("testdata/project/git", "testdata/project/.git")
 	defer func() {
-		os.Rename("testdata/project/.git", "testdata/project/git")
+		_ = os.Rename("testdata/project/.git", "testdata/project/git")
 	}()
 	project, err := platformsh.ProjectFromDir(l.Dir, false)
 	if err != nil {
@@ -56,8 +56,10 @@ func (s *LocalSuite) TestTunnelFilePath(c *C) {
 }
 
 func (s *LocalSuite) TestRelationships(c *C) {
-	os.Rename("testdata/project/git", "testdata/project/.git")
-	defer os.Rename("testdata/project/.git", "testdata/project/git")
+	_ = os.Rename("testdata/project/git", "testdata/project/.git")
+	defer func() {
+		_ = os.Rename("testdata/project/.git", "testdata/project/git")
+	}()
 	homedir.Reset()
 	os.Setenv("HOME", "testdata/project")
 	defer homedir.Reset()

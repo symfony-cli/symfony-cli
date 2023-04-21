@@ -80,7 +80,7 @@ func (p *Process) Run(ctx context.Context) (*exec.Cmd, error) {
 	go func() {
 		p.Logger.Debug().Msg("started")
 		<-ctx.Done()
-		kill(cmd)
+		_ = kill(cmd)
 		p.Logger.Debug().Msg("stopped")
 	}()
 	return cmd, nil

@@ -64,6 +64,11 @@ jobs:
                     echo '"go generate" changed some Go generated code, run "symfony cloud:self-update" then "go generate ./" locally and make a Pull Request with the changes'
                     git diff
                     exit 1
+            - 
+                name: Run golangci-lint
+                uses: golangci/golangci-lint-action@v3
+                with:
+                    only-new-issues: true
             -
                 name: Test
                 run: go test -v ./...

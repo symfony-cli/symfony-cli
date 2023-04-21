@@ -37,7 +37,7 @@ func (s *URLSlice) UnmarshalJSON(b []byte) error {
 	var keys []string
 
 	if err := errors.WithStack(json.Unmarshal(b, &v)); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	d := json.NewDecoder(bytes.NewReader(b))
@@ -59,7 +59,7 @@ func (s *URLSlice) UnmarshalJSON(b []byte) error {
 		}
 		keys = append(keys, t.(string))
 		if err := errors.WithStack(skipValue(d)); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	}
 
@@ -87,7 +87,7 @@ func skipValue(d *json.Decoder) error {
 				if err == end {
 					break
 				}
-				return err
+				return errors.WithStack(err)
 			}
 		}
 	case json.Delim(']'), json.Delim('}'):

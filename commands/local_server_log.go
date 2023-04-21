@@ -20,6 +20,7 @@
 package commands
 
 import (
+	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/logs"
 	"github.com/symfony-cli/symfony-cli/local/pid"
@@ -47,7 +48,7 @@ var localServerLogCmd = &console.Command{
 	Action: func(c *console.Context) error {
 		projectDir, err := getProjectDir(c.String("dir"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		tailer := logs.Tailer{
@@ -61,7 +62,7 @@ var localServerLogCmd = &console.Command{
 		}
 
 		if err := tailer.Watch(pid.New(projectDir, nil)); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		return tailer.Tail(terminal.Stderr)

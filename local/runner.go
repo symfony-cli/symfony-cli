@@ -71,7 +71,7 @@ func NewRunner(pidFile *pid.PidFile, mode runnerMode) (*Runner, error) {
 	}
 	r.binary, err = exec.LookPath(pidFile.Binary())
 	if err != nil {
-		r.pidFile.Remove()
+		_ = r.pidFile.Remove()
 		return nil, errors.WithStack(err)
 	}
 
@@ -91,7 +91,7 @@ func (r *Runner) Run() error {
 			}
 
 			if _, isExitCoder := err.(console.ExitCoder); isExitCoder {
-				return err
+				return errors.WithStack(err)
 			}
 			terminal.Printfln("Impossible to go to the background: %s", err)
 			terminal.Println("Continue in foreground")
@@ -107,7 +107,7 @@ func (r *Runner) Run() error {
 	cmdExitChan := make(chan error) // receives command exit status, allow to cmd.Wait() in non-blocking way
 	restartChan := make(chan bool)  // receives requests to restart the command
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Kill, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	defer signal.Stop(sigChan)
 
 	if len(r.pidFile.Watched) > 0 {
@@ -175,7 +175,7 @@ func (r *Runner) Run() error {
 			timer.Reset(RunnerReliefDuration)
 
 			if r.mode == RunnerModeLoopDetached {
-				reexec.NotifyForeground("started")
+				_ = reexec.NotifyForeground("started")
 			}
 
 			select {
@@ -203,7 +203,7 @@ func (r *Runner) Run() error {
 		}
 		if firstBoot && r.mode == RunnerModeLoopDetached {
 			terminal.RemapOutput(cmd.Stdout, cmd.Stderr).SetDecorated(true)
-			reexec.NotifyForeground(reexec.UP)
+			_ = reexec.NotifyForeground(reexec.UP)
 		}
 
 		firstBoot = false
@@ -213,13 +213,13 @@ func (r *Runner) Run() error {
 			terminal.Logger.Info().Msgf("Signal \"%s\" received, forwarding to command and exiting\n", sig)
 			err := cmd.Process.Signal(sig)
 			if err != nil && runtime.GOOS == "windows" && strings.Contains(err.Error(), "not supported by windows") {
-				return exec.Command("CMD", "/C", "TASKKILL", "/F", "/PID", strconv.Itoa(cmd.Process.Pid)).Run()
+				return errors.WithStack(exec.Command("CMD", "/C", "TASKKILL", "/F", "/PID", strconv.Itoa(cmd.Process.Pid)).Run())
 			}
-			return err
+			return errors.WithStack(err)
 		case <-restartChan:
 			// We use SIGTERM here because it's nicer and thus when we use our
 			// wrappers, signal will be nicely forwarded
-			cmd.Process.Signal(syscall.SIGTERM)
+			_ = cmd.Process.Signal(syscall.SIGTERM)
 			// we need to drain cmdExit channel to unblock cmd channel receiver
 			<-cmdExitChan
 		case err := <-cmdExitChan:
@@ -241,7 +241,7 @@ func (r *Runner) Run() error {
 				return r.pidFile.Remove()
 			}
 
-			return err
+			return errors.WithStack(err)
 		}
 
 		terminal.Logger.Info().Msgf(`Restarting command "%s"`, r.pidFile)

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/envs"
 	"github.com/symfony-cli/symfony-cli/local/platformsh"
@@ -18,11 +19,11 @@ var platformshBeforeHooks = map[string]console.BeforeFunc{
 		if projectID == "" {
 			projectDir, err := getProjectDir(c.String("dir"))
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 			project, err = platformsh.ProjectFromDir(projectDir, false)
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 			if app != "" {
 				project.App = app

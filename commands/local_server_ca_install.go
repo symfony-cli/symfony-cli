@@ -45,7 +45,7 @@ var localServerCAInstallCmd = &console.Command{
 		certsDir := filepath.Join(homeDir, "certs")
 		ca, err := cert.NewCA(certsDir)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		newCA := false
 		renew := c.Bool("renew")
@@ -61,8 +61,8 @@ var localServerCAInstallCmd = &console.Command{
 			return errors.Wrap(err, "failed to load the local Certificate Authority")
 		}
 		if renew && !newCA {
-			ca.Uninstall()
-			os.RemoveAll(certsDir)
+			_ = ca.Uninstall()
+			_ = os.RemoveAll(certsDir)
 			renew = false
 
 			goto retry

@@ -22,7 +22,6 @@ package commands
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -194,19 +193,19 @@ func getTemplates(rootDirectory, chosenTemplateName string, minorPHPVersion stri
 		)
 
 		if isFile {
-			templateConfigBytes, err = ioutil.ReadFile(chosenTemplateName)
+			templateConfigBytes, err = os.ReadFile(chosenTemplateName)
 		} else {
 			var resp *http.Response
 			resp, err = http.Get(chosenTemplateName)
 			if err != nil {
-				return nil, err
+				return nil, errors.WithStack(err)
 			}
 			if resp.StatusCode >= 400 {
 				return nil, errors.Errorf("Got HTTP status code >= 400: %s", resp.Status)
 			}
 			defer resp.Body.Close()
 
-			templateConfigBytes, err = ioutil.ReadAll(resp.Body)
+			templateConfigBytes, err = io.ReadAll(resp.Body)
 		}
 
 		if err != nil {
@@ -219,7 +218,7 @@ func getTemplates(rootDirectory, chosenTemplateName string, minorPHPVersion stri
 
 		terminal.Logger.Info().Msg("Using template " + chosenTemplateName)
 	} else {
-		files, err := ioutil.ReadDir(directory)
+		files, err := os.ReadDir(directory)
 		if err != nil {
 			return nil, errors.Wrap(err, "could not read configuration templates")
 		}
@@ -240,7 +239,7 @@ func getTemplates(rootDirectory, chosenTemplateName string, minorPHPVersion stri
 				continue
 			}
 
-			templateConfigBytes, err := ioutil.ReadFile(filepath.Join(directory, file.Name()))
+			templateConfigBytes, err := os.ReadFile(filepath.Join(directory, file.Name()))
 			if err != nil {
 				if isTemplateChosen {
 					return nil, errors.Wrap(err, "could not apply configuration template")
@@ -275,7 +274,7 @@ func getTemplates(rootDirectory, chosenTemplateName string, minorPHPVersion stri
 		return nil, errors.New("no matching template found")
 	}
 
-	phpini, err := ioutil.ReadFile(filepath.Join(directory, "php.ini"))
+	phpini, err := os.ReadFile(filepath.Join(directory, "php.ini"))
 	if err != nil {
 		return nil, errors.New("unable to find the php.ini template")
 	}

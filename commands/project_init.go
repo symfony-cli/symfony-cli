@@ -26,6 +26,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/git"
 	"github.com/symfony-cli/terminal"
@@ -57,17 +58,17 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 
 		projectDir, err := getProjectDir(c.String("dir"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		minorPHPVersion, err := forcePHPVersion(c.String("php"), projectDir)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		if buf, err := gitInit(projectDir); err != nil {
 			fmt.Print(buf.String())
-			return err
+			return errors.WithStack(err)
 		}
 		slug := c.String("slug")
 		if slug == "" {
@@ -76,12 +77,12 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 
 		cloudServices, err := parseCloudServices(projectDir, c.StringSlice("service"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		createdFiles, err := createRequiredFilesProject(projectDir, slug, c.String("template"), minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		if c.Bool("dump") {

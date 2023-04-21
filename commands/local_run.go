@@ -55,7 +55,7 @@ var localRunCmd = &console.Command{
 		}
 		projectDir, err := getProjectDir(c.String("dir"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		mode := local.RunnerModeOnce
@@ -70,13 +70,13 @@ var localRunCmd = &console.Command{
 		pidFile.Watched = directories
 		runner, err := local.NewRunner(pidFile, mode)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		runner.BuildCmdHook = func(cmd *exec.Cmd) error {
 			env, err := envs.GetEnv(pidFile.Dir, terminal.IsDebug())
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 
 			cmd.Env = append(cmd.Env, envs.AsSlice(env)...)
@@ -90,7 +90,7 @@ var localRunCmd = &console.Command{
 				return nil
 			}
 
-			return err
+			return errors.WithStack(err)
 		}
 
 		return nil

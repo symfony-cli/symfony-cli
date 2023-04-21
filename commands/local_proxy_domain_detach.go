@@ -20,6 +20,7 @@
 package commands
 
 import (
+	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/proxy"
 	"github.com/symfony-cli/symfony-cli/util"
@@ -38,11 +39,11 @@ var localProxyDetachDomainCmd = &console.Command{
 		homeDir := util.GetHomeDir()
 		config, err := proxy.Load(homeDir)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		domains := c.Args().Tail()
 		if err := config.RemoveDirDomains(domains); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		terminal.Println("<info>The following domains are not defined anymore on the proxy:</>")
 		for _, domain := range domains {

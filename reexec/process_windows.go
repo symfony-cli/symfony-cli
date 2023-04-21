@@ -122,7 +122,7 @@ func newWindowsProcess(e *processentry32) *windowsProcess {
 func findProcess(pid int) (*windowsProcess, error) {
 	ps, err := processes()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	for _, p := range ps {

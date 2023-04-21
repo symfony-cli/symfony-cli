@@ -215,7 +215,7 @@ func unmarshal(data []byte) (*line, error) {
 	raw := make(map[string]interface{})
 	err := errors.WithStack(json.Unmarshal(data, &raw))
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	line := &line{
 		fields: make(map[string]string),

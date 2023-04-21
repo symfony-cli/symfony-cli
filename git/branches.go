@@ -21,6 +21,8 @@ package git
 
 import (
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 func GetCurrentBranch(cwd string) string {
@@ -37,5 +39,5 @@ func GetCurrentBranch(cwd string) string {
 func ResetHard(cwd, reference string) error {
 	_, err := execGitQuiet(cwd, "reset", "--hard", reference)
 
-	return err
+	return errors.WithStack(err)
 }

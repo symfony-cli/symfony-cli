@@ -22,7 +22,7 @@ package proxy
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -59,7 +59,7 @@ func (s *ProxySuite) TestProxy(c *C) {
 		TLD:  "wip",
 		path: "testdata/.symfony5/proxy.json",
 	}, ca, log.New(zerolog.New(os.Stderr), "", 0), true)
-	os.MkdirAll("testdata/.symfony5", 0755)
+	_ = os.MkdirAll("testdata/.symfony5", 0755)
 	err = p.Save()
 	c.Assert(err, IsNil)
 
@@ -122,7 +122,7 @@ func (s *ProxySuite) TestProxy(c *C) {
 		res, err := client.Do(req)
 		c.Assert(err, IsNil)
 		c.Assert(res.StatusCode, Equals, http.StatusNotFound)
-		body, _ := ioutil.ReadAll(res.Body)
+		body, _ := io.ReadAll(res.Body)
 		c.Check(strings.Contains(string(body), "not linked"), Equals, true)
 	}
 
@@ -134,7 +134,7 @@ func (s *ProxySuite) TestProxy(c *C) {
 		res, err := client.Do(req)
 		c.Assert(err, IsNil)
 		c.Assert(res.StatusCode, Equals, http.StatusNotFound)
-		body, _ := ioutil.ReadAll(res.Body)
+		body, _ := io.ReadAll(res.Body)
 		c.Check(strings.Contains(string(body), "not started"), Equals, true)
 	}
 	/*
@@ -142,7 +142,7 @@ func (s *ProxySuite) TestProxy(c *C) {
 		{
 			backend := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(200)
-				w.Write([]byte(`symfony.wip`))
+				_, _ = w.Write([]byte(`symfony.wip`))
 			}))
 			cert, err := ca.CreateCert([]string{"localhost", "127.0.0.1"})
 			c.Assert(err, IsNil)
@@ -164,7 +164,7 @@ func (s *ProxySuite) TestProxy(c *C) {
 			res, err := client.Do(req)
 			c.Assert(err, IsNil)
 			c.Assert(res.StatusCode, Equals, http.StatusOK)
-			body, _ := ioutil.ReadAll(res.Body)
+			body, _ := io.ReadAll(res.Body)
 			c.Check(string(body), Equals, "symfony.wip")
 		}
 	*/
@@ -172,7 +172,7 @@ func (s *ProxySuite) TestProxy(c *C) {
 	{
 		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(200)
-			w.Write([]byte(`http://symfony-no-tls.wip`))
+			_, _ = w.Write([]byte(`http://symfony-no-tls.wip`))
 		}))
 		defer backend.Close()
 		backendURL, err := url.Parse(backend.URL)
@@ -180,14 +180,14 @@ func (s *ProxySuite) TestProxy(c *C) {
 
 		p := pid.New("symfony_com_no_tls", nil)
 		port, _ := strconv.Atoi(backendURL.Port())
-		p.Write(os.Getpid(), port, "http")
+		_ = p.Write(os.Getpid(), port, "http")
 
 		req, _ := http.NewRequest("GET", "http://symfony-no-tls.wip/", nil)
 		req.Close = true
 
 		res, err := client.Do(req)
 		c.Assert(err, IsNil)
-		body, _ := ioutil.ReadAll(res.Body)
+		body, _ := io.ReadAll(res.Body)
 		c.Assert(res.StatusCode, Equals, http.StatusOK)
 		c.Assert(string(body), Equals, "http://symfony-no-tls.wip")
 	}
@@ -212,10 +212,10 @@ func (s *ProxySuite) TestProxy(c *C) {
 			backend := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(200)
 				if r.Proto == "HTTP/2.0" {
-					w.Write([]byte(`http2`))
+					_, _ = w.Write([]byte(`http2`))
 					return
 				}
-				w.Write([]byte(`symfony.wip`))
+				_, _ = w.Write([]byte(`symfony.wip`))
 			}))
 			cert, err := ca.CreateCert([]string{"localhost", "127.0.0.1"})
 			c.Assert(err, IsNil)
@@ -238,7 +238,7 @@ func (s *ProxySuite) TestProxy(c *C) {
 			res, err := client.Do(req)
 			c.Assert(err, IsNil)
 			c.Assert(res.StatusCode, Equals, http.StatusOK)
-			body, _ := ioutil.ReadAll(res.Body)
+			body, _ := io.ReadAll(res.Body)
 			c.Check(string(body), Equals, "http2")
 		}
 	*/

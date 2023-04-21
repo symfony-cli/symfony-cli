@@ -23,7 +23,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -55,13 +54,13 @@ func testStdoutCapture(c *C, dst io.Writer) func() {
 	go func() {
 		defer close(doneCh)
 		defer r.Close()
-		io.Copy(dst, r)
+		_, _ = io.Copy(dst, r)
 	}()
 
 	return func() {
 		// Close the writer end of the pipe
-		w.Sync()
-		w.Close()
+		_ = w.Sync()
+		_ = w.Close()
 
 		// Reset stdout
 		os.Stdout = old
@@ -125,8 +124,10 @@ func (s *ExecutorSuite) TestForwardExitCode(c *C) {
 	defer homedir.Reset()
 
 	oldwd, _ := os.Getwd()
-	defer os.Chdir(oldwd)
-	os.Chdir(filepath.Join(home, "project"))
+	defer func(path string) {
+		_ = os.Chdir(path)
+	}(oldwd)
+	_ = os.Chdir(filepath.Join(home, "project"))
 	defer cleanupExecutorTempFiles()
 
 	c.Assert((&Executor{BinName: "php", Args: []string{"php"}}).Execute(true), Equals, 5)
@@ -144,11 +145,15 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 	defer homedir.Reset()
 
 	oldwd, _ := os.Getwd()
-	defer os.Chdir(oldwd)
-	os.Chdir(filepath.Join(home, "project"))
+	defer func(path string) {
+		_ = os.Chdir(path)
+	}(oldwd)
+	_ = os.Chdir(filepath.Join(home, "project"))
 
-	os.Rename("git", ".git")
-	defer os.Rename(".git", "git")
+	_ = os.Rename("git", ".git")
+	defer func() {
+		_ = os.Rename(".git", "git")
+	}()
 	defer cleanupExecutorTempFiles()
 
 	var output bytes.Buffer
@@ -165,10 +170,12 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 
 	// change the project name to get exposed env vars
 	projectFile := filepath.Join(".platform", "local", "project.yaml")
-	contents, err := ioutil.ReadFile(projectFile)
+	contents, err := os.ReadFile(projectFile)
 	c.Assert(err, IsNil)
-	defer ioutil.WriteFile(projectFile, contents, 0644)
-	ioutil.WriteFile(projectFile, bytes.Replace(contents, []byte("bew7pfa7t2ut2"), []byte("aew7pfa7t2ut2"), 1), 0644)
+	defer func(pf string, c []byte) {
+		_ = os.WriteFile(pf, c, 0644)
+	}(projectFile, contents)
+	_ = os.WriteFile(projectFile, bytes.Replace(contents, []byte("bew7pfa7t2ut2"), []byte("aew7pfa7t2ut2"), 1), 0644)
 
 	output.Reset()
 	outCloser = testStdoutCapture(c, &output)

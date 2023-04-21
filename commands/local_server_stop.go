@@ -22,6 +22,7 @@ package commands
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/pid"
 	"github.com/symfony-cli/terminal"
@@ -39,7 +40,7 @@ var localServerStopCmd = &console.Command{
 	Action: func(c *console.Context) error {
 		projectDir, err := getProjectDir(c.String("dir"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		ui := terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin)
 		webserver := pid.New(projectDir, nil)
@@ -59,7 +60,7 @@ var localServerStopCmd = &console.Command{
 
 		terminal.Println("")
 		if err := g.Wait(); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		if running == 0 {
 			ui.Success("The web server is not running")

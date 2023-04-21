@@ -21,7 +21,6 @@ package reexec
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -80,7 +79,7 @@ func ExecBinaryWithEnv(binary string, envs []string) bool {
 	case state := <-done:
 		return state
 	case <-time.After(10 * time.Second):
-		p.Kill()
+		_ = p.Kill()
 		return false
 	}
 }
@@ -90,7 +89,7 @@ func Background(homeDir string) error {
 		return errors.New("Not applicable in a Go run context")
 	}
 
-	statusFile, err := ioutil.TempFile(homeDir, "status-")
+	statusFile, err := os.CreateTemp(homeDir, "status-")
 	if err != nil {
 		return errors.Wrap(err, "Could not create status file")
 	}
@@ -151,7 +150,7 @@ func Background(homeDir string) error {
 				continue
 			}
 			if err := p.Signal(sig); err != nil {
-				p.Kill()
+				_ = p.Kill()
 				return errors.Wrapf(err, "error sending signal %s", sig)
 			}
 			// if the signal terminates the process we will loop over and
@@ -170,7 +169,7 @@ func Background(homeDir string) error {
 		case status := <-statusCh:
 			return console.Exit("", status)
 		case <-ticker.C:
-			p.Kill()
+			_ = p.Kill()
 			return errors.New("reexec timed out")
 		}
 	}
@@ -190,9 +189,9 @@ func NotifyForeground(status string) error {
 		os.Stdin.Close()
 		os.Stdout.Close()
 		os.Stderr.Close()
-		return os.Remove(statusFile)
+		return errors.WithStack(os.Remove(statusFile))
 	}
-	return ioutil.WriteFile(statusFile, []byte(status), 0600)
+	return errors.WithStack(os.WriteFile(statusFile, []byte(status), 0600))
 }
 
 func WatchParent(stopCh chan bool) error {
@@ -232,7 +231,7 @@ func Restart(postRespawn func()) error {
 	}
 	p, err := Respawn()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	if postRespawn != nil {
@@ -283,7 +282,7 @@ func Restart(postRespawn func()) error {
 func Respawn() (*os.Process, error) {
 	argv0, err := console.CurrentBinaryPath()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	wd, err := os.Getwd()
 	if err != nil {

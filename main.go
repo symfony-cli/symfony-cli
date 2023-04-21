@@ -23,7 +23,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"time"
 
@@ -83,7 +83,7 @@ func main() {
 	}
 	// called via "symfony composer"?
 	if len(args) >= 2 && args[1] == "composer" {
-		res := php.Composer("", args[2:], getCliExtraEnv(), os.Stdout, os.Stderr, ioutil.Discard, zerolog.Nop())
+		res := php.Composer("", args[2:], getCliExtraEnv(), os.Stdout, os.Stderr, io.Discard, zerolog.Nop())
 		terminal.Eprintln(res.Error())
 		os.Exit(res.ExitCode())
 	}
@@ -124,5 +124,7 @@ func main() {
 		Channel:   channel,
 		BuildDate: buildDate,
 	}
-	app.Run(args)
+	if err := app.Run(args); err != nil {
+		panic(err)
+	}
 }

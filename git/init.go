@@ -19,11 +19,15 @@
 
 package git
 
-import "bytes"
+import (
+	"bytes"
+
+	"github.com/pkg/errors"
+)
 
 func Init(dir string, forceMainGitBranchName, debug bool) (*bytes.Buffer, error) {
 	if content, err := doExecGit(dir, []string{"init"}, !debug); err != nil {
-		return content, err
+		return content, errors.WithStack(err)
 	}
 	if forceMainGitBranchName {
 		return doExecGit(dir, []string{"checkout", "-b", "main"}, !debug)
@@ -38,7 +42,7 @@ func AddAndCommit(dir string, files []string, msg string, debug bool) (*bytes.Bu
 	}
 	for _, cmd := range cmds {
 		if content, err := doExecGit(dir, cmd, !debug); err != nil {
-			return content, err
+			return content, errors.WithStack(err)
 		}
 	}
 	return nil, nil

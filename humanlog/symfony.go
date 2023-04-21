@@ -31,7 +31,7 @@ import (
 
 // [2018-11-19 12:52:00] console.DEBUG: www {"xxx":"yyy","code":1} []
 // or [2019-11-13T07:16:50.260544+01:00] console.DEBUG: www {"xxx":"yyy","code":1} []
-var symfonyLogLineRegexp = regexp.MustCompile("^\\[(\\d{4}\\-\\d{2}\\-\\d{2} \\d{2}\\:\\d{2}\\:\\d{2}|\\d{4}\\-\\d{2}\\-\\d{2}T\\d{2}\\:\\d{2}\\:\\d{2}\\.\\d+\\+\\d{2}\\:\\d{2})\\] ([^\\.]+)\\.([^\\:]+)\\: (.+) (\\[.*?\\]|{.*?}) (\\[.*?\\]|{.*?})\\s*$")
+var symfonyLogLineRegexp = regexp.MustCompile(`^\[(\d{4}\-\d{2}\-\d{2} \d{2}\:\d{2}\:\d{2}|\d{4}\-\d{2}\-\d{2}T\d{2}\:\d{2}\:\d{2}\.\d+\+\d{2}\:\d{2})\] ([^\.]+)\.([^\:]+)\: (.+) (\[.*?\]|{.*?}) (\[.*?\]|{.*?})\s*$`)
 
 func convertSymfonyLog(in []byte) (*line, error) {
 	allMatches := symfonyLogLineRegexp.FindAllSubmatch(in, -1)

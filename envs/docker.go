@@ -23,7 +23,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/url"
 	"os"
@@ -197,266 +196,268 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 	}
 
 	sort.Sort(exposedPorts)
-	for _, p := range exposedPorts {
-		rels := make(map[string]map[string]interface{})
-		if p.PrivatePort == 1025 {
-			// recommended image: schickling/mailcatcher
-			for _, pw := range exposedPorts {
-				if pw.PrivatePort == 1080 || pw.PrivatePort == 8025 {
-					rels["-web"] = map[string]interface{}{
-						"host":   host,
-						"ip":     host,
-						"port":   formatDockerPort(pw.PublicPort),
-						"rel":    "mailer",
-						"scheme": "http",
-					}
-					rels[""] = map[string]interface{}{
-						"host":   host,
-						"ip":     host,
-						"port":   formatDockerPort(p.PublicPort),
-						"rel":    "mailer",
-						"scheme": "smtp",
-					}
-					return rels
-				}
-			}
-		} else if p.PrivatePort == 25 {
-			// recommended image: djfarrelly/maildev
-			for _, pw := range exposedPorts {
-				if pw.PrivatePort == 80 {
-					rels["-web"] = map[string]interface{}{
-						"host":   host,
-						"ip":     host,
-						"port":   formatDockerPort(pw.PublicPort),
-						"rel":    "mailer",
-						"scheme": "http",
-					}
-					rels[""] = map[string]interface{}{
-						"host":   host,
-						"ip":     host,
-						"port":   formatDockerPort(p.PublicPort),
-						"rel":    "mailer",
-						"scheme": "smtp",
-					}
-					return rels
-				}
-			}
-		} else if p.PrivatePort == 8707 || p.PrivatePort == 8307 {
-			// Blackfire
-			rels[""] = map[string]interface{}{
-				"host":   host,
-				"ip":     host,
-				"port":   formatDockerPort(p.PublicPort),
-				"rel":    "blackfire",
-				"scheme": "tcp",
-			}
-			return rels
-		} else if p.PrivatePort == 3306 {
-			username := ""
-			password := ""
-			path := ""
-			// MARIADB is used by bitnami/mariadb
-			for _, prefix := range []string{"MYSQL", "MARIADB"} {
-				for _, env := range c.Config.Env {
-					if strings.HasPrefix(env, prefix+"_ROOT_PASSWORD") && password == "" {
-						// *_PASSWORD has precedence over *_ROOT_PASSWORD
-						password = getEnvValue(env, prefix+"_ROOT_PASSWORD")
-						username = "root"
-					} else if strings.HasPrefix(env, prefix+"_USER") {
-						username = getEnvValue(env, prefix+"_USER")
-					} else if strings.HasPrefix(env, prefix+"_PASSWORD") {
-						password = getEnvValue(env, prefix+"_PASSWORD")
-					} else if strings.HasPrefix(env, prefix+"_DATABASE") {
-						path = getEnvValue(env, prefix+"_DATABASE")
-					}
-				}
-			}
-			if path == "" {
-				path = username
-			}
-			rels[""] = map[string]interface{}{
-				"host":     host,
-				"ip":       host,
-				"username": username,
-				"password": password,
-				"path":     path,
-				"port":     formatDockerPort(p.PublicPort),
-				"query": map[string]bool{
-					"is_master": true,
-				},
-				"rel":    "mysql",
-				"scheme": "mysql",
-			}
-			return rels
-		} else if p.PrivatePort == 5432 {
-			username := ""
-			password := ""
-			path := ""
-			for _, env := range c.Config.Env {
-				if strings.HasPrefix(env, "POSTGRES_USER") {
-					username = getEnvValue(env, "POSTGRES_USER")
-				} else if strings.HasPrefix(env, "POSTGRES_PASSWORD") {
-					password = getEnvValue(env, "POSTGRES_PASSWORD")
-				} else if strings.HasPrefix(env, "POSTGRES_DB") {
-					path = getEnvValue(env, "POSTGRES_DB")
-				}
-			}
-			if path == "" {
-				path = username
-			}
-			rels[""] = map[string]interface{}{
-				"host":     host,
-				"ip":       host,
-				"username": username,
-				"password": password,
-				"path":     path,
-				"port":     formatDockerPort(p.PublicPort),
-				"query": map[string]bool{
-					"is_master": true,
-				},
-				"rel":    "pgsql",
-				"scheme": "pgsql",
-			}
-			return rels
-		} else if p.PrivatePort == 6379 {
-			rels[""] = map[string]interface{}{
-				"host":   host,
-				"ip":     host,
-				"port":   formatDockerPort(p.PublicPort),
-				"rel":    "redis",
-				"scheme": "redis",
-			}
-			return rels
-		} else if p.PrivatePort == 11211 {
-			rels[""] = map[string]interface{}{
-				"host":   host,
-				"ip":     host,
-				"port":   formatDockerPort(p.PublicPort),
-				"rel":    "memcached",
-				"scheme": "memcached",
-			}
-			return rels
-		} else if p.PrivatePort == 5672 {
-			username := "guest"
-			password := "guest"
-			for _, env := range c.Config.Env {
-				// that's our local convention
-				if strings.HasPrefix(env, "RABBITMQ_DEFAULT_USER") {
-					username = getEnvValue(env, "RABBITMQ_DEFAULT_USER")
-				} else if strings.HasPrefix(env, "RABBITMQ_DEFAULT_PASS") {
-					password = getEnvValue(env, "RABBITMQ_DEFAULT_PASS")
-				}
-			}
-			rels[""] = map[string]interface{}{
-				"host":     host,
-				"ip":       host,
-				"port":     formatDockerPort(p.PublicPort),
-				"username": username,
-				"password": password,
-				"rel":      "amqp",
-				"scheme":   "amqp",
-			}
-			// management plugin?
-			for _, pw := range exposedPorts {
-				if pw.PrivatePort == 15672 {
-					rels["-management"] = map[string]interface{}{
-						"host":   host,
-						"ip":     host,
-						"port":   formatDockerPort(pw.PublicPort),
-						"rel":    "amqp",
-						"scheme": "http",
-					}
-					break
-				}
-			}
-			return rels
-		} else if p.PrivatePort == 9200 {
-			rels[""] = map[string]interface{}{
-				"host":   host,
-				"ip":     host,
-				"port":   formatDockerPort(p.PublicPort),
-				"path":   "/",
-				"rel":    "elasticsearch",
-				"scheme": "http",
-			}
-			return rels
-		} else if p.PrivatePort == 5601 {
-			rels[""] = map[string]interface{}{
-				"host":   host,
-				"ip":     host,
-				"port":   formatDockerPort(p.PublicPort),
-				"path":   "/",
-				"rel":    "kibana",
-				"scheme": "http",
-			}
-			return rels
-		} else if p.PrivatePort == 27017 {
-			username := ""
-			password := ""
-			path := ""
-			for _, env := range c.Config.Env {
-				// that's our local convention
-				if strings.HasPrefix(env, "MONGO_DATABASE") {
-					path = getEnvValue(env, "MONGO_DATABASE")
-				} else if strings.HasPrefix(env, "MONGO_INITDB_DATABASE") {
-					path = getEnvValue(env, "MONGO_INITDB_DATABASE")
-				} else if strings.HasPrefix(env, "MONGO_INITDB_ROOT_USERNAME") {
-					username = getEnvValue(env, "MONGO_INITDB_ROOT_USERNAME")
-				} else if strings.HasPrefix(env, "MONGO_INITDB_ROOT_PASSWORD") {
-					password = getEnvValue(env, "MONGO_INITDB_ROOT_PASSWORD")
-				}
-			}
-			rels[""] = map[string]interface{}{
-				"host":     host,
-				"ip":       host,
-				"username": username,
-				"password": password,
-				"path":     path,
-				"port":     formatDockerPort(p.PublicPort),
-				"rel":      "mongodb",
-				"scheme":   "mongodb",
-			}
-			return rels
-		} else if p.PrivatePort == 9092 {
-			rels[""] = map[string]interface{}{
-				"host":   host,
-				"ip":     host,
-				"port":   formatDockerPort(p.PublicPort),
-				"rel":    "kafka",
-				"scheme": "kafka",
-			}
-			return rels
-		} else if p.PrivatePort == 80 && container.Image == "dunglas/mercure" {
-			rels[""] = map[string]interface{}{
-				"host":   host,
-				"ip":     host,
-				"port":   formatDockerPort(p.PublicPort),
-				"rel":    "mercure",
-				"scheme": "http",
-			}
-			return rels
-		}
 
-		if l.Debug {
-			fmt.Fprintln(os.Stderr, "  exposing port")
-		}
+	if len(exposedPorts) == 0 {
+		return nil
+	}
 
+	p := exposedPorts[0]
+	rels := make(map[string]map[string]interface{})
+	if p.PrivatePort == 1025 {
+		// recommended image: schickling/mailcatcher
+		for _, pw := range exposedPorts {
+			if pw.PrivatePort == 1080 || pw.PrivatePort == 8025 {
+				rels["-web"] = map[string]interface{}{
+					"host":   host,
+					"ip":     host,
+					"port":   formatDockerPort(pw.PublicPort),
+					"rel":    "mailer",
+					"scheme": "http",
+				}
+				rels[""] = map[string]interface{}{
+					"host":   host,
+					"ip":     host,
+					"port":   formatDockerPort(p.PublicPort),
+					"rel":    "mailer",
+					"scheme": "smtp",
+				}
+				return rels
+			}
+		}
+	} else if p.PrivatePort == 25 {
+		// recommended image: djfarrelly/maildev
+		for _, pw := range exposedPorts {
+			if pw.PrivatePort == 80 {
+				rels["-web"] = map[string]interface{}{
+					"host":   host,
+					"ip":     host,
+					"port":   formatDockerPort(pw.PublicPort),
+					"rel":    "mailer",
+					"scheme": "http",
+				}
+				rels[""] = map[string]interface{}{
+					"host":   host,
+					"ip":     host,
+					"port":   formatDockerPort(p.PublicPort),
+					"rel":    "mailer",
+					"scheme": "smtp",
+				}
+				return rels
+			}
+		}
+	} else if p.PrivatePort == 8707 || p.PrivatePort == 8307 {
+		// Blackfire
 		rels[""] = map[string]interface{}{
-			"host": host,
-			"ip":   host,
-			"port": formatDockerPort(p.PublicPort),
-			"rel":  "simple",
+			"host":   host,
+			"ip":     host,
+			"port":   formatDockerPort(p.PublicPort),
+			"rel":    "blackfire",
+			"scheme": "tcp",
 		}
-		// Official HTTP(s) ports or well know alternatives
-		if p.PrivatePort == 80 || p.PrivatePort == 8008 || p.PrivatePort == 8080 || p.PrivatePort == 8081 {
-			rels[""]["scheme"] = "http"
-		} else if p.PrivatePort == 443 || p.PrivatePort == 8443 {
-			rels[""]["scheme"] = "https"
+		return rels
+	} else if p.PrivatePort == 3306 {
+		username := ""
+		password := ""
+		path := ""
+		// MARIADB is used by bitnami/mariadb
+		for _, prefix := range []string{"MYSQL", "MARIADB"} {
+			for _, env := range c.Config.Env {
+				if strings.HasPrefix(env, prefix+"_ROOT_PASSWORD") && password == "" {
+					// *_PASSWORD has precedence over *_ROOT_PASSWORD
+					password = getEnvValue(env, prefix+"_ROOT_PASSWORD")
+					username = "root"
+				} else if strings.HasPrefix(env, prefix+"_USER") {
+					username = getEnvValue(env, prefix+"_USER")
+				} else if strings.HasPrefix(env, prefix+"_PASSWORD") {
+					password = getEnvValue(env, prefix+"_PASSWORD")
+				} else if strings.HasPrefix(env, prefix+"_DATABASE") {
+					path = getEnvValue(env, prefix+"_DATABASE")
+				}
+			}
+		}
+		if path == "" {
+			path = username
+		}
+		rels[""] = map[string]interface{}{
+			"host":     host,
+			"ip":       host,
+			"username": username,
+			"password": password,
+			"path":     path,
+			"port":     formatDockerPort(p.PublicPort),
+			"query": map[string]bool{
+				"is_master": true,
+			},
+			"rel":    "mysql",
+			"scheme": "mysql",
+		}
+		return rels
+	} else if p.PrivatePort == 5432 {
+		username := ""
+		password := ""
+		path := ""
+		for _, env := range c.Config.Env {
+			if strings.HasPrefix(env, "POSTGRES_USER") {
+				username = getEnvValue(env, "POSTGRES_USER")
+			} else if strings.HasPrefix(env, "POSTGRES_PASSWORD") {
+				password = getEnvValue(env, "POSTGRES_PASSWORD")
+			} else if strings.HasPrefix(env, "POSTGRES_DB") {
+				path = getEnvValue(env, "POSTGRES_DB")
+			}
+		}
+		if path == "" {
+			path = username
+		}
+		rels[""] = map[string]interface{}{
+			"host":     host,
+			"ip":       host,
+			"username": username,
+			"password": password,
+			"path":     path,
+			"port":     formatDockerPort(p.PublicPort),
+			"query": map[string]bool{
+				"is_master": true,
+			},
+			"rel":    "pgsql",
+			"scheme": "pgsql",
+		}
+		return rels
+	} else if p.PrivatePort == 6379 {
+		rels[""] = map[string]interface{}{
+			"host":   host,
+			"ip":     host,
+			"port":   formatDockerPort(p.PublicPort),
+			"rel":    "redis",
+			"scheme": "redis",
+		}
+		return rels
+	} else if p.PrivatePort == 11211 {
+		rels[""] = map[string]interface{}{
+			"host":   host,
+			"ip":     host,
+			"port":   formatDockerPort(p.PublicPort),
+			"rel":    "memcached",
+			"scheme": "memcached",
+		}
+		return rels
+	} else if p.PrivatePort == 5672 {
+		username := "guest"
+		password := "guest"
+		for _, env := range c.Config.Env {
+			// that's our local convention
+			if strings.HasPrefix(env, "RABBITMQ_DEFAULT_USER") {
+				username = getEnvValue(env, "RABBITMQ_DEFAULT_USER")
+			} else if strings.HasPrefix(env, "RABBITMQ_DEFAULT_PASS") {
+				password = getEnvValue(env, "RABBITMQ_DEFAULT_PASS")
+			}
+		}
+		rels[""] = map[string]interface{}{
+			"host":     host,
+			"ip":       host,
+			"port":     formatDockerPort(p.PublicPort),
+			"username": username,
+			"password": password,
+			"rel":      "amqp",
+			"scheme":   "amqp",
+		}
+		// management plugin?
+		for _, pw := range exposedPorts {
+			if pw.PrivatePort == 15672 {
+				rels["-management"] = map[string]interface{}{
+					"host":   host,
+					"ip":     host,
+					"port":   formatDockerPort(pw.PublicPort),
+					"rel":    "amqp",
+					"scheme": "http",
+				}
+				break
+			}
+		}
+		return rels
+	} else if p.PrivatePort == 9200 {
+		rels[""] = map[string]interface{}{
+			"host":   host,
+			"ip":     host,
+			"port":   formatDockerPort(p.PublicPort),
+			"path":   "/",
+			"rel":    "elasticsearch",
+			"scheme": "http",
+		}
+		return rels
+	} else if p.PrivatePort == 5601 {
+		rels[""] = map[string]interface{}{
+			"host":   host,
+			"ip":     host,
+			"port":   formatDockerPort(p.PublicPort),
+			"path":   "/",
+			"rel":    "kibana",
+			"scheme": "http",
+		}
+		return rels
+	} else if p.PrivatePort == 27017 {
+		username := ""
+		password := ""
+		path := ""
+		for _, env := range c.Config.Env {
+			// that's our local convention
+			if strings.HasPrefix(env, "MONGO_DATABASE") {
+				path = getEnvValue(env, "MONGO_DATABASE")
+			} else if strings.HasPrefix(env, "MONGO_INITDB_DATABASE") {
+				path = getEnvValue(env, "MONGO_INITDB_DATABASE")
+			} else if strings.HasPrefix(env, "MONGO_INITDB_ROOT_USERNAME") {
+				username = getEnvValue(env, "MONGO_INITDB_ROOT_USERNAME")
+			} else if strings.HasPrefix(env, "MONGO_INITDB_ROOT_PASSWORD") {
+				password = getEnvValue(env, "MONGO_INITDB_ROOT_PASSWORD")
+			}
+		}
+		rels[""] = map[string]interface{}{
+			"host":     host,
+			"ip":       host,
+			"username": username,
+			"password": password,
+			"path":     path,
+			"port":     formatDockerPort(p.PublicPort),
+			"rel":      "mongodb",
+			"scheme":   "mongodb",
+		}
+		return rels
+	} else if p.PrivatePort == 9092 {
+		rels[""] = map[string]interface{}{
+			"host":   host,
+			"ip":     host,
+			"port":   formatDockerPort(p.PublicPort),
+			"rel":    "kafka",
+			"scheme": "kafka",
+		}
+		return rels
+	} else if p.PrivatePort == 80 && container.Image == "dunglas/mercure" {
+		rels[""] = map[string]interface{}{
+			"host":   host,
+			"ip":     host,
+			"port":   formatDockerPort(p.PublicPort),
+			"rel":    "mercure",
+			"scheme": "http",
 		}
 		return rels
 	}
 
-	return nil
+	if l.Debug {
+		fmt.Fprintln(os.Stderr, "  exposing port")
+	}
+
+	rels[""] = map[string]interface{}{
+		"host": host,
+		"ip":   host,
+		"port": formatDockerPort(p.PublicPort),
+		"rel":  "simple",
+	}
+	// Official HTTP(s) ports or well know alternatives
+	if p.PrivatePort == 80 || p.PrivatePort == 8008 || p.PrivatePort == 8080 || p.PrivatePort == 8081 {
+		rels[""]["scheme"] = "http"
+	} else if p.PrivatePort == 443 || p.PrivatePort == 8443 {
+		rels[""]["scheme"] = "https"
+	}
+	return rels
 }
 
 func formatDockerPort(port uint16) string {
@@ -487,7 +488,7 @@ func (l *Local) getComposeProjectName() string {
 
 	// COMPOSE_PROJECT_NAME can be set in a .env file
 	if _, err := os.Stat(filepath.Join(composeDir, ".env")); err == nil {
-		if contents, err := ioutil.ReadFile(filepath.Join(composeDir, ".env")); err == nil {
+		if contents, err := os.ReadFile(filepath.Join(composeDir, ".env")); err == nil {
 			for _, line := range bytes.Split(contents, []byte("\n")) {
 				if bytes.HasPrefix(line, []byte("COMPOSE_PROJECT_NAME=")) {
 					return string(line[len("COMPOSE_PROJECT_NAME="):])
