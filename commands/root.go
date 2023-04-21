@@ -107,7 +107,7 @@ func GetPSH() (*platformshCLI, error) {
 			err = errors.Wrap(err, "Unable to setup Platform.sh CLI")
 		}
 	})
-	return psh, err
+	return psh, errors.WithStack(err)
 }
 
 func InitAppFunc(c *console.Context) error {
@@ -148,7 +148,7 @@ func WelcomeAction(c *console.Context) error {
 	terminal.Println("")
 	psh, err := GetPSH()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	displayCommandsHelp(c, append([]*console.Command{projectInitCmd}, psh.PSHMainCommands()...))
 	terminal.Println("")
@@ -184,8 +184,9 @@ func getProjectDir(dir string) (string, error) {
 
 	var err error
 	if dir, err = filepath.Abs(dir); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 
-	return filepath.EvalSymlinks(dir)
+	s, err := filepath.EvalSymlinks(dir)
+	return s, errors.WithStack(err)
 }

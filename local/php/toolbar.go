@@ -22,14 +22,14 @@ package php
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"regexp"
+
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/symfony-cli/envs"
 	"github.com/symfony-cli/terminal"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"io"
-	"io/ioutil"
-	"regexp"
 )
 
 func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.ReadCloser, error) {
@@ -38,13 +38,13 @@ func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.Rea
 	n, err := body.Read(bn)
 	// if body is empty, return immediately
 	if n == 0 && err == io.EOF {
-		return ioutil.NopCloser(bytes.NewReader([]byte{})), nil
+		return io.NopCloser(bytes.NewReader([]byte{})), nil
 	}
 	if n == len(bn) && err != nil {
 		return nil, errors.WithStack(err)
 	}
 	if bn[0] != '\n' && bn[0] != '<' {
-		return ioutil.NopCloser(io.MultiReader(bytes.NewReader(bn), body)), nil
+		return io.NopCloser(io.MultiReader(bytes.NewReader(bn), body)), nil
 	}
 
 	toolbarHint := []byte("<!-- START of Symfony Web Debug Toolbar -->")
@@ -57,7 +57,7 @@ func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.Rea
 		return nil, errors.WithStack(err)
 	}
 	if n != len(toolbarHint) || !bytes.Equal(start, toolbarHint) {
-		return ioutil.NopCloser(io.MultiReader(bytes.NewReader(bn), bytes.NewReader(start), body)), nil
+		return io.NopCloser(io.MultiReader(bytes.NewReader(bn), bytes.NewReader(start), body)), nil
 	}
 
 	logoBg := "sf-toolbar-status-normal"
@@ -111,7 +111,7 @@ func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.Rea
 		}
 	}
 
-	b, err := ioutil.ReadAll(body)
+	b, err := io.ReadAll(body)
 	if err != nil {
 		return body, errors.WithStack(err)
 	}
@@ -152,5 +152,5 @@ $1`)
 	re := regexp.MustCompile(`(<(?:a|button)[^"]+?class="hide-button")`)
 	b = re.ReplaceAll(b, content)
 
-	return ioutil.NopCloser(io.MultiReader(bytes.NewReader(bn), bytes.NewReader(start), bytes.NewReader(b))), nil
+	return io.NopCloser(io.MultiReader(bytes.NewReader(bn), bytes.NewReader(start), bytes.NewReader(b))), nil
 }

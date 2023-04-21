@@ -22,6 +22,7 @@ package commands
 import (
 	"os"
 
+	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/envs"
 	"github.com/symfony-cli/symfony-cli/local/platformsh"
@@ -42,13 +43,13 @@ var localVariableExposeFromTunnelCmd = &console.Command{
 		if dir == "" {
 			var err error
 			if dir, err = os.Getwd(); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		}
 
 		project, err := platformsh.ProjectFromDir(dir, false)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		tunnel := envs.Tunnel{Project: project}
 

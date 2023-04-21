@@ -75,7 +75,8 @@ func (p *ResponseWriterProxy) WriteHeader(code int) {
 // from https://github.com/mholt/caddy/pull/134
 func (p *ResponseWriterProxy) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if hj, ok := p.writer.(http.Hijacker); ok {
-		return hj.Hijack()
+		c, rw, err := hj.Hijack()
+		return c, rw, errors.WithStack(err)
 	}
 	return nil, nil, errors.New("I'm not a Hijacker")
 }

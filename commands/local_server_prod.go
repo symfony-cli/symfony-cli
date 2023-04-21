@@ -39,7 +39,7 @@ var localServerProdCmd = &console.Command{
 	Action: func(c *console.Context) error {
 		projectDir, err := getProjectDir(c.String("dir"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		beacon := filepath.Join(projectDir, ".prod")
 		if c.Bool("off") {

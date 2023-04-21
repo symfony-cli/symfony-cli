@@ -63,7 +63,7 @@ func (s *Server) servePreloadLinks(w http.ResponseWriter, r *http.Request) ([]st
 				Method: http.MethodGet,
 				Header: headers,
 			})); err != nil {
-				return nil, err
+				return nil, errors.WithStack(err)
 			}
 			rs = append(rs, resource.uri)
 		}

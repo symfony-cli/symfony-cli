@@ -49,8 +49,8 @@ var localServerCAUninstallCmd = &console.Command{
 		if err = ca.LoadCA(); err != nil {
 			return errors.Wrap(err, "failed to load the local Certificate Authority")
 		}
-		ca.Uninstall()
-		os.RemoveAll(certsDir)
+		_ = ca.Uninstall()
+		_ = os.RemoveAll(certsDir)
 		ui.Success("The local Certificate Authority has been uninstalled")
 		return nil
 	},

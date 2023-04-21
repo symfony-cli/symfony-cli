@@ -24,7 +24,6 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -71,7 +70,7 @@ func NewServer(homeDir, projectDir, documentRoot, passthru string, logger zerolo
 		logger.Warn().Str("source", "PHP").Msg(warning)
 	}
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	logger.Debug().Str("source", "PHP").Msgf("Using PHP version %s (from %s)", version.Version, source)
 	return &Server{
@@ -90,7 +89,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 	port, err := process.FindAvailablePort()
 	if err != nil {
 		p.logger.Debug().Err(err).Msg("unable to find an available port")
-		return nil, nil, err
+		return nil, nil, errors.WithStack(err)
 	}
 	p.addr = net.JoinHostPort("", strconv.Itoa(port))
 	workingDir := p.documentRoot
@@ -99,7 +98,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 	var args []string
 	if p.Version.IsFPMServer() {
 		fpmConfigFile := p.fpmConfigFile()
-		if err := ioutil.WriteFile(fpmConfigFile, []byte(p.defaultFPMConf()), 0644); err != nil {
+		if err := os.WriteFile(fpmConfigFile, []byte(p.defaultFPMConf()), 0644); err != nil {
 			return nil, nil, errors.WithStack(err)
 		}
 		pathsToRemove = append(pathsToRemove, fpmConfigFile)
@@ -124,7 +123,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 		args = []string{p.Version.ServerPath(), "-b", strconv.Itoa(port), "-d", "error_log=" + errorLog}
 	} else {
 		routerPath := p.phpRouterFile()
-		if err := ioutil.WriteFile(routerPath, phprouter, 0644); err != nil {
+		if err := os.WriteFile(routerPath, phprouter, 0644); err != nil {
 			return nil, nil, errors.WithStack(err)
 		}
 		pathsToRemove = append(pathsToRemove, routerPath)
@@ -140,7 +139,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 		p.proxy = httputil.NewSingleHostReverseProxy(target)
 		p.proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 			w.WriteHeader(http.StatusBadGateway)
-			w.Write([]byte(html.WrapHTML(err.Error(), html.CreateErrorTerminal("# "+err.Error()), "")))
+			_, _ = w.Write([]byte(html.WrapHTML(err.Error(), html.CreateErrorTerminal("# "+err.Error()), "")))
 		}
 	}
 
@@ -162,14 +161,14 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 	phpPidFile.Watched = e.PathsToWatch()
 	runner, err := local.NewRunner(phpPidFile, local.RunnerModeLoopAttached)
 	if err != nil {
-		return phpPidFile, nil, err
+		return phpPidFile, nil, errors.WithStack(err)
 	}
 	runner.AlwaysRestartOnExit = true
 	runner.BuildCmdHook = func(cmd *exec.Cmd) error {
 		cmd.Dir = workingDir
 
 		if err = e.Config(false); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		cmd.Env = append(cmd.Env, e.environ...)
@@ -205,9 +204,9 @@ func (p *Server) Serve(w http.ResponseWriter, r *http.Request, env map[string]st
 		for k, v := range env {
 			envContent += fmt.Sprintf("$_ENV['%s'] = '%s';\n", addslashes.Replace(k), addslashes.Replace(v))
 		}
-		err := errors.WithStack(ioutil.WriteFile(envPath, []byte(envContent), 0644))
+		err := errors.WithStack(os.WriteFile(envPath, []byte(envContent), 0644))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		defer os.Remove(envPath)
 		pw := httptest.NewRecorder()
@@ -261,7 +260,7 @@ func (p *Server) writeResponse(w http.ResponseWriter, r *http.Request, env map[s
 	if r.Method == http.MethodGet && r.Header.Get("x-requested-with") == "XMLHttpRequest" {
 		var err error
 		if resp.Body, err = p.tweakToolbar(resp.Body, env); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		bodyModified = true
 	}
@@ -280,13 +279,13 @@ func (p *Server) writeResponse(w http.ResponseWriter, r *http.Request, env map[s
 	}
 	w.WriteHeader(resp.StatusCode)
 	if r.Method != http.MethodHead {
-		io.Copy(w, resp.Body)
+		_, _ = io.Copy(w, resp.Body)
 	}
 	return nil
 }
 
 func name(dir string) string {
 	h := sha1.New()
-	io.WriteString(h, dir)
+	_, _ = io.WriteString(h, dir)
 	return fmt.Sprintf("%x", h.Sum(nil))
 }

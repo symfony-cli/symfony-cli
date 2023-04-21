@@ -20,6 +20,7 @@
 package commands
 
 import (
+	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/book"
 	"github.com/symfony-cli/terminal"
@@ -40,7 +41,7 @@ var bookCheckoutCmd = &console.Command{
 	Action: func(c *console.Context) error {
 		dir, err := getProjectDir(c.String("dir"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		book := &book.Book{
@@ -50,7 +51,7 @@ var bookCheckoutCmd = &console.Command{
 		}
 		if !c.Bool("force") {
 			if err := book.CheckRepository(); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		}
 		if err := book.Checkout(c.Args().Get("step")); err != nil {
@@ -59,7 +60,7 @@ var bookCheckoutCmd = &console.Command{
 				terminal.Println("Re-run the command with <comment>--debug</> to get more information about the error")
 				terminal.Println("")
 			}
-			return err
+			return errors.WithStack(err)
 		}
 		return nil
 	},

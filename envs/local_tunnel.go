@@ -23,7 +23,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -31,6 +30,7 @@ import (
 	"strconv"
 
 	"github.com/mitchellh/go-homedir"
+	"github.com/pkg/errors"
 	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	"github.com/symfony-cli/symfony-cli/util"
 )
@@ -58,7 +58,7 @@ func (l *Local) relationshipsFromTunnel() Relationships {
 		userHomeDir = ""
 	}
 	tunnelFile := filepath.Join(userHomeDir, ".platformsh", "tunnel-info.json")
-	data, err := ioutil.ReadFile(tunnelFile)
+	data, err := os.ReadFile(tunnelFile)
 	if err != nil {
 		if l.Debug {
 			fmt.Fprintf(os.Stderr, "WARNING: unable to read relationships from %s: %s\n", tunnelFile, err)
@@ -98,7 +98,7 @@ func (l *Local) relationshipsFromTunnel() Relationships {
 	return nil
 }
 
-var pathCleaningRegex = regexp.MustCompile("[^a-zA-Z0-9-\\.]+")
+var pathCleaningRegex = regexp.MustCompile(`[^a-zA-Z0-9-\.]+`)
 
 type Tunnel struct {
 	Project *platformsh.Project
@@ -117,13 +117,13 @@ func (t *Tunnel) Expose(expose bool) error {
 	path := t.path()
 	if expose {
 		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		file, err := os.Create(path)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
-		return file.Close()
+		return errors.WithStack(file.Close())
 	}
 
 	os.Remove(path)

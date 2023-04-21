@@ -46,12 +46,12 @@ var variableExportCmd = &console.Command{
 		if dir == "" {
 			var err error
 			if dir, err = os.Getwd(); err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		}
 		env, err := envs.GetEnv(dir, c.Bool("debug"))
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		if name := c.Args().Get("name"); name != "" {

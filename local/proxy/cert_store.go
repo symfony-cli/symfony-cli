@@ -24,6 +24,7 @@ import (
 	"sync"
 
 	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/pkg/errors"
 	"github.com/symfony-cli/cert"
 )
 
@@ -55,7 +56,7 @@ func (c *certStore) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certi
 	}
 	cert, err := c.ca.CreateCert([]string{name})
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	c.cache.Add(name, cert)
 	return &cert, nil

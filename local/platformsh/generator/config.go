@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"sort"
@@ -12,6 +12,7 @@ import (
 	"text/template"
 
 	"github.com/hashicorp/go-version"
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -82,22 +83,22 @@ func generateConfig() {
 	if err != nil {
 		panic(err)
 	}
-	f.Write(buf.Bytes())
+	_, _ = f.Write(buf.Bytes())
 }
 
 func parseServices() (string, error) {
 	resp, err := http.Get("https://raw.githubusercontent.com/platformsh/platformsh-docs/master/docs/data/registry.json")
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	defer resp.Body.Close()
 	var services map[string]*service
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	if err := json.Unmarshal(body, &services); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	serviceNames := []string{}
 	for name := range services {
@@ -110,11 +111,11 @@ func parseServices() (string, error) {
 		if !s.Runtime {
 			deprecatedVersions, err := sortVersions(s.Versions.Deprecated)
 			if err != nil {
-				return "", err
+				return "", errors.WithStack(err)
 			}
 			supportedVersions, err := sortVersions(s.Versions.Supported)
 			if err != nil {
-				return "", err
+				return "", errors.WithStack(err)
 			}
 
 			servicesAsString += "\t{\n"
@@ -140,16 +141,16 @@ func parseServices() (string, error) {
 func parsePHPExtensions() (string, error) {
 	resp, err := http.Get("https://raw.githubusercontent.com/platformsh/platformsh-docs/master/docs/data/php_extensions.yaml")
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	defer resp.Body.Close()
 	var versions []string
 	orderedExtensionNames := []string{}
 	extensions := make(map[string][]string)
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	var fullConfig struct {
 		Grid map[string]struct {
@@ -158,7 +159,7 @@ func parsePHPExtensions() (string, error) {
 		}
 	}
 	if err := yaml.Unmarshal(body, &fullConfig); err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	for version, cfg := range fullConfig.Grid {
 		for _, ext := range append(cfg.Available, cfg.Default...) {
@@ -195,31 +196,12 @@ func parsePHPExtensions() (string, error) {
 	return extsAsString, nil
 }
 
-func parseLine(line string) (string, []string) {
-	next := strings.Index(line[1:], "|") + 1
-	name := strings.TrimSpace(line[1:next])
-	var versions []string
-	for {
-		current := next + 1
-		nextIndex := strings.Index(line[current:], "|")
-		if nextIndex == -1 {
-			break
-		}
-		next = nextIndex + current
-		versions = append(versions, strings.TrimSpace(line[current:next]))
-		if next >= len(line) {
-			break
-		}
-	}
-	return name, versions
-}
-
 func sortVersions(versions []string) ([]string, error) {
 	parsedVersions := make([]*version.Version, len(versions))
 	for i, raw := range versions {
 		v, err := version.NewVersion(raw)
 		if err != nil {
-			return nil, err
+			return nil, errors.WithStack(err)
 		}
 		parsedVersions[i] = v
 	}
