@@ -255,6 +255,7 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 			username := ""
 			password := ""
 			path := ""
+			version := ""
 			// MARIADB is used by bitnami/mariadb
 			for _, prefix := range []string{"MYSQL", "MARIADB"} {
 				for _, env := range c.Config.Env {
@@ -268,6 +269,8 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 						password = getEnvValue(env, prefix+"_PASSWORD")
 					} else if strings.HasPrefix(env, prefix+"_DATABASE") {
 						path = getEnvValue(env, prefix+"_DATABASE")
+					} else if strings.HasPrefix(env, prefix+"_VERSION") {
+						version = getEnvValue(env, prefix+"_VERSION")
 					}
 				}
 			}
@@ -280,6 +283,7 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 				"username": username,
 				"password": password,
 				"path":     path,
+				"version":  version,
 				"port":     formatDockerPort(p.PublicPort),
 				"query": map[string]bool{
 					"is_master": true,
@@ -292,6 +296,7 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 			username := ""
 			password := ""
 			path := ""
+			version := ""
 			for _, env := range c.Config.Env {
 				if strings.HasPrefix(env, "POSTGRES_USER") {
 					username = getEnvValue(env, "POSTGRES_USER")
@@ -299,6 +304,8 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 					password = getEnvValue(env, "POSTGRES_PASSWORD")
 				} else if strings.HasPrefix(env, "POSTGRES_DB") {
 					path = getEnvValue(env, "POSTGRES_DB")
+				} else if strings.HasPrefix(env, "PG_VERSION") {
+					version = getEnvValue(env, "PG_VERSION")
 				}
 			}
 			if path == "" {
@@ -310,6 +317,7 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 				"username": username,
 				"password": password,
 				"path":     path,
+				"version":  version,
 				"port":     formatDockerPort(p.PublicPort),
 				"query": map[string]bool{
 					"is_master": true,
