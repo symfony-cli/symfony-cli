@@ -181,7 +181,6 @@ Environment variables to use Platform.sh relationships or Docker services are au
 }
 
 func getProjectDir(dir string) (string, error) {
-
 	var err error
 	if dir, err = filepath.Abs(dir); err != nil {
 		return "", err

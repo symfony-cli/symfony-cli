@@ -1,0 +1,27 @@
+name: app
+
+type: php:8.2
+
+relationships:
+    database: "pgsqldb:postgresql"
+
+web:
+    locations:
+        "/":
+            root: "public"
+            expires: 1d
+            passthru: "/index.php"
+
+disk: 8192
+
+hooks:
+    build: |
+        set -x -e
+
+        curl -s https://get.symfony.com/cloud/configurator | bash
+        symfony-build
+
+    deploy: |
+        set -x -e
+
+        symfony-deploy

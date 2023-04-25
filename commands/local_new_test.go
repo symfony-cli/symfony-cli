@@ -38,17 +38,17 @@ func TestParseDockerComposeServices(t *testing.T) {
 	}
 
 	for dir, expected := range map[string]CloudService{
-		"testdata/postgresql/noversion/": {
+		"testdata/docker/postgresql/noversion/": {
 			Name:    "database",
 			Type:    "postgresql",
 			Version: lastVersion,
 		},
-		"testdata/postgresql/10/": {
+		"testdata/docker/postgresql/10/": {
 			Name:    "database",
 			Type:    "postgresql",
 			Version: "10",
 		},
-		"testdata/postgresql/next/": {
+		"testdata/docker/postgresql/next/": {
 			Name:    "database",
 			Type:    "postgresql",
 			Version: lastVersion,

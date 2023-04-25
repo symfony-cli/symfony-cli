@@ -1,0 +1,3 @@
+pgsqldb:
+    type: postgresql:14
+    disk: 512
