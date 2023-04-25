@@ -1,7 +1,9 @@
 package commands
 
 import (
+	"errors"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -40,7 +42,12 @@ func readDBVersionFromPlatformServiceYAML(projectDir string) (string, string, er
 }
 
 func readDBVersionFromDotEnv(projectDir string) (string, error) {
-	dotEnv, err := ioutil.ReadFile(filepath.Join(projectDir, ".env"))
+	path := filepath.Join(projectDir, ".env")
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return "", nil
+	}
+
+	dotEnv, err := ioutil.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
@@ -59,7 +66,12 @@ func readDBVersionFromDotEnv(projectDir string) (string, error) {
 }
 
 func readDBVersionFromDoctrineConfigYAML(projectDir string) (string, error) {
-	doctrineConfigYAML, err := ioutil.ReadFile(filepath.Join(projectDir, "config", "packages", "doctrine.yaml"))
+	path := filepath.Join(projectDir, "config", "packages", "doctrine.yaml")
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return "", nil
+	}
+
+	doctrineConfigYAML, err := ioutil.ReadFile(path)
 	if err != nil {
 		return "", err
 	}

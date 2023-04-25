@@ -1,7 +1,25 @@
+/*
+ * Copyright (c) 2021-present Fabien Potencier <fabien@symfony.com>
+ *
+ * This file is part of Symfony CLI project
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package commands
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/symfony-cli/console"
@@ -17,7 +35,7 @@ var platformshBeforeHooks = map[string]console.BeforeFunc{
 		if err != nil {
 			return err
 		}
-		if len(platformsh.FindLocalApplications(projectDir)) > 0 {
+		if len(platformsh.FindLocalApplications(projectDir)) > 1 {
 			// not implemented yet as more complex
 			return nil
 		}
@@ -49,6 +67,7 @@ Before deploying, fix the version mismatch.
 
 		doctrineConfigVersion, err := readDBVersionFromDoctrineConfigYAML(projectDir)
 		if err != nil {
+			fmt.Printf("%+v", err)
 			return nil
 		}
 		if doctrineConfigVersion != "" && doctrineConfigVersion != dbVersion {
@@ -56,16 +75,16 @@ Before deploying, fix the version mismatch.
 		}
 
 		if dotEnvVersion == "" && doctrineConfigVersion == "" {
-			return errors.New(`
+			return fmt.Errorf(`
 The ".platform/services.yaml" file defines a "%s" database service.
 
 When deploying, Doctrine needs to know the database version to determine the supported SQL syntax.
 
 As the database is not available when Doctrine is warming up its cache on Platform.sh,
-you need to explicitely set the database version in the ".env" or "config/packages/doctrine.yaml" file.
+you need to explicitly set the database version in the ".env" or "config/packages/doctrine.yaml" file.
 
-The easiest is to set the "serverVersion" parameter in the "config/packages/doctrine.yaml" file.
-`)
+Set the "server_version" parameter to "%s" in "config/packages/doctrine.yaml".
+`, dbName, dbVersion)
 		}
 
 		return nil
