@@ -98,7 +98,15 @@ jobs:
                 uses: actions/upload-artifact@v3
                 with:
                     retention-days: 5
+                    name: binaries
                     path: dist
+            -
+                name: Archive Linux binary
+                uses: actions/upload-artifact@v3
+                with:
+                    retention-days: 5
+                    name: linux-binary
+                    path: dist/symfony-cli_linux_amd64.tar.gz
             -
                 name: Install Cloudsmith CLI
                 run: pip install --upgrade cloudsmith-cli
