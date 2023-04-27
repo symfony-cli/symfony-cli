@@ -3,10 +3,12 @@ package commands
 import (
 	"errors"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v2"
 )
 
@@ -47,22 +49,26 @@ func readDBVersionFromDotEnv(projectDir string) (string, error) {
 		return "", nil
 	}
 
-	dotEnv, err := ioutil.ReadFile(path)
+	vars, err := godotenv.Read(path)
 	if err != nil {
 		return "", err
 	}
 
-	lines := strings.Split(string(dotEnv), "\n")
-	for _, line := range lines {
-		if !strings.HasPrefix(line, "DATABASE_URL=") {
-			continue
-		}
-		if !strings.Contains(line, "serverVersion=") {
-			return "", nil
-		}
-		return strings.TrimRight(strings.Split(strings.Split(line, "serverVersion=")[1], "&")[0], "\""), nil
+	databaseUrl, defined := vars["DATABASE_URL"]
+	if !defined {
+		return "", nil
 	}
-	return "", nil
+
+	if !strings.Contains(databaseUrl, "serverVersion=") {
+		return "", nil
+	}
+
+	url, err := url.Parse(databaseUrl)
+	if err != nil {
+		return "", err
+	}
+
+	return url.Query().Get("serverVersion"), nil
 }
 
 func readDBVersionFromDoctrineConfigYAML(projectDir string) (string, error) {
