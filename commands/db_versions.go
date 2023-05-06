@@ -54,16 +54,16 @@ func readDBVersionFromDotEnv(projectDir string) (string, error) {
 		return "", err
 	}
 
-	databaseUrl, defined := vars["DATABASE_URL"]
+	databaseURL, defined := vars["DATABASE_URL"]
 	if !defined {
 		return "", nil
 	}
 
-	if !strings.Contains(databaseUrl, "serverVersion=") {
+	if !strings.Contains(databaseURL, "serverVersion=") {
 		return "", nil
 	}
 
-	url, err := url.Parse(databaseUrl)
+	url, err := url.Parse(databaseURL)
 	if err != nil {
 		return "", err
 	}
@@ -94,4 +94,10 @@ func readDBVersionFromDoctrineConfigYAML(projectDir string) (string, error) {
 		return "", err
 	}
 	return doctrineConfig.Doctrine.Dbal.ServerVersion, nil
+}
+
+func databaseVersiondUnsynced(providedVersion, dbVersion string) bool {
+	providedVersion = strings.Replace(providedVersion, "mariadb-", "", 1)
+
+	return providedVersion != "" && !strings.HasPrefix(providedVersion, dbVersion)
 }
