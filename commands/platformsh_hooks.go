@@ -35,6 +35,7 @@ var platformshBeforeHooks = map[string]console.BeforeFunc{
 		if err != nil {
 			return err
 		}
+
 		if len(platformsh.FindLocalApplications(projectDir)) > 1 {
 			// not implemented yet as more complex
 			return nil
@@ -61,16 +62,15 @@ Before deploying, fix the version mismatch.
 		if err != nil {
 			return nil
 		}
-		if dotEnvVersion != "" && dotEnvVersion != dbVersion {
+		if databaseVersiondUnsynced(dotEnvVersion, dbVersion) {
 			return fmt.Errorf(errorTpl, fmt.Sprintf("the \".env\" file requires version %s", dotEnvVersion))
 		}
 
 		doctrineConfigVersion, err := readDBVersionFromDoctrineConfigYAML(projectDir)
 		if err != nil {
-			fmt.Printf("%+v", err)
 			return nil
 		}
-		if doctrineConfigVersion != "" && doctrineConfigVersion != dbVersion {
+		if databaseVersiondUnsynced(doctrineConfigVersion, dbVersion) {
 			return fmt.Errorf(errorTpl, fmt.Sprintf("the \"config/packages/doctrine.yaml\" file requires version %s", doctrineConfigVersion))
 		}
 

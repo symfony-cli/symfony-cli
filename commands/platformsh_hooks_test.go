@@ -36,6 +36,7 @@ func TestDeployHook(t *testing.T) {
 		"testdata/platformsh/version-mismatch-env/":    `The ".platform/services.yaml" file defines a "postgresql" version 14 database service but the ".env" file requires version 13.`,
 		"testdata/platformsh/version-mismatch-config/": `The ".platform/services.yaml" file defines a "postgresql" version 14 database service but the "config/packages/doctrine.yaml" file requires version 13.`,
 		"testdata/platformsh/ok/":                      ``,
+		"testdata/platformsh/mariadb-version/":         ``,
 		"testdata/platformsh/missing-version/":         `Set the "server_version" parameter to "14" in "config/packages/doctrine.yaml".`,
 	} {
 		flags.Set("dir", dir)
@@ -47,6 +48,9 @@ func TestDeployHook(t *testing.T) {
 			continue
 		}
 		errString := strings.ReplaceAll(err.Error(), "\n", " ")
+		if expected == "" {
+			t.Errorf("TestDeployHook(%q): got %s, expected no errors", dir, errString)
+		}
 		if !strings.Contains(errString, expected) {
 			t.Errorf("TestDeployHook(%q): got %s, expected %s", dir, errString, expected)
 		}

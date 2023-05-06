@@ -1,5 +1,5 @@
 doctrine:
     dbal:
         driver: pdo_pgsql
-        server_version: '13'
+        server_version: '14'
         url: '%env(resolve:DATABASE_URL)%'
