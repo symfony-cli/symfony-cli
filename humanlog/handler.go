@@ -211,6 +211,14 @@ func (h *Handler) joinKVs(line *line) []string {
 	return kv
 }
 
+func marshal(i interface{}) ([]byte, error) {
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(i)
+	return bytes.TrimRight(buffer.Bytes(), "\n"), err
+}
+
 func unmarshal(data []byte) (*line, error) {
 	raw := make(map[string]interface{})
 	err := errors.WithStack(json.Unmarshal(data, &raw))
@@ -280,7 +288,7 @@ func convertAnyVal(val interface{}) string {
 	case string:
 		return fmt.Sprintf("%q", v)
 	default:
-		ret, err := json.Marshal(v)
+		ret, err := marshal(v)
 		if err != nil {
 			return fmt.Sprintf("%v", v)
 		}
