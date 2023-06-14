@@ -722,6 +722,20 @@ var Commands = []*console.Command{
 	},
 	{
 		Category: "cloud:environment",
+		Name:     "pause",
+		Aliases:  []*console.Alias{
+			{Name: "environment:pause", Hidden: true},
+		},
+		Usage:    "Pause an environment",
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.BoolFlag{Name: "no-wait", Aliases: []string{"W"},},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+			&console.BoolFlag{Name: "wait",},
+		},
+	},
+	{
+		Category: "cloud:environment",
 		Name:     "push",
 		Aliases:  []*console.Alias{
 			{Name: "environment:push", Hidden: true},
@@ -773,6 +787,20 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
 			&console.StringFlag{Name: "property", Aliases: []string{"P"},},
 			&console.BoolFlag{Name: "refresh",},
+		},
+	},
+	{
+		Category: "cloud:environment",
+		Name:     "resume",
+		Aliases:  []*console.Alias{
+			{Name: "environment:resume", Hidden: true},
+		},
+		Usage:    "Resume a paused environment",
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.BoolFlag{Name: "no-wait", Aliases: []string{"W"},},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+			&console.BoolFlag{Name: "wait",},
 		},
 	},
 	{
