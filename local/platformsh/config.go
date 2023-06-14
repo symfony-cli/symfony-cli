@@ -133,13 +133,13 @@ var availableServices = []*service{
 		Type: "chrome-headless",
 		Versions: serviceVersions{
 			Deprecated: []string{},
-			Supported:  []string{"73", "80", "81", "83", "84", "86", "91", "95"},
+			Supported:  []string{"73", "80", "81", "83", "84", "86", "91", "95", "113"},
 		},
 	},
 	{
 		Type: "elasticsearch",
 		Versions: serviceVersions{
-			Deprecated: []string{"0.9", "1.4", "1.7", "2.4", "5.2", "5.4", "6.5", "6.8", "7.2", "7.5", "7.7", "7.9", "7.10"},
+			Deprecated: []string{"1.4", "1.7", "2.4", "5.2", "5.4", "6.5", "6.8", "7.2", "7.5", "7.7", "7.9", "7.10"},
 			Supported: []string{},
 		},
 	},
@@ -161,7 +161,7 @@ var availableServices = []*service{
 		Type: "mariadb",
 		Versions: serviceVersions{
 			Deprecated: []string{"5.5", "10.0", "10.1", "10.2"},
-			Supported:  []string{"10.3", "10.4", "10.5", "10.6", "10.11"},
+			Supported:  []string{"10.3", "10.4", "10.5", "10.6"},
 		},
 	},
 	{
@@ -174,7 +174,7 @@ var availableServices = []*service{
 	{
 		Type: "mongodb",
 		Versions: serviceVersions{
-			Deprecated: []string{"3.0", "3.2", "3.4", "3.6"},
+			Deprecated: []string{"3.0", "3.2", "3.4", "3.6", "4.0.3"},
 			Supported: []string{},
 		},
 	},
@@ -182,14 +182,14 @@ var availableServices = []*service{
 		Type: "mongodb-enterprise",
 		Versions: serviceVersions{
 			Deprecated: []string{"4.0"},
-			Supported:  []string{"4.2", "4.4", "5.0"},
+			Supported:  []string{"4.2", "4.4", "5.0", "6.0"},
 		},
 	},
 	{
 		Type: "mysql",
 		Versions: serviceVersions{
 			Deprecated: []string{"5.5", "10.0", "10.1", "10.2"},
-			Supported:  []string{"10.3", "10.4", "10.5", "10.6", "10.11"},
+			Supported:  []string{"10.3", "10.4", "10.5", "10.6"},
 		},
 	},
 	{
@@ -244,8 +244,8 @@ var availableServices = []*service{
 	{
 		Type: "varnish",
 		Versions: serviceVersions{
-			Deprecated: []string{"5.1", "5.2"},
-			Supported:  []string{"6.0", "6.3", "7.1", "7.2"},
+			Deprecated: []string{"5.1", "5.2", "6.0", "7.1"},
+			Supported:  []string{"6.3", "7.2"},
 		},
 	},
 	{
