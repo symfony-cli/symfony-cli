@@ -604,6 +604,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "Delete one or more environments",
 		Flags:    []console.Flag{
+			&console.BoolFlag{Name: "allow-delete-parent",},
 			&console.BoolFlag{Name: "delete-branch",},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "exclude",},
