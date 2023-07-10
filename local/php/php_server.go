@@ -26,7 +26,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
 	"os"
@@ -34,14 +33,12 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/xid"
 	"github.com/rs/zerolog"
 	"github.com/symfony-cli/phpstore"
 	"github.com/symfony-cli/symfony-cli/local"
-	fcgiclient "github.com/symfony-cli/symfony-cli/local/fcgi_client"
 	"github.com/symfony-cli/symfony-cli/local/html"
 	"github.com/symfony-cli/symfony-cli/local/pid"
 	"github.com/symfony-cli/symfony-cli/local/process"
@@ -94,6 +91,28 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 		return nil, nil, err
 	}
 	p.addr = net.JoinHostPort("", strconv.Itoa(port))
+
+	target, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", port))
+	if err != nil {
+		return nil, nil, errors.WithStack(err)
+	}
+	p.proxy = httputil.NewSingleHostReverseProxy(target)
+	p.proxy.ModifyResponse = func(resp *http.Response) error {
+		if err, processed := p.processToolbarInResponse(resp); processed {
+			return err
+		}
+
+		if err, processed := p.processXSendFile(resp); processed {
+			return err
+		}
+
+		return nil
+	}
+	p.proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		w.WriteHeader(http.StatusBadGateway)
+		w.Write([]byte(html.WrapHTML(err.Error(), html.CreateErrorTerminal("# "+err.Error()), "")))
+	}
+
 	workingDir := p.documentRoot
 	env := []string{}
 	var binName, workerName string
@@ -103,6 +122,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 		if err := os.WriteFile(fpmConfigFile, []byte(p.defaultFPMConf()), 0644); err != nil {
 			return nil, nil, errors.WithStack(err)
 		}
+		p.proxy.Transport = &cgiTransport{}
 		pathsToRemove = append(pathsToRemove, fpmConfigFile)
 		binName = "php-fpm"
 		workerName = "PHP-FPM"
@@ -111,6 +131,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 			args = append(args, "--force-stderr")
 		}
 	} else if p.Version.IsCGIServer() {
+		p.proxy.Transport = &cgiTransport{}
 		// as php-cgi reads the main php.ini file from the current directory,
 		// we want to execute from another directory to be sure that we
 		// are always loading the default PHP configuration
@@ -129,20 +150,10 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 			return nil, nil, errors.WithStack(err)
 		}
 		pathsToRemove = append(pathsToRemove, routerPath)
-		addr := "127.0.0.1:" + strconv.Itoa(port)
 		binName = "php"
 		workerName = "PHP"
-		args = []string{p.Version.ServerPath(), "-S", addr, "-d", "variables_order=EGPCS", routerPath}
-		target, err := url.Parse(fmt.Sprintf("http://%s", addr))
-		if err != nil {
-			return nil, nil, errors.WithStack(err)
-		}
+		args = []string{p.Version.ServerPath(), "-S", "127.0.0.1:" + strconv.Itoa(port), "-d", "variables_order=EGPCS", routerPath}
 		env = append(env, "APP_FRONT_CONTROLLER="+strings.TrimLeft(p.passthru, "/"))
-		p.proxy = httputil.NewSingleHostReverseProxy(target)
-		p.proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-			w.WriteHeader(http.StatusBadGateway)
-			w.Write([]byte(html.WrapHTML(err.Error(), html.CreateErrorTerminal("# "+err.Error()), "")))
-		}
 	}
 
 	e := &Executor{
@@ -198,6 +209,12 @@ func (p *Server) Serve(w http.ResponseWriter, r *http.Request, env map[string]st
 	for k, v := range p.generateEnv(r) {
 		env[k] = v
 	}
+
+	// inject our ResponseWriter and our environment into the request's context
+	// to allow for processing at a later stage
+	r = r.WithContext(context.WithValue(r.Context(), responseWriterContextKey, w))
+	r = r.WithContext(context.WithValue(r.Context(), environmentContextKey, env))
+
 	if p.Version.IsCLIServer() {
 		rid := xid.New().String()
 		r.Header.Add("__SYMFONY_LOCAL_REQUEST_ID__", rid)
@@ -211,78 +228,9 @@ func (p *Server) Serve(w http.ResponseWriter, r *http.Request, env map[string]st
 			return err
 		}
 		defer os.Remove(envPath)
-		pw := httptest.NewRecorder()
-		p.proxy.ServeHTTP(pw, r)
-		return p.writeResponse(w, r, env, pw.Result())
-	}
-	return p.serveFastCGI(env, w, r)
-}
-
-func (p *Server) serveFastCGI(env map[string]string, w http.ResponseWriter, r *http.Request) error {
-	// as the process might have been just created, it might not be ready yet
-	var fcgi *fcgiclient.FCGIClient
-	var err error
-	max := 10
-	i := 0
-	for {
-		if fcgi, err = fcgiclient.Dial("tcp", p.addr); err == nil {
-			break
-		}
-		i++
-		if i > max {
-			return errors.Wrapf(err, "unable to connect to the PHP FastCGI process")
-		}
-		time.Sleep(time.Millisecond * 50)
-	}
-	defer fcgi.Close()
-	defer r.Body.Close()
-
-	// fetching the response from the fastcgi backend, and check for errors
-	resp, err := fcgi.Request(env, r.Body)
-	if err != nil {
-		return errors.Wrapf(err, "unable to fetch the response from the backend")
 	}
 
-	// X-SendFile
-	sendFilename := resp.Header.Get("X-SendFile")
-	_, err = os.Stat(sendFilename)
-	if sendFilename != "" && err == nil {
-		http.ServeFile(w, r, sendFilename)
-		return nil
-	}
-	return p.writeResponse(w, r, env, resp)
-}
-
-func (p *Server) writeResponse(w http.ResponseWriter, r *http.Request, env map[string]string, resp *http.Response) error {
-	defer resp.Body.Close()
-	if env["SYMFONY_TUNNEL"] != "" && env["SYMFONY_TUNNEL_ENV"] == "" {
-		p.logger.Warn().Msgf("Tunnel to %s open but environment variables not exposed", env["SYMFONY_TUNNEL_BRAND"])
-	}
-	bodyModified := false
-	if r.Method == http.MethodGet && r.Header.Get("x-requested-with") == "XMLHttpRequest" {
-		var err error
-		if resp.Body, err = p.tweakToolbar(resp.Body, env); err != nil {
-			return err
-		}
-		bodyModified = true
-	}
-	for k, v := range resp.Header {
-		if bodyModified && strings.ToLower(k) == "content-length" {
-			// we drop the incoming Content-Length, it will be recomputed by Go automatically anyway
-			continue
-		}
-		for i := 0; i < len(v); i++ {
-			if w.Header().Get(k) == "" {
-				w.Header().Set(k, v[i])
-			} else {
-				w.Header().Add(k, v[i])
-			}
-		}
-	}
-	w.WriteHeader(resp.StatusCode)
-	if r.Method != http.MethodHead {
-		io.Copy(w, resp.Body)
-	}
+	p.proxy.ServeHTTP(w, r)
 	return nil
 }
 
