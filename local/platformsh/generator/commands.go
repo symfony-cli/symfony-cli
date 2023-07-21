@@ -35,6 +35,7 @@ type command struct {
 	Help        string
 	Definition  definition
 	Hidden      bool
+	Aliases     []string
 }
 
 type definition struct {
@@ -121,7 +122,7 @@ func parseCommands(home string) (string, error) {
 	var buf bytes.Buffer
 	e := &php.Executor{
 		BinName: "php",
-		Args:    []string{"php", filepath.Join(dir, "platform"), "list", "--format=json"},
+		Args:    []string{"php", filepath.Join(dir, "platform"), "list", "--format=json", "--all"},
 	}
 	e.Paths = append([]string{dir}, e.Paths...)
 	e.Dir = dir
@@ -193,11 +194,16 @@ func parseCommands(home string) (string, error) {
 		if namespace != "cloud" && !strings.HasPrefix(command.Name, "self:") {
 			aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", command.Name))
 		}
-		for _, usage := range command.Usage {
-			if allCommandNames[usage] {
-				aliases = append(aliases, fmt.Sprintf("{Name: \"cloud:%s\"}", usage))
+
+		cmdAliases, err := getCommandAliases(command.Name, dir)
+		if err != nil {
+			return "", err
+		}
+		for _, alias := range cmdAliases {
+			if allCommandNames[alias] {
+				aliases = append(aliases, fmt.Sprintf("{Name: \"cloud:%s\"}", alias))
 				if namespace != "cloud" && !strings.HasPrefix(command.Name, "self:") {
-					aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", usage))
+					aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", alias))
 				}
 			}
 		}
@@ -277,4 +283,23 @@ func parseCommands(home string) (string, error) {
 	}
 
 	return definitionAsString, nil
+}
+
+func getCommandAliases(name, dir string) ([]string, error) {
+	var buf bytes.Buffer
+	e := &php.Executor{
+		BinName: "php",
+		Args:    []string{"php", filepath.Join(dir, "platform"), name, "--help", "--format=json"},
+	}
+	e.Paths = append([]string{dir}, e.Paths...)
+	e.Dir = dir
+	e.Stdout = &buf
+	if ret := e.Execute(false); ret != 0 {
+		return nil, errors.Errorf("unable to get definition for command %s: %s", name, buf.String())
+	}
+	var cmd command
+	if err := json.Unmarshal(buf.Bytes(), &cmd); err != nil {
+		return nil, err
+	}
+	return cmd.Aliases, nil
 }

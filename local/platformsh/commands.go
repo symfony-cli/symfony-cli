@@ -29,7 +29,33 @@ import (
 var Commands = []*console.Command{
 	{
 		Category: "cloud",
+		Name:     "_completion",
+		Usage:    "BASH completion hook.",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.BoolFlag{Name: "generate-hook", Aliases: []string{"g"},},
+			&console.BoolFlag{Name: "multiple", Aliases: []string{"m"},},
+			&console.StringFlag{Name: "program", Aliases: []string{"p"},},
+			&console.StringFlag{Name: "shell-type",},
+		},
+	},
+	{
+		Category: "cloud",
+		Name:     "bot",
+		Usage:    "The Platform.sh Bot",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.BoolFlag{Name: "parrot",},
+			&console.BoolFlag{Name: "party",},
+		},
+	},
+	{
+		Category: "cloud",
 		Name:     "clear-cache",
+		Aliases:  []*console.Alias{
+			{Name: "cloud:clearcache"},
+			{Name: "cloud:cc"},
+		},
 		Usage:    "Clear the CLI cache",
 	},
 	{
@@ -39,6 +65,15 @@ var Commands = []*console.Command{
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "browser",},
 			&console.BoolFlag{Name: "pipe",},
+		},
+	},
+	{
+		Category: "cloud",
+		Name:     "legacy-migrate",
+		Usage:    "Migrate from the legacy file structure",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.BoolFlag{Name: "no-backup",},
 		},
 	},
 	{
@@ -62,6 +97,18 @@ var Commands = []*console.Command{
 			&console.BoolFlag{Name: "pipe",},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
 		},
+	},
+	{
+		Category: "cloud",
+		Name:     "welcome",
+		Usage:    "Welcome to Platform.sh",
+		Hidden:   console.Hide,
+	},
+	{
+		Category: "cloud",
+		Name:     "winky",
+		Usage:    "",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud:activity",
@@ -106,6 +153,10 @@ var Commands = []*console.Command{
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "activity:list", Hidden: true},
+			{Name: "cloud:activities"},
+			{Name: "activities", Hidden: true},
+			{Name: "cloud:act"},
+			{Name: "act", Hidden: true},
 		},
 		Usage:    "Get a list of activities for an environment or project",
 		Flags:    []console.Flag{
@@ -147,6 +198,26 @@ var Commands = []*console.Command{
 		},
 	},
 	{
+		Category: "cloud:api",
+		Name:     "curl",
+		Aliases:  []*console.Alias{
+			{Name: "api:curl", Hidden: true},
+		},
+		Usage:    "Run an authenticated cURL request on the Platform.sh API",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "data", Aliases: []string{"d"},},
+			&console.BoolFlag{Name: "disable-compression",},
+			&console.BoolFlag{Name: "enable-glob",},
+			&console.BoolFlag{Name: "fail", Aliases: []string{"f"},},
+			&console.BoolFlag{Name: "head", Aliases: []string{"I"},},
+			&console.StringFlag{Name: "header", Aliases: []string{"H"},},
+			&console.BoolFlag{Name: "include", Aliases: []string{"i"},},
+			&console.StringFlag{Name: "json",},
+			&console.StringFlag{Name: "request", Aliases: []string{"X"},},
+		},
+	},
+	{
 		Category: "cloud:app",
 		Name:     "config-get",
 		Aliases:  []*console.Alias{
@@ -167,6 +238,8 @@ var Commands = []*console.Command{
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "app:list", Hidden: true},
+			{Name: "cloud:apps"},
+			{Name: "apps", Hidden: true},
 		},
 		Usage:    "List apps in the project",
 		Flags:    []console.Flag{
@@ -192,6 +265,8 @@ var Commands = []*console.Command{
 		Name:     "browser-login",
 		Aliases:  []*console.Alias{
 			{Name: "auth:browser-login", Hidden: true},
+			{Name: "cloud:login"},
+			{Name: "login", Hidden: true},
 		},
 		Usage:    "Log in to Platform.sh via a browser",
 		Flags:    []console.Flag{
@@ -221,11 +296,26 @@ var Commands = []*console.Command{
 		Name:     "logout",
 		Aliases:  []*console.Alias{
 			{Name: "auth:logout", Hidden: true},
+			{Name: "cloud:logout"},
+			{Name: "logout", Hidden: true},
 		},
 		Usage:    "Log out of Platform.sh",
 		Flags:    []console.Flag{
 			&console.BoolFlag{Name: "all", Aliases: []string{"a"},},
 			&console.BoolFlag{Name: "other",},
+		},
+	},
+	{
+		Category: "cloud:auth",
+		Name:     "token",
+		Aliases:  []*console.Alias{
+			{Name: "auth:token", Hidden: true},
+		},
+		Usage:    "Obtain an OAuth 2 access token for requests to Platform.sh APIs",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.BoolFlag{Name: "header", Aliases: []string{"H"},},
+			&console.BoolFlag{Name: "no-warn", Aliases: []string{"W"},},
 		},
 	},
 	{
@@ -241,6 +331,8 @@ var Commands = []*console.Command{
 		Name:     "create",
 		Aliases:  []*console.Alias{
 			{Name: "backup:create", Hidden: true},
+			{Name: "cloud:backup"},
+			{Name: "backup", Hidden: true},
 		},
 		Usage:    "Make a backup of an environment",
 		Flags:    []console.Flag{
@@ -284,6 +376,8 @@ var Commands = []*console.Command{
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "backup:list", Hidden: true},
+			{Name: "cloud:backups"},
+			{Name: "backups", Hidden: true},
 		},
 		Usage:    "List available backups of an environment",
 		Flags:    []console.Flag{
@@ -309,6 +403,47 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
 			&console.StringFlag{Name: "target",},
 			&console.BoolFlag{Name: "wait",},
+		},
+	},
+	{
+		Category: "cloud:blue-green",
+		Name:     "conclude",
+		Aliases:  []*console.Alias{
+			{Name: "blue-green:conclude", Hidden: true},
+		},
+		Usage:    "<fg=white;bg=red> ALPHA </> Conclude a blue/green deployment",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+		},
+	},
+	{
+		Category: "cloud:blue-green",
+		Name:     "deploy",
+		Aliases:  []*console.Alias{
+			{Name: "blue-green:deploy", Hidden: true},
+		},
+		Usage:    "<fg=white;bg=red> ALPHA </> Perform a blue/green deployment",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+			&console.StringFlag{Name: "routing-percentage",},
+		},
+	},
+	{
+		Category: "cloud:blue-green",
+		Name:     "enable",
+		Aliases:  []*console.Alias{
+			{Name: "blue-green:enable", Hidden: true},
+		},
+		Usage:    "<fg=white;bg=red> ALPHA </> Enable blue/green deployments",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+			&console.StringFlag{Name: "routing-percentage", Aliases: []string{"%"},},
 		},
 	},
 	{
@@ -358,6 +493,10 @@ var Commands = []*console.Command{
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "certificate:list", Hidden: true},
+			{Name: "cloud:certificates"},
+			{Name: "certificates", Hidden: true},
+			{Name: "cloud:certs"},
+			{Name: "certs", Hidden: true},
 		},
 		Usage:    "List project certificates",
 		Flags:    []console.Flag{
@@ -396,6 +535,8 @@ var Commands = []*console.Command{
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "commit:list", Hidden: true},
+			{Name: "cloud:commits"},
+			{Name: "commits", Hidden: true},
 		},
 		Usage:    "List commits",
 		Flags:    []console.Flag{
@@ -458,6 +599,8 @@ var Commands = []*console.Command{
 		Name:     "sql",
 		Aliases:  []*console.Alias{
 			{Name: "db:sql", Hidden: true},
+			{Name: "cloud:sql"},
+			{Name: "sql", Hidden: true},
 		},
 		Usage:    "Run SQL on the remote database",
 		Flags:    []console.Flag{
@@ -524,6 +667,8 @@ var Commands = []*console.Command{
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "domain:list", Hidden: true},
+			{Name: "cloud:domains"},
+			{Name: "domains", Hidden: true},
 		},
 		Usage:    "Get a list of all domains",
 		Flags:    []console.Flag{
@@ -571,6 +716,8 @@ var Commands = []*console.Command{
 		Name:     "branch",
 		Aliases:  []*console.Alias{
 			{Name: "environment:branch", Hidden: true},
+			{Name: "cloud:branch"},
+			{Name: "branch", Hidden: true},
 		},
 		Usage:    "Branch an environment",
 		Flags:    []console.Flag{
@@ -590,10 +737,34 @@ var Commands = []*console.Command{
 		Name:     "checkout",
 		Aliases:  []*console.Alias{
 			{Name: "environment:checkout", Hidden: true},
+			{Name: "cloud:checkout"},
+			{Name: "checkout", Hidden: true},
 		},
 		Usage:    "Check out an environment",
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "identity-file", Aliases: []string{"i"},},
+		},
+	},
+	{
+		Category: "cloud:environment",
+		Name:     "curl",
+		Aliases:  []*console.Alias{
+			{Name: "environment:curl", Hidden: true},
+		},
+		Usage:    "Run an authenticated cURL request on an environment's API",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "data", Aliases: []string{"d"},},
+			&console.BoolFlag{Name: "disable-compression",},
+			&console.BoolFlag{Name: "enable-glob",},
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.BoolFlag{Name: "fail", Aliases: []string{"f"},},
+			&console.BoolFlag{Name: "head", Aliases: []string{"I"},},
+			&console.StringFlag{Name: "header", Aliases: []string{"H"},},
+			&console.BoolFlag{Name: "include", Aliases: []string{"i"},},
+			&console.StringFlag{Name: "json",},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+			&console.StringFlag{Name: "request", Aliases: []string{"X"},},
 		},
 	},
 	{
@@ -624,6 +795,8 @@ var Commands = []*console.Command{
 		Name:     "http-access",
 		Aliases:  []*console.Alias{
 			{Name: "environment:http-access", Hidden: true},
+			{Name: "cloud:httpaccess"},
+			{Name: "httpaccess", Hidden: true},
 		},
 		Usage:    "Update HTTP access settings for an environment",
 		Flags:    []console.Flag{
@@ -675,6 +848,10 @@ var Commands = []*console.Command{
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "environment:list", Hidden: true},
+			{Name: "cloud:environments"},
+			{Name: "environments", Hidden: true},
+			{Name: "cloud:env"},
+			{Name: "env", Hidden: true},
 		},
 		Usage:    "Get a list of environments",
 		Flags:    []console.Flag{
@@ -695,6 +872,8 @@ var Commands = []*console.Command{
 		Name:     "logs",
 		Aliases:  []*console.Alias{
 			{Name: "environment:logs", Hidden: true},
+			{Name: "cloud:log"},
+			{Name: "log", Hidden: true},
 		},
 		Usage:    "Read an environment's logs",
 		Flags:    []console.Flag{
@@ -712,6 +891,8 @@ var Commands = []*console.Command{
 		Name:     "merge",
 		Aliases:  []*console.Alias{
 			{Name: "environment:merge", Hidden: true},
+			{Name: "cloud:merge"},
+			{Name: "merge", Hidden: true},
 		},
 		Usage:    "Merge an environment",
 		Flags:    []console.Flag{
@@ -740,6 +921,8 @@ var Commands = []*console.Command{
 		Name:     "push",
 		Aliases:  []*console.Alias{
 			{Name: "environment:push", Hidden: true},
+			{Name: "cloud:push"},
+			{Name: "push", Hidden: true},
 			{Name: "deploy"},
 			{Name: "cloud:deploy"},
 		},
@@ -765,6 +948,8 @@ var Commands = []*console.Command{
 		Name:     "redeploy",
 		Aliases:  []*console.Alias{
 			{Name: "environment:redeploy", Hidden: true},
+			{Name: "cloud:redeploy"},
+			{Name: "redeploy", Hidden: true},
 		},
 		Usage:    "Redeploy an environment",
 		Flags:    []console.Flag{
@@ -779,6 +964,8 @@ var Commands = []*console.Command{
 		Name:     "relationships",
 		Aliases:  []*console.Alias{
 			{Name: "environment:relationships", Hidden: true},
+			{Name: "cloud:relationships"},
+			{Name: "relationships", Hidden: true},
 		},
 		Usage:    "Show an environment's relationships",
 		Flags:    []console.Flag{
@@ -809,6 +996,8 @@ var Commands = []*console.Command{
 		Name:     "scp",
 		Aliases:  []*console.Alias{
 			{Name: "environment:scp", Hidden: true},
+			{Name: "cloud:scp"},
+			{Name: "scp", Hidden: true},
 		},
 		Usage:    "Copy files to and from an environment using scp",
 		Flags:    []console.Flag{
@@ -823,9 +1012,20 @@ var Commands = []*console.Command{
 	},
 	{
 		Category: "cloud:environment",
+		Name:     "set-remote",
+		Aliases:  []*console.Alias{
+			{Name: "environment:set-remote", Hidden: true},
+		},
+		Usage:    "Set the remote environment to map to a branch",
+		Hidden:   console.Hide,
+	},
+	{
+		Category: "cloud:environment",
 		Name:     "ssh",
 		Aliases:  []*console.Alias{
 			{Name: "environment:ssh", Hidden: true},
+			{Name: "cloud:ssh"},
+			{Name: "ssh", Hidden: true},
 		},
 		Usage:    "SSH to the current environment",
 		Flags:    []console.Flag{
@@ -844,6 +1044,8 @@ var Commands = []*console.Command{
 		Name:     "synchronize",
 		Aliases:  []*console.Alias{
 			{Name: "environment:synchronize", Hidden: true},
+			{Name: "cloud:sync"},
+			{Name: "sync", Hidden: true},
 		},
 		Usage:    "Synchronize an environment's code and/or data from its parent",
 		Flags:    []console.Flag{
@@ -859,6 +1061,8 @@ var Commands = []*console.Command{
 		Name:     "url",
 		Aliases:  []*console.Alias{
 			{Name: "environment:url", Hidden: true},
+			{Name: "cloud:url"},
+			{Name: "url", Hidden: true},
 		},
 		Usage:    "Get the public URLs of an environment",
 		Flags:    []console.Flag{
@@ -874,6 +1078,8 @@ var Commands = []*console.Command{
 		Name:     "xdebug",
 		Aliases:  []*console.Alias{
 			{Name: "environment:xdebug", Hidden: true},
+			{Name: "cloud:xdebug"},
+			{Name: "xdebug", Hidden: true},
 		},
 		Usage:    "Open a tunnel to Xdebug on the environment",
 		Flags:    []console.Flag{
@@ -908,6 +1114,8 @@ var Commands = []*console.Command{
 		Name:     "activity:list",
 		Aliases:  []*console.Alias{
 			{Name: "integration:activity:list", Hidden: true},
+			{Name: "cloud:i:act"},
+			{Name: "i:act", Hidden: true},
 		},
 		Usage:    "Get a list of activities for an integration",
 		Flags:    []console.Flag{
@@ -1029,6 +1237,8 @@ var Commands = []*console.Command{
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "integration:list", Hidden: true},
+			{Name: "cloud:integrations"},
+			{Name: "integrations", Hidden: true},
 		},
 		Usage:    "View a list of project integration(s)",
 		Flags:    []console.Flag{
@@ -1110,6 +1320,10 @@ var Commands = []*console.Command{
 		Name:     "all",
 		Aliases:  []*console.Alias{
 			{Name: "metrics:all", Hidden: true},
+			{Name: "cloud:met"},
+			{Name: "met", Hidden: true},
+			{Name: "cloud:metrics"},
+			{Name: "metrics", Hidden: true},
 		},
 		Usage:    "<fg=white;bg=red> BETA </> Show CPU, disk and memory metrics for an environment",
 		Flags:    []console.Flag{
@@ -1132,6 +1346,8 @@ var Commands = []*console.Command{
 		Name:     "cpu",
 		Aliases:  []*console.Alias{
 			{Name: "metrics:cpu", Hidden: true},
+			{Name: "cloud:cpu"},
+			{Name: "cpu", Hidden: true},
 		},
 		Usage:    "<fg=white;bg=red> BETA </> Show CPU usage of an environment",
 		Flags:    []console.Flag{
@@ -1151,9 +1367,33 @@ var Commands = []*console.Command{
 	},
 	{
 		Category: "cloud:metrics",
+		Name:     "curl",
+		Aliases:  []*console.Alias{
+			{Name: "metrics:curl", Hidden: true},
+		},
+		Usage:    "Run an authenticated cURL request on an environment's metrics API",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "data", Aliases: []string{"d"},},
+			&console.BoolFlag{Name: "disable-compression",},
+			&console.BoolFlag{Name: "enable-glob",},
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.BoolFlag{Name: "fail", Aliases: []string{"f"},},
+			&console.BoolFlag{Name: "head", Aliases: []string{"I"},},
+			&console.StringFlag{Name: "header", Aliases: []string{"H"},},
+			&console.BoolFlag{Name: "include", Aliases: []string{"i"},},
+			&console.StringFlag{Name: "json",},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+			&console.StringFlag{Name: "request", Aliases: []string{"X"},},
+		},
+	},
+	{
+		Category: "cloud:metrics",
 		Name:     "disk-usage",
 		Aliases:  []*console.Alias{
 			{Name: "metrics:disk-usage", Hidden: true},
+			{Name: "cloud:disk"},
+			{Name: "disk", Hidden: true},
 		},
 		Usage:    "Show disk usage of an environment",
 		Flags:    []console.Flag{
@@ -1178,6 +1418,10 @@ var Commands = []*console.Command{
 		Name:     "memory",
 		Aliases:  []*console.Alias{
 			{Name: "metrics:memory", Hidden: true},
+			{Name: "cloud:mem"},
+			{Name: "mem", Hidden: true},
+			{Name: "cloud:memory"},
+			{Name: "memory", Hidden: true},
 		},
 		Usage:    "<fg=white;bg=red> BETA </> Show memory usage of an environment",
 		Flags:    []console.Flag{
@@ -1225,6 +1469,8 @@ var Commands = []*console.Command{
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "mount:list", Hidden: true},
+			{Name: "cloud:mounts"},
+			{Name: "mounts", Hidden: true},
 		},
 		Usage:    "Get a list of mounts",
 		Flags:    []console.Flag{
@@ -1330,6 +1576,28 @@ var Commands = []*console.Command{
 	},
 	{
 		Category: "cloud:organization",
+		Name:     "curl",
+		Aliases:  []*console.Alias{
+			{Name: "organization:curl", Hidden: true},
+		},
+		Usage:    "Run an authenticated cURL request on an organization's API",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "data", Aliases: []string{"d"},},
+			&console.BoolFlag{Name: "disable-compression",},
+			&console.BoolFlag{Name: "enable-glob",},
+			&console.BoolFlag{Name: "fail", Aliases: []string{"f"},},
+			&console.BoolFlag{Name: "head", Aliases: []string{"I"},},
+			&console.StringFlag{Name: "header", Aliases: []string{"H"},},
+			&console.BoolFlag{Name: "include", Aliases: []string{"i"},},
+			&console.StringFlag{Name: "json",},
+			&console.StringFlag{Name: "org", Aliases: []string{"o"},},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+			&console.StringFlag{Name: "request", Aliases: []string{"X"},},
+		},
+	},
+	{
+		Category: "cloud:organization",
 		Name:     "delete",
 		Aliases:  []*console.Alias{
 			{Name: "organization:delete", Hidden: true},
@@ -1361,6 +1629,10 @@ var Commands = []*console.Command{
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "organization:list", Hidden: true},
+			{Name: "cloud:orgs"},
+			{Name: "orgs", Hidden: true},
+			{Name: "cloud:organizations"},
+			{Name: "organizations", Hidden: true},
 		},
 		Usage:    "List organizations",
 		Flags:    []console.Flag{
@@ -1377,6 +1649,8 @@ var Commands = []*console.Command{
 		Name:     "subscription:list",
 		Aliases:  []*console.Alias{
 			{Name: "organization:subscription:list", Hidden: true},
+			{Name: "cloud:organization:subscriptions"},
+			{Name: "organization:subscriptions", Hidden: true},
 		},
 		Usage:    "List subscriptions within an organization",
 		Flags:    []console.Flag{
@@ -1436,6 +1710,8 @@ var Commands = []*console.Command{
 		Name:     "user:list",
 		Aliases:  []*console.Alias{
 			{Name: "organization:user:list", Hidden: true},
+			{Name: "cloud:organization:users"},
+			{Name: "organization:users", Hidden: true},
 		},
 		Usage:    "List organization users",
 		Flags:    []console.Flag{
@@ -1452,6 +1728,8 @@ var Commands = []*console.Command{
 		Name:     "user:projects",
 		Aliases:  []*console.Alias{
 			{Name: "organization:user:projects", Hidden: true},
+			{Name: "cloud:oups"},
+			{Name: "oups", Hidden: true},
 		},
 		Usage:    "List the projects a user can access",
 		Flags:    []console.Flag{
@@ -1495,6 +1773,8 @@ var Commands = []*console.Command{
 		Name:     "create",
 		Aliases:  []*console.Alias{
 			{Name: "project:create", Hidden: true},
+			{Name: "cloud:create"},
+			{Name: "create", Hidden: true},
 		},
 		Usage:    "Create a new project",
 		Flags:    []console.Flag{
@@ -1514,6 +1794,27 @@ var Commands = []*console.Command{
 	},
 	{
 		Category: "cloud:project",
+		Name:     "curl",
+		Aliases:  []*console.Alias{
+			{Name: "project:curl", Hidden: true},
+		},
+		Usage:    "Run an authenticated cURL request on a project's API",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "data", Aliases: []string{"d"},},
+			&console.BoolFlag{Name: "disable-compression",},
+			&console.BoolFlag{Name: "enable-glob",},
+			&console.BoolFlag{Name: "fail", Aliases: []string{"f"},},
+			&console.BoolFlag{Name: "head", Aliases: []string{"I"},},
+			&console.StringFlag{Name: "header", Aliases: []string{"H"},},
+			&console.BoolFlag{Name: "include", Aliases: []string{"i"},},
+			&console.StringFlag{Name: "json",},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+			&console.StringFlag{Name: "request", Aliases: []string{"X"},},
+		},
+	},
+	{
+		Category: "cloud:project",
 		Name:     "delete",
 		Aliases:  []*console.Alias{
 			{Name: "project:delete", Hidden: true},
@@ -1528,6 +1829,8 @@ var Commands = []*console.Command{
 		Name:     "get",
 		Aliases:  []*console.Alias{
 			{Name: "project:get", Hidden: true},
+			{Name: "cloud:get"},
+			{Name: "get", Hidden: true},
 		},
 		Usage:    "Clone a project locally",
 		Flags:    []console.Flag{
@@ -1561,6 +1864,10 @@ var Commands = []*console.Command{
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "project:list", Hidden: true},
+			{Name: "cloud:projects"},
+			{Name: "projects", Hidden: true},
+			{Name: "cloud:pro"},
+			{Name: "pro", Hidden: true},
 		},
 		Usage:    "Get a list of all active projects",
 		Flags:    []console.Flag{
@@ -1622,6 +1929,8 @@ var Commands = []*console.Command{
 		Name:     "read",
 		Aliases:  []*console.Alias{
 			{Name: "repo:read", Hidden: true},
+			{Name: "cloud:read"},
+			{Name: "read", Hidden: true},
 		},
 		Usage:    "Read a directory or file in the project repository",
 		Flags:    []console.Flag{
@@ -1654,6 +1963,8 @@ var Commands = []*console.Command{
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "route:list", Hidden: true},
+			{Name: "cloud:routes"},
+			{Name: "routes", Hidden: true},
 		},
 		Usage:    "List all routes for an environment",
 		Flags:    []console.Flag{
@@ -1677,6 +1988,9 @@ var Commands = []*console.Command{
 	{
 		Category: "cloud:self",
 		Name:     "update",
+		Aliases:  []*console.Alias{
+			{Name: "cloud:self-update"},
+		},
 		Usage:    "Update the CLI to the latest version",
 		Hidden:   console.Hide,
 		Flags:    []console.Flag{
@@ -1692,6 +2006,8 @@ var Commands = []*console.Command{
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "service:list", Hidden: true},
+			{Name: "cloud:services"},
+			{Name: "services", Hidden: true},
 		},
 		Usage:    "List services in the project",
 		Flags:    []console.Flag{
@@ -1709,6 +2025,8 @@ var Commands = []*console.Command{
 		Name:     "mongo:dump",
 		Aliases:  []*console.Alias{
 			{Name: "service:mongo:dump", Hidden: true},
+			{Name: "cloud:mongodump"},
+			{Name: "mongodump", Hidden: true},
 		},
 		Usage:    "Create a binary archive dump of data from MongoDB",
 		Flags:    []console.Flag{
@@ -1727,6 +2045,8 @@ var Commands = []*console.Command{
 		Name:     "mongo:export",
 		Aliases:  []*console.Alias{
 			{Name: "service:mongo:export", Hidden: true},
+			{Name: "cloud:mongoexport"},
+			{Name: "mongoexport", Hidden: true},
 		},
 		Usage:    "Export data from MongoDB",
 		Flags:    []console.Flag{
@@ -1746,6 +2066,8 @@ var Commands = []*console.Command{
 		Name:     "mongo:restore",
 		Aliases:  []*console.Alias{
 			{Name: "service:mongo:restore", Hidden: true},
+			{Name: "cloud:mongorestore"},
+			{Name: "mongorestore", Hidden: true},
 		},
 		Usage:    "Restore a binary archive dump of data into MongoDB",
 		Flags:    []console.Flag{
@@ -1762,6 +2084,8 @@ var Commands = []*console.Command{
 		Name:     "mongo:shell",
 		Aliases:  []*console.Alias{
 			{Name: "service:mongo:shell", Hidden: true},
+			{Name: "cloud:mongo"},
+			{Name: "mongo", Hidden: true},
 		},
 		Usage:    "Use the MongoDB shell",
 		Flags:    []console.Flag{
@@ -1778,6 +2102,8 @@ var Commands = []*console.Command{
 		Name:     "redis-cli",
 		Aliases:  []*console.Alias{
 			{Name: "service:redis-cli", Hidden: true},
+			{Name: "cloud:redis"},
+			{Name: "redis", Hidden: true},
 		},
 		Usage:    "Access the Redis CLI",
 		Flags:    []console.Flag{
@@ -1789,10 +2115,21 @@ var Commands = []*console.Command{
 		},
 	},
 	{
+		Category: "cloud:session",
+		Name:     "switch",
+		Aliases:  []*console.Alias{
+			{Name: "session:switch", Hidden: true},
+		},
+		Usage:    "<fg=white;bg=red> BETA </> Switch between sessions",
+		Hidden:   console.Hide,
+	},
+	{
 		Category: "cloud:source-operation",
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "source-operation:list", Hidden: true},
+			{Name: "cloud:source-ops"},
+			{Name: "source-ops", Hidden: true},
 		},
 		Usage:    "List source operations on an environment",
 		Flags:    []console.Flag{
@@ -1817,6 +2154,20 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
 			&console.StringFlag{Name: "variable",},
 			&console.BoolFlag{Name: "wait",},
+		},
+	},
+	{
+		Category: "cloud:ssh-cert",
+		Name:     "info",
+		Aliases:  []*console.Alias{
+			{Name: "ssh-cert:info", Hidden: true},
+		},
+		Usage:    "Display information about the current SSH certificate",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
+			&console.BoolFlag{Name: "no-refresh",},
+			&console.StringFlag{Name: "property", Aliases: []string{"P"},},
 		},
 	},
 	{
@@ -1856,6 +2207,8 @@ var Commands = []*console.Command{
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "ssh-key:list", Hidden: true},
+			{Name: "cloud:ssh-keys"},
+			{Name: "ssh-keys", Hidden: true},
 		},
 		Usage:    "Get a list of SSH keys in your account",
 		Flags:    []console.Flag{
@@ -1917,6 +2270,8 @@ var Commands = []*console.Command{
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "tunnel:list", Hidden: true},
+			{Name: "cloud:tunnels"},
+			{Name: "tunnels", Hidden: true},
 		},
 		Usage:    "List SSH tunnels",
 		Flags:    []console.Flag{
@@ -2011,6 +2366,8 @@ var Commands = []*console.Command{
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "user:list", Hidden: true},
+			{Name: "cloud:users"},
+			{Name: "users", Hidden: true},
 		},
 		Usage:    "List project users",
 		Flags:    []console.Flag{
@@ -2079,6 +2436,8 @@ var Commands = []*console.Command{
 		Name:     "get",
 		Aliases:  []*console.Alias{
 			{Name: "variable:get", Hidden: true},
+			{Name: "cloud:vget"},
+			{Name: "vget", Hidden: true},
 		},
 		Usage:    "View a variable",
 		Flags:    []console.Flag{
@@ -2097,6 +2456,10 @@ var Commands = []*console.Command{
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "variable:list", Hidden: true},
+			{Name: "cloud:variables"},
+			{Name: "variables", Hidden: true},
+			{Name: "cloud:var"},
+			{Name: "var", Hidden: true},
 		},
 		Usage:    "List variables",
 		Flags:    []console.Flag{
@@ -2132,10 +2495,30 @@ var Commands = []*console.Command{
 		},
 	},
 	{
+		Category: "cloud:version",
+		Name:     "list",
+		Aliases:  []*console.Alias{
+			{Name: "version:list", Hidden: true},
+			{Name: "cloud:versions"},
+			{Name: "versions", Hidden: true},
+		},
+		Usage:    "<fg=white;bg=red> ALPHA </> List environment versions",
+		Hidden:   console.Hide,
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.StringFlag{Name: "format", DefaultValue: "table",},
+			&console.BoolFlag{Name: "no-header",},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+		},
+	},
+	{
 		Category: "cloud:worker",
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "worker:list", Hidden: true},
+			{Name: "cloud:workers"},
+			{Name: "workers", Hidden: true},
 		},
 		Usage:    "Get a list of all deployed workers",
 		Flags:    []console.Flag{
