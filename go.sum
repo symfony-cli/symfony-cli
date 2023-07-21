@@ -121,8 +121,8 @@ github.com/symfony-cli/cert v1.0.2 h1:rvveFVIoH6JwdfbsjDy5crsFFBiUwJsfEEZduuBtRN
 github.com/symfony-cli/cert v1.0.2/go.mod h1:m2aZC0qLifAgsa0uLshMlJRIkS6hx2bqvDLJgGEbY6Q=
 github.com/symfony-cli/console v1.0.3 h1:iQli0SgvfW7v5DjH2dc36UpLKVM+OCxoWA5XU/ZGaa0=
 github.com/symfony-cli/console v1.0.3/go.mod h1:z2dLSNdPW3rWdSxj8DlZocMtMYN5EF6OeIYjVioXVqE=
-github.com/symfony-cli/phpstore v1.0.8 h1:vwr3dIMV4et12K4oMEBiqm4FSyIItAFkYLvX8vALpK8=
-github.com/symfony-cli/phpstore v1.0.8/go.mod h1:Pug4pGst4b5DcGUwYz2DB1LjltohPgvE4OusDe1z2Xg=
+github.com/symfony-cli/phpstore v1.0.9 h1:XBy2Qtk8YKhnzee+Wivb29B8kCoR7QSMAK4qDgnUC34=
+github.com/symfony-cli/phpstore v1.0.9/go.mod h1:Pug4pGst4b5DcGUwYz2DB1LjltohPgvE4OusDe1z2Xg=
 github.com/symfony-cli/terminal v1.0.4 h1:jam7aN7g7WQ9uOwV9UC+iVGBLTlzK8kAC5EKcxq21Z8=
 github.com/symfony-cli/terminal v1.0.4/go.mod h1:+OxxnU05wyRHKYyQkTzTaCSSxmmIBcvAHLcQ099odj4=
 github.com/syncthing/notify v0.0.0-20210616190510-c6b7342338d2 h1:F4snRP//nIuTTW9LYEzVH4HVwDG9T3M4t8y/2nqMbiY=
