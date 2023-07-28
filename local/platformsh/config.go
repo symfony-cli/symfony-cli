@@ -141,7 +141,7 @@ var availableServices = []*service{
 		Type: "elasticsearch",
 		Versions: serviceVersions{
 			Deprecated: []string{"1.4", "1.7", "2.4", "5.2", "5.4", "6.5", "6.8", "7.2", "7.5", "7.7", "7.9", "7.10"},
-			Supported: []string{},
+			Supported:  []string{"7.17", "8.5"},
 		},
 	},
 	{
