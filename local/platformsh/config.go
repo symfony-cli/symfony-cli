@@ -162,7 +162,7 @@ var availableServices = []*service{
 		Type: "mariadb",
 		Versions: serviceVersions{
 			Deprecated: []string{"5.5", "10.0", "10.1", "10.2"},
-			Supported:  []string{"10.3", "10.4", "10.5", "10.6", "10.11"},
+			Supported:  []string{"10.3", "10.4", "10.5", "10.6", "10.11", "11"},
 		},
 	},
 	{
@@ -239,7 +239,7 @@ var availableServices = []*service{
 		Type: "solr",
 		Versions: serviceVersions{
 			Deprecated: []string{"3.6", "4.10", "6.3", "6.6", "7.6", "7.7", "8.0", "8.4", "8.6"},
-			Supported:  []string{"8.11", "9.1"},
+			Supported:  []string{"8.11", "9.1", "9.2"},
 		},
 	},
 	{
