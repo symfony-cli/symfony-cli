@@ -148,7 +148,7 @@ var availableServices = []*service{
 		Type: "influxdb",
 		Versions: serviceVersions{
 			Deprecated: []string{"1.2", "1.3", "1.7", "1.8", "2.2"},
-			Supported:  []string{"2.3"},
+			Supported:  []string{"2.3", "2.7"},
 		},
 	},
 	{
