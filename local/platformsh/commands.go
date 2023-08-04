@@ -120,9 +120,9 @@ var Commands = []*console.Command{
 		Flags:    []console.Flag{
 			&console.BoolFlag{Name: "all", Aliases: []string{"a"},},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
-			&console.StringFlag{Name: "exclude-type",},
+			&console.StringFlag{Name: "exclude-type", Aliases: []string{"x"},},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
-			&console.StringFlag{Name: "type",},
+			&console.StringFlag{Name: "type", Aliases: []string{"t"},},
 		},
 	},
 	{
@@ -137,7 +137,7 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
-			&console.StringFlag{Name: "exclude-type",},
+			&console.StringFlag{Name: "exclude-type", Aliases: []string{"x"},},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.BoolFlag{Name: "incomplete", Aliases: []string{"i"},},
 			&console.BoolFlag{Name: "no-header",},
@@ -145,7 +145,7 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "property", Aliases: []string{"P"},},
 			&console.StringFlag{Name: "result",},
 			&console.StringFlag{Name: "state",},
-			&console.StringFlag{Name: "type",},
+			&console.StringFlag{Name: "type", Aliases: []string{"t"},},
 		},
 	},
 	{
@@ -187,7 +187,7 @@ var Commands = []*console.Command{
 			&console.BoolFlag{Name: "all", Aliases: []string{"a"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
-			&console.StringFlag{Name: "exclude-type",},
+			&console.StringFlag{Name: "exclude-type", Aliases: []string{"x"},},
 			&console.BoolFlag{Name: "incomplete", Aliases: []string{"i"},},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
 			&console.StringFlag{Name: "refresh",},
@@ -621,13 +621,13 @@ var Commands = []*console.Command{
 		},
 		Usage:    "Add a new domain to the project",
 		Flags:    []console.Flag{
+			&console.StringFlag{Name: "attach",},
 			&console.StringFlag{Name: "cert",},
 			&console.StringFlag{Name: "chain",},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
 			&console.StringFlag{Name: "key",},
 			&console.BoolFlag{Name: "no-wait", Aliases: []string{"W"},},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
-			&console.StringFlag{Name: "replace", Aliases: []string{"r"},},
 			&console.BoolFlag{Name: "wait",},
 		},
 	},
@@ -722,8 +722,6 @@ var Commands = []*console.Command{
 		Usage:    "Branch an environment",
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
-			&console.BoolFlag{Name: "force",},
-			&console.StringFlag{Name: "identity-file", Aliases: []string{"i"},},
 			&console.BoolFlag{Name: "no-clone-parent",},
 			&console.BoolFlag{Name: "no-wait", Aliases: []string{"W"},},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
@@ -1530,6 +1528,42 @@ var Commands = []*console.Command{
 		},
 	},
 	{
+		Category: "cloud:operation",
+		Name:     "list",
+		Aliases:  []*console.Alias{
+			{Name: "operation:list", Hidden: true},
+			{Name: "cloud:ops"},
+			{Name: "ops", Hidden: true},
+		},
+		Usage:    "<fg=white;bg=red> BETA </> List runtime operations on an environment",
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "app", Aliases: []string{"A"},},
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.StringFlag{Name: "format", DefaultValue: "table",},
+			&console.BoolFlag{Name: "full",},
+			&console.BoolFlag{Name: "no-header",},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+			&console.StringFlag{Name: "worker",},
+		},
+	},
+	{
+		Category: "cloud:operation",
+		Name:     "run",
+		Aliases:  []*console.Alias{
+			{Name: "operation:run", Hidden: true},
+		},
+		Usage:    "<fg=white;bg=red> BETA </> Run an operation on the environment",
+		Flags:    []console.Flag{
+			&console.StringFlag{Name: "app", Aliases: []string{"A"},},
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.BoolFlag{Name: "no-wait", Aliases: []string{"W"},},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+			&console.BoolFlag{Name: "wait",},
+			&console.StringFlag{Name: "worker",},
+		},
+	},
+	{
 		Category: "cloud:organization",
 		Name:     "billing:address",
 		Aliases:  []*console.Alias{
@@ -1892,6 +1926,8 @@ var Commands = []*console.Command{
 		Name:     "set-remote",
 		Aliases:  []*console.Alias{
 			{Name: "project:set-remote", Hidden: true},
+			{Name: "cloud:set-remote"},
+			{Name: "set-remote", Hidden: true},
 		},
 		Usage:    "Set the remote project for the current Git repository",
 	},
@@ -1975,6 +2011,12 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
 			&console.BoolFlag{Name: "refresh",},
 		},
+	},
+	{
+		Category: "cloud:self",
+		Name:     "config",
+		Usage:    "Read CLI config",
+		Hidden:   console.Hide,
 	},
 	{
 		Category: "cloud:self",
