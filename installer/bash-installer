@@ -217,6 +217,7 @@ if [ "${custom_dir}" == "false" ]; then
     output "\nOr add the following line to your shell configuration file:" "info"
     output "  export PATH=\"\$HOME/${CLI_CONFIG_DIR}/bin:\$PATH\""
     output "\nOr install it globally on your system:" "info"
-    output "  mv ${binary_dest}/${CLI_EXECUTABLE} /usr/local/bin/${CLI_EXECUTABLE}"
+    output " mv ${binary_dest}/${CLI_EXECUTABLE} /usr/local/bin/${CLI_EXECUTABLE}"
+    output "\nAccording to the Linux system, it is necessary to have sudo priviliges to move the file to /usr/local/bin/ directory"
     output "\nThen start a new shell and run '${CLI_EXECUTABLE}'" "info"
 fi
