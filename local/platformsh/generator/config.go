@@ -86,7 +86,7 @@ func generateConfig() {
 }
 
 func parseServices() (string, error) {
-	resp, err := http.Get("https://raw.githubusercontent.com/platformsh/platformsh-docs/master/docs/data/registry.json")
+	resp, err := http.Get("https://raw.githubusercontent.com/platformsh/platformsh-docs/master/shared/data/registry.json")
 	if err != nil {
 		return "", err
 	}
@@ -138,7 +138,7 @@ func parseServices() (string, error) {
 }
 
 func parsePHPExtensions() (string, error) {
-	resp, err := http.Get("https://raw.githubusercontent.com/platformsh/platformsh-docs/master/docs/data/php_extensions.yaml")
+	resp, err := http.Get("https://raw.githubusercontent.com/platformsh/platformsh-docs/master/shared/data/php_extensions.yaml")
 	if err != nil {
 		return "", err
 	}
