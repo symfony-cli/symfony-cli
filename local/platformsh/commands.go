@@ -90,7 +90,7 @@ var Commands = []*console.Command{
 	{
 		Category: "cloud",
 		Name:     "web",
-		Usage:    "Open the Web UI",
+		Usage:    "Open the project in the Web Console",
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "browser",},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
@@ -1325,6 +1325,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "<fg=white;bg=red> BETA </> Show CPU, disk and memory metrics for an environment",
 		Flags:    []console.Flag{
+			&console.BoolFlag{Name: "bytes", Aliases: []string{"B"},},
 			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
@@ -2298,11 +2299,8 @@ var Commands = []*console.Command{
 		Usage:    "View relationship info for SSH tunnels",
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "app", Aliases: []string{"A"},},
-			&console.StringFlag{Name: "columns",},
 			&console.BoolFlag{Name: "encode", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
-			&console.StringFlag{Name: "format", DefaultValue: "table",},
-			&console.BoolFlag{Name: "no-header",},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
 			&console.StringFlag{Name: "property", Aliases: []string{"P"},},
 		},
