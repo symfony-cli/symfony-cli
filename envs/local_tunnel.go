@@ -23,7 +23,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -58,7 +57,7 @@ func (l *Local) relationshipsFromTunnel() Relationships {
 		userHomeDir = ""
 	}
 	tunnelFile := filepath.Join(userHomeDir, ".platformsh", "tunnel-info.json")
-	data, err := ioutil.ReadFile(tunnelFile)
+	data, err := os.ReadFile(tunnelFile)
 	if err != nil {
 		if l.Debug {
 			fmt.Fprintf(os.Stderr, "WARNING: unable to read relationships from %s: %s\n", tunnelFile, err)

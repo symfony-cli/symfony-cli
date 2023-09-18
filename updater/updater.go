@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -132,7 +131,7 @@ func (updater *Updater) check(currentVersion *version.Version, enableCache bool)
 	if enableCache && manifestFileErr == nil {
 		if stat, err := manifestFile.Stat(); err == nil {
 			if time.Since(stat.ModTime()) < 1*time.Hour {
-				if manifestCacheBody, manifestCacheErr := ioutil.ReadAll(manifestFile); manifestCacheErr == nil {
+				if manifestCacheBody, manifestCacheErr := io.ReadAll(manifestFile); manifestCacheErr == nil {
 					manifestBody = manifestCacheBody
 				}
 			} else {
@@ -171,13 +170,13 @@ func (updater *Updater) check(currentVersion *version.Version, enableCache bool)
 			return nil
 		}
 
-		manifestBody, err = ioutil.ReadAll(resp.Body)
+		manifestBody, err = io.ReadAll(resp.Body)
 		if err != nil {
 			updater.logger.Err(err).Msg("")
 			return nil
 		}
 
-		if err := ioutil.WriteFile(manifestCachePath, manifestBody, 0644); err != nil {
+		if err := os.WriteFile(manifestCachePath, manifestBody, 0644); err != nil {
 			updater.logger.Err(err).Msg("")
 			return nil
 		}

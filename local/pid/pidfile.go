@@ -24,7 +24,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -72,7 +71,7 @@ func New(dir string, args []string) *PidFile {
 }
 
 func Load(path string) (*PidFile, error) {
-	contents, err := ioutil.ReadFile(path)
+	contents, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +254,7 @@ func (p *PidFile) Write(pid, port int, scheme string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(p.path, b, 0644)
+	return os.WriteFile(p.path, b, 0644)
 }
 
 // Stop kills the current process
@@ -333,7 +332,7 @@ func doAll(dir string) []*PidFile {
 		if !strings.HasSuffix(p, ".pid") {
 			return nil
 		}
-		contents, err := ioutil.ReadFile(p)
+		contents, err := os.ReadFile(p)
 		if err != nil {
 			return nil
 		}

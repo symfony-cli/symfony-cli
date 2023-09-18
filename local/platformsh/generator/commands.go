@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -115,7 +114,7 @@ func parseCommands(home string) (string, error) {
 	dir := filepath.Join(home, ".platformsh", "bin")
 	var pharPath = filepath.Join(dir, "platform")
 	hasher := md5.New()
-	if s, err := ioutil.ReadFile(pharPath); err != nil {
+	if s, err := os.ReadFile(pharPath); err != nil {
 		hasher.Write(s)
 	}
 

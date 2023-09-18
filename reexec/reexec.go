@@ -21,7 +21,6 @@ package reexec
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -90,7 +89,7 @@ func Background(homeDir string) error {
 		return errors.New("Not applicable in a Go run context")
 	}
 
-	statusFile, err := ioutil.TempFile(homeDir, "status-")
+	statusFile, err := os.CreateTemp(homeDir, "status-")
 	if err != nil {
 		return errors.Wrap(err, "Could not create status file")
 	}
@@ -192,7 +191,7 @@ func NotifyForeground(status string) error {
 		os.Stderr.Close()
 		return os.Remove(statusFile)
 	}
-	return ioutil.WriteFile(statusFile, []byte(status), 0600)
+	return os.WriteFile(statusFile, []byte(status), 0600)
 }
 
 func WatchParent(stopCh chan bool) error {

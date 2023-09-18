@@ -20,7 +20,6 @@
 package platformsh
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -95,7 +94,7 @@ func FindLocalApplications(rootDirectory string) LocalApplications {
 
 	go func() {
 		for file := range appParser {
-			content, err := ioutil.ReadFile(file)
+			content, err := os.ReadFile(file)
 			if err != nil {
 				terminal.Logger.Warn().Msgf("Could not read %s file: %s\n", file, err)
 				continue

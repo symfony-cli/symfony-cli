@@ -22,7 +22,6 @@ package proxy
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -66,11 +65,11 @@ func Load(homeDir string) (*Config, error) {
 		if err := os.MkdirAll(filepath.Dir(proxyFile), 0755); err != nil {
 			return nil, errors.Wrapf(err, "unable to create directory for %s", proxyFile)
 		}
-		if err := ioutil.WriteFile(proxyFile, DefaultConfig, 0644); err != nil {
+		if err := os.WriteFile(proxyFile, DefaultConfig, 0644); err != nil {
 			return nil, errors.Wrapf(err, "unable to write %s", proxyFile)
 		}
 	}
-	data, err := ioutil.ReadFile(proxyFile)
+	data, err := os.ReadFile(proxyFile)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to read the proxy configuration file, %s", proxyFile)
 	}
@@ -221,7 +220,7 @@ func (c *Config) Watch() {
 
 // reloads the TLD and the domains (not the port)
 func (c *Config) reload() {
-	data, err := ioutil.ReadFile(c.path)
+	data, err := os.ReadFile(c.path)
 	if err != nil {
 		return
 	}
@@ -249,7 +248,7 @@ func (c *Config) Save() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	return errors.WithStack(ioutil.WriteFile(c.path, data, 0644))
+	return errors.WithStack(os.WriteFile(c.path, data, 0644))
 }
 
 // should be called with a lock a place

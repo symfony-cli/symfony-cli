@@ -21,7 +21,6 @@ package project
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -112,7 +111,7 @@ func realPassthru(documentRoot, passthru string) (string, error) {
 
 func guessDocumentRoot(path string) string {
 	// for Symfony: check if public-dir is set up in composer.json first
-	if b, err := ioutil.ReadFile(filepath.Join(path, "composer.json")); err == nil {
+	if b, err := os.ReadFile(filepath.Join(path, "composer.json")); err == nil {
 		var f map[string]interface{}
 		if err := json.Unmarshal(b, &f); err == nil {
 			if f1, ok := f["extra"]; ok {

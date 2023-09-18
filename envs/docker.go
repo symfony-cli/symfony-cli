@@ -23,7 +23,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/url"
 	"os"
@@ -495,7 +494,7 @@ func (l *Local) getComposeProjectName() string {
 
 	// COMPOSE_PROJECT_NAME can be set in a .env file
 	if _, err := os.Stat(filepath.Join(composeDir, ".env")); err == nil {
-		if contents, err := ioutil.ReadFile(filepath.Join(composeDir, ".env")); err == nil {
+		if contents, err := os.ReadFile(filepath.Join(composeDir, ".env")); err == nil {
 			for _, line := range bytes.Split(contents, []byte("\n")) {
 				if bytes.HasPrefix(line, []byte("COMPOSE_PROJECT_NAME=")) {
 					return string(line[len("COMPOSE_PROJECT_NAME="):])

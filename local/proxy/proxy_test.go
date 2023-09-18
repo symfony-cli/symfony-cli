@@ -22,7 +22,7 @@ package proxy
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -122,7 +122,7 @@ func (s *ProxySuite) TestProxy(c *C) {
 		res, err := client.Do(req)
 		c.Assert(err, IsNil)
 		c.Assert(res.StatusCode, Equals, http.StatusNotFound)
-		body, _ := ioutil.ReadAll(res.Body)
+		body, _ := io.ReadAll(res.Body)
 		c.Check(strings.Contains(string(body), "not linked"), Equals, true)
 	}
 
@@ -134,7 +134,7 @@ func (s *ProxySuite) TestProxy(c *C) {
 		res, err := client.Do(req)
 		c.Assert(err, IsNil)
 		c.Assert(res.StatusCode, Equals, http.StatusNotFound)
-		body, _ := ioutil.ReadAll(res.Body)
+		body, _ := io.ReadAll(res.Body)
 		c.Check(strings.Contains(string(body), "not started"), Equals, true)
 	}
 	/*
@@ -164,7 +164,7 @@ func (s *ProxySuite) TestProxy(c *C) {
 			res, err := client.Do(req)
 			c.Assert(err, IsNil)
 			c.Assert(res.StatusCode, Equals, http.StatusOK)
-			body, _ := ioutil.ReadAll(res.Body)
+			body, _ := io.ReadAll(res.Body)
 			c.Check(string(body), Equals, "symfony.wip")
 		}
 	*/
@@ -187,7 +187,7 @@ func (s *ProxySuite) TestProxy(c *C) {
 
 		res, err := client.Do(req)
 		c.Assert(err, IsNil)
-		body, _ := ioutil.ReadAll(res.Body)
+		body, _ := io.ReadAll(res.Body)
 		c.Assert(res.StatusCode, Equals, http.StatusOK)
 		c.Assert(string(body), Equals, "http://symfony-no-tls.wip")
 	}

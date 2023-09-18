@@ -20,7 +20,6 @@
 package project
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -121,7 +120,7 @@ func newConfigFromFile(configFile string) (*FileConfig, error) {
 		return nil, nil
 	}
 
-	contents, err := ioutil.ReadFile(configFile)
+	contents, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, err
 	}
