@@ -12,7 +12,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/php"
@@ -85,14 +84,11 @@ var Commands = []*console.Command{
 `))
 
 func generateCommands() {
-	home, err := homedir.Dir()
-	if err != nil {
-		panic(err)
-	}
-	if err := php.InstallPlatformPhar(home); err != nil {
+	tmpDir := os.TempDir()
+	if err := php.InstallPlatformPhar(tmpDir); err != nil {
 		panic(err.Error())
 	}
-	definitionAsString, err := parseCommands(home)
+	definitionAsString, err := parseCommands(tmpDir)
 	if err != nil {
 		panic(err.Error())
 	}
