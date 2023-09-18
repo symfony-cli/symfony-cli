@@ -23,7 +23,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -165,10 +164,10 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 
 	// change the project name to get exposed env vars
 	projectFile := filepath.Join(".platform", "local", "project.yaml")
-	contents, err := ioutil.ReadFile(projectFile)
+	contents, err := os.ReadFile(projectFile)
 	c.Assert(err, IsNil)
-	defer ioutil.WriteFile(projectFile, contents, 0644)
-	ioutil.WriteFile(projectFile, bytes.Replace(contents, []byte("bew7pfa7t2ut2"), []byte("aew7pfa7t2ut2"), 1), 0644)
+	defer os.WriteFile(projectFile, contents, 0644)
+	os.WriteFile(projectFile, bytes.Replace(contents, []byte("bew7pfa7t2ut2"), []byte("aew7pfa7t2ut2"), 1), 0644)
 
 	output.Reset()
 	outCloser = testStdoutCapture(c, &output)

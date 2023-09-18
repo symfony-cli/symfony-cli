@@ -22,7 +22,6 @@ package envs
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -90,7 +89,7 @@ func AsMap(env Environment) map[string]string {
 
 // appID returns the Symfony project's ID from composer.json
 func appID(path string) string {
-	content, err := ioutil.ReadFile(filepath.Join(path, "composer.json"))
+	content, err := os.ReadFile(filepath.Join(path, "composer.json"))
 	if err != nil {
 		return ""
 	}

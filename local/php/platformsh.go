@@ -2,7 +2,7 @@ package php
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -25,7 +25,7 @@ func InstallPlatformPhar(home string) error {
 	dir := filepath.Join(home, ".platformsh", "bin")
 	if _, err := os.Stat(filepath.Join(dir, "platform")); err == nil {
 		// check "API version" (we never upgrade automatically the psh CLI except if we need to if our code would not be compatible with old versions)
-		if v, err := ioutil.ReadFile(versionPath); err == nil && bytes.Equal(v, internalVersion) {
+		if v, err := os.ReadFile(versionPath); err == nil && bytes.Equal(v, internalVersion) {
 			return nil
 		}
 	}
@@ -39,13 +39,13 @@ func InstallPlatformPhar(home string) error {
 		return err
 	}
 	defer resp.Body.Close()
-	installer, err := ioutil.ReadAll(resp.Body)
+	installer, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
 
 	installerPath := filepath.Join(home, "platformsh-installer.php")
-	ioutil.WriteFile(installerPath, installer, 0666)
+	os.WriteFile(installerPath, installer, 0666)
 	defer os.Remove(installerPath)
 
 	var stdout bytes.Buffer
@@ -62,5 +62,5 @@ func InstallPlatformPhar(home string) error {
 		return errors.Errorf("unable to setup platformsh CLI: %s", stdout.String())
 	}
 
-	return ioutil.WriteFile(versionPath, internalVersion, 0644)
+	return os.WriteFile(versionPath, internalVersion, 0644)
 }

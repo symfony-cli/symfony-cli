@@ -2,7 +2,6 @@ package commands
 
 import (
 	"errors"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -13,7 +12,7 @@ import (
 )
 
 func readDBVersionFromPlatformServiceYAML(projectDir string) (string, string, error) {
-	servicesYAML, err := ioutil.ReadFile(filepath.Join(projectDir, ".platform", "services.yaml"))
+	servicesYAML, err := os.ReadFile(filepath.Join(projectDir, ".platform", "services.yaml"))
 	if err != nil {
 		// no services.yaml or unreadable
 		return "", "", err
@@ -77,7 +76,7 @@ func readDBVersionFromDoctrineConfigYAML(projectDir string) (string, error) {
 		return "", nil
 	}
 
-	doctrineConfigYAML, err := ioutil.ReadFile(path)
+	doctrineConfigYAML, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"sort"
@@ -92,7 +92,7 @@ func parseServices() (string, error) {
 	}
 	defer resp.Body.Close()
 	var services map[string]*service
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -147,7 +147,7 @@ func parsePHPExtensions() (string, error) {
 	orderedExtensionNames := []string{}
 	extensions := make(map[string][]string)
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
