@@ -153,7 +153,7 @@ func (updater *Updater) check(currentVersion *version.Version, enableCache bool)
 
 	updater.logger.Printf("Checking for updates (current version: <info>%s</>)", currentVersion)
 	if manifestBody == nil {
-		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://api.github.com/repos/symfony-cli/symfony-cli/releases/latest"), nil)
+		req, err := http.NewRequest(http.MethodGet, "https://api.github.com/repos/symfony-cli/symfony-cli/releases/latest", nil)
 		if err != nil {
 			updater.logger.Err(err).Msg("")
 			return nil
