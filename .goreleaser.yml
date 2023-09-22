@@ -181,3 +181,37 @@ docker_manifests:
     image_templates: *docker_images
   - name_template: ghcr.io/symfony-cli/{{ .ProjectName }}:latest
     image_templates: *docker_images
+
+chocolateys:
+  -
+    owners: Symfony
+    title: Symfony CLI
+    authors: Symfony
+    project_url: https://symfony.com/
+
+    # Template for the url which is determined by the given Token (github,
+    # gitlab or gitea)
+    # Default depends on the client.
+    url_template: "https://github.com/foo/bar/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+
+    # App's icon.
+    # Default is empty.
+    icon_url: 'https://rawcdn.githack.com/foo/bar/efbdc760-395b-43f1-bf69-ba25c374d473/icon.png'
+    copyright: 2021-present Fabien Potencier
+    license_url: https://github.com/symfony-cli/symfony-cli/blob/main/LICENSE
+    project_source_url: https://github.com/symfony-cli/symfony-cli
+    bug_tracker_url: https://github.com/symfony-cli/symfony-cli/issues
+    summary: Symfony CLI helps Symfony developers manage projects, from local code to remote infrastructure
+    description: Symfony CLI helps Symfony developers manage projects, from local code to remote infrastructure
+    release_notes: "https://github.com/symfony-cli/symfony-cli/releases/tag/v{{ .Version }}"
+    api_key: '{{ .Env.CHOCOLATEY_API_KEY }}'
+
+    # The source repository that will push the package to.
+    #
+    # Defaults are shown below.
+    source_repo: "https://push.chocolatey.org/"
+
+    # Setting this will prevent goreleaser to actually try to push the package
+    # to chocolatey repository, leaving the responsability of publishing it to
+    # the user.
+    skip_publish: false
