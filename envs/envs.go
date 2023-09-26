@@ -172,7 +172,7 @@ func extractRelationshipsEnvs(env Environment) Envs {
 								if version == "10.2" {
 									minor = 7
 								}
-								version = fmt.Sprintf("mariadb-%s.%d", version, minor)
+								version = fmt.Sprintf("%s.%d-MariaDB", version, minor)
 							}
 
 							values[versionKey] = version

@@ -315,7 +315,7 @@ func (s *RemoteSuite) TestRelationships(c *C) {
 
 	os.Setenv("PLATFORM_RELATIONSHIPS", "eyJyZWRpcyI6IFt7InVzZXJuYW1lIjogbnVsbCwgInBhc3N3b3JkIjogbnVsbCwgInNlcnZpY2UiOiAicmVkaXNfc2Vzc2lvbnMiLCAiZnJhZ21lbnQiOiBudWxsLCAiaXAiOiAiMTY5LjI1NC4yMy4yMDQiLCAiaG9zdG5hbWUiOiAidGVncTdqY3BqMjVuM3VnYjN0cm9rY2w1anEucmVkaXNfc2Vzc2lvbnMuc2VydmljZS5fLnM1eS5pbyIsICJwb3J0IjogNjM3OSwgImNsdXN0ZXIiOiAiN2NhbTRtbTUzN2ViZS1jbGVhbi11cC10bWVpd2hxIiwgImhvc3QiOiAicmVkaXMuaW50ZXJuYWwiLCAicmVsIjogInJlZGlzIiwgInBhdGgiOiBudWxsLCAicXVlcnkiOiB7fSwgInNjaGVtZSI6ICJyZWRpcyIsICJ0eXBlIjogInJlZGlzOjMuMiIsICJwdWJsaWMiOiBmYWxzZX1dLCAiZGF0YWJhc2UiOiBbeyJ1c2VybmFtZSI6ICJtYWluIiwgInBhc3N3b3JkIjogIjZlNjAyODg4NTc2NzAzMDMwZjUzYzE1NDA1MWJkNzc4IiwgInNlcnZpY2UiOiAibXlzcWwiLCAiaXAiOiAiMTY5LjI1NC4xMzQuMTEiLCAiaG9zdG5hbWUiOiAiaTNvNjJkbzV0eXh5MzV3NXdzdTY1YmdjcnUubXlzcWwuc2VydmljZS5fLnM1eS5pbyIsICJjbHVzdGVyIjogIjdjYW00bW01MzdlYmUtY2xlYW4tdXAtdG1laXdocSIsICJob3N0IjogImRhdGFiYXNlLmludGVybmFsIiwgInJlbCI6ICJtYWluIiwgInF1ZXJ5IjogeyJpc19tYXN0ZXIiOiB0cnVlfSwgInBhdGgiOiAibWFpbiIsICJzY2hlbWUiOiAibXlzcWwiLCAidHlwZSI6ICJteXNxbDoxMC4wIiwgInBvcnQiOiAzMzA2fV19")
 	c.Assert(extractRelationshipsEnvs(r), DeepEquals, Envs{
-		"DATABASE_URL":      "mysql://main:6e602888576703030f53c154051bd778@database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=mariadb-10.0.0",
+		"DATABASE_URL":      "mysql://main:6e602888576703030f53c154051bd778@database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.0.0-MariaDB",
 		"DATABASE_DRIVER":   "mysql",
 		"DATABASE_NAME":     "main",
 		"DATABASE_DATABASE": "main",
@@ -325,7 +325,7 @@ func (s *RemoteSuite) TestRelationships(c *C) {
 		"DATABASE_USER":     "main",
 		"DATABASE_USERNAME": "main",
 		"DATABASE_PASSWORD": "6e602888576703030f53c154051bd778",
-		"DATABASE_VERSION":  "mariadb-10.0.0",
+		"DATABASE_VERSION":  "10.0.0-MariaDB",
 		"REDIS_URL":         "redis://redis.internal:6379",
 		"REDIS_HOST":        "redis.internal",
 		"REDIS_PORT":        "6379",
@@ -367,12 +367,12 @@ func (s *RemoteSuite) TestRelationships(c *C) {
 
 	os.Setenv("PLATFORM_RELATIONSHIPS", "eyJkYXRhYmFzZSI6IFt7InNlcnZpY2UiOiAiZGF0YWJhc2VfbXlzcWxfbWFpbiIsICJpcCI6ICIxNjkuMjU0LjE4MC4yMjUiLCAiaG9zdG5hbWUiOiAibG03aDJld2Zvemc2cHVyamlhYmI1ZzRpYnUuZGF0YWJhc2VfbXlzcWxfbWFpbi5zZXJ2aWNlLl8uczV5LmlvIiwgImNsdXN0ZXIiOiAieHBzZm9vdGFwanc0YS1tYXN0ZXItN3JxdHd0aSIsICJob3N0IjogImRhdGFiYXNlLmludGVybmFsIiwgInJlbCI6ICJteXNxbCIsICJxdWVyeSI6IHt9LCAic2NoZW1lIjogIm15c3FsIiwgInR5cGUiOiAibXlzcWw6MTAuMSIsICJwb3J0IjogMzMwNn1dfQ==")
 	c.Assert(extractRelationshipsEnvs(r), DeepEquals, Envs{
-		"DATABASE_URL":      "mysql://database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=mariadb-10.1.0",
+		"DATABASE_URL":      "mysql://database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.1.0-MariaDB",
 		"DATABASE_SERVER":   "mysql://database.internal:3306",
 		"DATABASE_DRIVER":   "mysql",
 		"DATABASE_HOST":     "database.internal",
 		"DATABASE_PORT":     "3306",
-		"DATABASE_VERSION":  "mariadb-10.1.0",
+		"DATABASE_VERSION":  "10.1.0-MariaDB",
 		"DATABASE_DATABASE": "main",
 		"DATABASE_NAME":     "main",
 	})
@@ -380,25 +380,25 @@ func (s *RemoteSuite) TestRelationships(c *C) {
 	os.Setenv("PLATFORM_RELATIONSHIPS", "eyJkYXRhYmFzZSI6IFt7InNlcnZpY2UiOiAiZGF0YWJhc2VfbXlzcWxfbWFpbiIsICJpcCI6ICIxNjkuMjU0LjE4MC4yMjUiLCAiaG9zdG5hbWUiOiAibG03aDJld2Zvemc2cHVyamlhYmI1ZzRpYnUuZGF0YWJhc2VfbXlzcWxfbWFpbi5zZXJ2aWNlLl8uczV5LmlvIiwgImNsdXN0ZXIiOiAieHBzZm9vdGFwanc0YS1tYXN0ZXItN3JxdHd0aSIsICJob3N0IjogImRhdGFiYXNlLmludGVybmFsIiwgInJlbCI6ICJteXNxbCIsICJxdWVyeSI6IHt9LCAic2NoZW1lIjogIm15c3FsIiwgInR5cGUiOiAibXlzcWw6MTAuMiIsICJwb3J0IjogMzMwNn1dfQo=")
 	// Maria DB 10.2 == 10.2.7
 	c.Assert(extractRelationshipsEnvs(r), DeepEquals, Envs{
-		"DATABASE_URL":      "mysql://database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=mariadb-10.2.7",
+		"DATABASE_URL":      "mysql://database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.2.7-MariaDB",
 		"DATABASE_SERVER":   "mysql://database.internal:3306",
 		"DATABASE_DRIVER":   "mysql",
 		"DATABASE_HOST":     "database.internal",
 		"DATABASE_PORT":     "3306",
-		"DATABASE_VERSION":  "mariadb-10.2.7",
+		"DATABASE_VERSION":  "10.2.7-MariaDB",
 		"DATABASE_DATABASE": "main",
 		"DATABASE_NAME":     "main",
 	})
 
-	os.Setenv("DATABASE_VERSION", "mariadb-10.2.19")
+	os.Setenv("DATABASE_VERSION", "10.2.19-MariaDB")
 	os.Setenv("DATABASE_CHARSET", "utf8")
 	c.Assert(extractRelationshipsEnvs(r), DeepEquals, Envs{
-		"DATABASE_URL":      "mysql://database.internal:3306/main?sslmode=disable&charset=utf8&serverVersion=mariadb-10.2.19",
+		"DATABASE_URL":      "mysql://database.internal:3306/main?sslmode=disable&charset=utf8&serverVersion=10.2.19-MariaDB",
 		"DATABASE_SERVER":   "mysql://database.internal:3306",
 		"DATABASE_DRIVER":   "mysql",
 		"DATABASE_HOST":     "database.internal",
 		"DATABASE_PORT":     "3306",
-		"DATABASE_VERSION":  "mariadb-10.2.19",
+		"DATABASE_VERSION":  "10.2.19-MariaDB",
 		"DATABASE_DATABASE": "main",
 		"DATABASE_NAME":     "main",
 	})
