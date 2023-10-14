@@ -67,6 +67,7 @@ var localNewCmd = &console.Command{
 		&console.BoolFlag{Name: "book", Usage: "Clone the Symfony: The Fast Track book project"},
 		&console.BoolFlag{Name: "docker", Usage: "Enable Docker support"},
 		&console.BoolFlag{Name: "no-git", Usage: "Do not initialize Git"},
+		&console.BoolFlag{Name: "upsun", Usage: "Initialize Upsun"},
 		&console.BoolFlag{Name: "cloud", Usage: "Initialize Platform.sh"},
 		&console.StringSliceFlag{Name: "service", Usage: "Configure some services", Hidden: true},
 		&console.BoolFlag{Name: "debug", Usage: "Display commands output"},
@@ -130,8 +131,9 @@ var localNewCmd = &console.Command{
 		if c.Bool("webapp") && c.Bool("no-git") {
 			return console.Exit("The --webapp flag cannot be used with --no-git", 1)
 		}
-		if len(c.StringSlice("service")) > 0 && !c.Bool("cloud") {
-			return console.Exit("The --service flag cannot be used without --cloud", 1)
+		withCloud := c.Bool("cloud") || c.Bool("upsun")
+		if len(c.StringSlice("service")) > 0 && !withCloud {
+			return console.Exit("The --service flag cannot be used without --cloud or --upsun", 1)
 		}
 
 		s := terminal.NewSpinner(terminal.Stderr)
@@ -147,7 +149,7 @@ var localNewCmd = &console.Command{
 			return err
 		}
 
-		if "" != c.String("php") && !c.Bool("cloud") {
+		if "" != c.String("php") && !withCloud {
 			if err := createPhpVersionFile(c.String("php"), dir); err != nil {
 				return err
 			}
@@ -172,7 +174,7 @@ var localNewCmd = &console.Command{
 			}
 		}
 
-		if c.Bool("cloud") {
+		if withCloud {
 			if err := runComposer(c, dir, []string{"require", "platformsh"}, c.Bool("debug")); err != nil {
 				return err
 			}
@@ -322,7 +324,7 @@ func initProjectGit(c *console.Context, s *terminal.Spinner, dir string) error {
 	terminal.Printfln("  (running git init %s)\n", dir)
 	// Only force the branch to be "main" when running a Cloud context to make
 	// onboarding simpler.
-	if buf, err := git.Init(dir, c.Bool("cloud"), c.Bool("debug")); err != nil {
+	if buf, err := git.Init(dir, c.Bool("cloud") || c.Bool("upsun"), c.Bool("debug")); err != nil {
 		fmt.Print(buf.String())
 		return err
 	}
