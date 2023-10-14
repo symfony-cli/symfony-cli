@@ -21,6 +21,7 @@ package platformsh
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -57,17 +58,18 @@ func GuessCloudFromCommandName(name string) CloudBrand {
 		return UpsunBrand
 	}
 
-	// FIXME: maybe there is something better by passing the dir to this function
-	dir, err := os.Getwd()
-	if err != nil {
-		return PlatformshBrand
+	if dir, err := os.Getwd(); err == nil {
+		return GuessCloudFromDirectory(dir)
 	}
 
-	return GuessCloudFromDirectory(dir)
+	return PlatformshBrand
 }
 
 func GuessCloudFromDirectory(dir string) CloudBrand {
-	// determine the brand when in a project directory with cloud configuration
-	// FIXME: determine based on the current directory project
+	for _, brand := range []CloudBrand{UpsunBrand, PlatformshBrand} {
+		if _, err := os.Stat(filepath.Join(dir, "."+brand.Slug)); err != nil {
+			return brand
+		}
+	}
 	return PlatformshBrand
 }

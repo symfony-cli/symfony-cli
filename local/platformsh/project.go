@@ -20,11 +20,9 @@
 package platformsh
 
 import (
-	"bytes"
 	goerr "errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 
@@ -130,15 +128,8 @@ func getProjectIDFromConfigFile(brand CloudBrand, projectRoot string, debug bool
 
 func getProjectIDFromGitConfig(brand CloudBrand, projectRoot string, debug bool) string {
 	for _, remote := range []string{brand.GitRemoteName, "origin"} {
-		cmd := exec.Command("git", "config", "--get", fmt.Sprintf("remote.%s.url", remote))
-		cmd.Dir = projectRoot
-		cmd.Env = os.Environ()
-		out := bytes.Buffer{}
-		cmd.Stdout = &out
-		if err := cmd.Run(); err != nil {
-			continue
-		}
-		matches := regexp.MustCompile(`^([a-z0-9]{12,})@git\.`).FindSubmatch(out.Bytes())
+		url := git.GetRemoteURL(projectRoot, remote)
+		matches := regexp.MustCompile(`^([a-z0-9]{12,})@git\.`).FindStringSubmatch(url)
 		if len(matches) > 1 {
 			return string(matches[1])
 		}
