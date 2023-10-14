@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
+	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	"github.com/symfony-cli/terminal"
 )
 
@@ -24,6 +25,11 @@ var cloudEnvDebugCmd = &console.Command{
 		spinner := terminal.NewSpinner(terminal.Stderr)
 		spinner.Start()
 		defer spinner.Stop()
+
+		psh, err := platformsh.Get()
+		if err != nil {
+			return err
+		}
 
 		projectID := c.String("project")
 		if projectID == "" {

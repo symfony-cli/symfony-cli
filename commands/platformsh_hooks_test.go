@@ -40,7 +40,7 @@ func TestDeployHook(t *testing.T) {
 		"testdata/platformsh/missing-version/":         `Set the "server_version" parameter to "14" in "config/packages/doctrine.yaml".`,
 	} {
 		flags.Set("dir", dir)
-		err := platformshBeforeHooks["cloud:environment:push"](c)
+		err := platformshBeforeHooks["environment:push"](c)
 		if err == nil {
 			if expected != "" {
 				t.Errorf("TestDeployHook(%q): got %v, expected %v", dir, err, expected)
