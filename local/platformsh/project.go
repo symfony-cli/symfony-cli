@@ -20,10 +20,13 @@
 package platformsh
 
 import (
+	"bytes"
 	goerr "errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"regexp"
 
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/symfony-cli/git"
@@ -97,7 +100,15 @@ func repositoryRootDir(currentDir string) string {
 
 func getProjectID(projectRoot string, debug bool) string {
 	brand := GuessCloudFromDirectory(projectRoot)
+	id := getProjectIDFromConfigFile(brand, projectRoot, debug)
+	if id != "" {
+		return id
+	}
 
+	return getProjectIDFromGitConfig(brand, projectRoot, debug)
+}
+
+func getProjectIDFromConfigFile(brand CloudBrand, projectRoot string, debug bool) string {
 	contents, err := os.ReadFile(filepath.Join(projectRoot, "."+brand.Slug, "local", "project.yaml"))
 	if err != nil {
 		if debug {
@@ -115,4 +126,26 @@ func getProjectID(projectRoot string, debug bool) string {
 		return ""
 	}
 	return config.ID
+}
+
+func getProjectIDFromGitConfig(brand CloudBrand, projectRoot string, debug bool) string {
+	for _, remote := range []string{brand.GitRemoteName, "origin"} {
+		cmd := exec.Command("git", "config", "--get", fmt.Sprintf("remote.%s.url", remote))
+		cmd.Dir = projectRoot
+		cmd.Env = os.Environ()
+		out := bytes.Buffer{}
+		cmd.Stdout = &out
+		if err := cmd.Run(); err != nil {
+			continue
+		}
+		matches := regexp.MustCompile(`^([a-z0-9]{12,})@git\.`).FindSubmatch(out.Bytes())
+		if len(matches) > 1 {
+			return string(matches[1])
+		}
+		return ""
+	}
+	if debug {
+		fmt.Fprintf(os.Stderr, "ERROR: unable to read the git config file\n")
+	}
+	return ""
 }

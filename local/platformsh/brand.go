@@ -29,6 +29,7 @@ type CloudBrand struct {
 	Slug          string
 	CommandPrefix string
 	CLIPrefix     string
+	GitRemoteName string
 }
 
 var UpsunBrand = CloudBrand{
@@ -36,12 +37,14 @@ var UpsunBrand = CloudBrand{
 	Slug:          "upsun",
 	CommandPrefix: "upsun:",
 	CLIPrefix:     "UPSUN_CLI_",
+	GitRemoteName: "upsun",
 }
 var PlatformshBrand = CloudBrand{
 	Name:          "Platform.sh",
 	Slug:          "platformsh",
 	CommandPrefix: "cloud:",
 	CLIPrefix:     "PLATFORMSH_CLI_",
+	GitRemoteName: "platform",
 }
 
 func (b CloudBrand) String() string {
