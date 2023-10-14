@@ -42,13 +42,17 @@ type Project struct {
 }
 
 func ProjectFromDir(dir string, debug bool) (*Project, error) {
-	projectRoot, projectID := guessProjectRoot(dir, debug)
-	if projectID == "" {
-		return nil, errors.New("unable to get project root")
+	projectRoot := repositoryRootDir(dir)
+	if projectRoot == "" {
+		return nil, errors.New("unable to get project repository root")
 	}
-	envID, err := potentialCurrentEnvironmentID(projectRoot)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to get current env")
+	projectID := getProjectID(projectRoot, debug)
+	if projectID == "" {
+		return nil, errors.New("unable to get project id")
+	}
+	envID := git.GetCurrentBranch(projectRoot)
+	if envID == "" {
+		return nil, errors.New("unable to get current env: unable to retrieve the current Git branch name")
 	}
 	app := GuessSelectedAppByDirectory(dir, FindLocalApplications(projectRoot))
 	if app == nil {
@@ -67,19 +71,11 @@ func GetProjectRoot(debug bool) (string, error) {
 		return "", errors.WithStack(err)
 	}
 
-	if projectRoot, _ := guessProjectRoot(currentDir, debug); projectRoot != "" {
+	if projectRoot := repositoryRootDir(currentDir); projectRoot != "" {
 		return projectRoot, nil
 	}
 
 	return "", errors.WithStack(ErrProjectRootNotFoundNoGitRemote)
-}
-
-func potentialCurrentEnvironmentID(cwd string) (string, error) {
-	for _, potentialEnvironment := range guessCloudBranch(cwd) {
-		return potentialEnvironment, nil
-	}
-
-	return "", errors.New("no known git upstream, branch or environment name")
 }
 
 func repositoryRootDir(currentDir string) string {
@@ -99,19 +95,7 @@ func repositoryRootDir(currentDir string) string {
 	return ""
 }
 
-func guessProjectRoot(currentDir string, debug bool) (string, string) {
-	rootDir := repositoryRootDir(currentDir)
-	if rootDir == "" {
-		return "", ""
-	}
-	config := getProjectConfig(rootDir, debug)
-	if config == "" {
-		return "", ""
-	}
-	return rootDir, config
-}
-
-func getProjectConfig(projectRoot string, debug bool) string {
+func getProjectID(projectRoot string, debug bool) string {
 	contents, err := os.ReadFile(filepath.Join(projectRoot, ".platform", "local", "project.yaml"))
 	if err != nil {
 		if debug {
@@ -129,20 +113,4 @@ func getProjectConfig(projectRoot string, debug bool) string {
 		return ""
 	}
 	return config.ID
-}
-
-func guessCloudBranch(cwd string) []string {
-	localBranch := git.GetCurrentBranch(cwd)
-	if localBranch == "" {
-		return []string{}
-	}
-
-	branches := []string{}
-	branches = append(branches, localBranch)
-
-	if remoteBranch := git.GetUpstreamBranch(cwd, "origin", "upstream"); remoteBranch != "" {
-		branches = append(branches, remoteBranch)
-	}
-
-	return branches
 }
