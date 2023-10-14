@@ -22,10 +22,10 @@ package commands
 import (
 	"os/exec"
 	"path/filepath"
-	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
+	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	"github.com/symfony-cli/symfony-cli/reexec"
 	"github.com/symfony-cli/symfony-cli/updater"
 	"github.com/symfony-cli/symfony-cli/util"
@@ -33,9 +33,6 @@ import (
 )
 
 var (
-	psh     *platformshCLI
-	pshOnce sync.Once
-
 	dirFlag         = &console.StringFlag{Name: "dir", Usage: "Project directory"}
 	projectFlag     = &console.StringFlag{Name: "project", Aliases: []string{"p"}, Usage: "The project ID or URL"}
 	environmentFlag = &console.StringFlag{Name: "environment", Aliases: []string{"e"}, Usage: "The environment ID"}
@@ -99,30 +96,29 @@ func init() {
 	initCLI()
 }
 
-func GetPSH() (*platformshCLI, error) {
-	var err error
-	pshOnce.Do(func() {
-		psh, err = NewPlatformShCLI()
-		if err != nil {
-			err = errors.Wrap(err, "Unable to setup Platform.sh CLI")
-		}
-	})
-	return psh, err
+func InitAppFunc(c *console.Context) error {
+	psh, err := platformsh.Get()
+	if err != nil {
+		return err
+	}
+	for name, f := range platformshBeforeHooks {
+		psh.AddBeforeHook(name, f)
+	}
+
+	checkForUpdates(c)
+	return nil
 }
 
-func InitAppFunc(c *console.Context) error {
+func checkForUpdates(c *console.Context) {
 	if c.App.Channel != "stable" {
-		return nil
+		return
 	}
 	// do not run auto-update in the cloud, CI or background jobs
 	if util.InCloud() || !terminal.Stdin.IsInteractive() || reexec.IsChild() {
-		return nil
+		return
 	}
-
 	updater := updater.NewUpdater(filepath.Join(util.GetHomeDir(), "update"), c.App.ErrWriter, terminal.IsDebug())
 	updater.CheckForNewVersion(c.App.Version)
-
-	return nil
 }
 
 // WelcomeAction displays a message when no command
@@ -146,7 +142,7 @@ func WelcomeAction(c *console.Context) error {
 	terminal.Println("")
 	terminal.Println("<comment>Manage a project on Cloud</>")
 	terminal.Println("")
-	psh, err := GetPSH()
+	psh, err := platformsh.Get()
 	if err != nil {
 		return err
 	}

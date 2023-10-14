@@ -29,7 +29,7 @@ import (
 )
 
 var platformshBeforeHooks = map[string]console.BeforeFunc{
-	"cloud:environment:push": func(c *console.Context) error {
+	"environment:push": func(c *console.Context) error {
 		// check that project has a DB and that server version is set properly
 		projectDir, err := getProjectDir(c.String("dir"))
 		if err != nil {
@@ -89,7 +89,7 @@ Set the "server_version" parameter to "%s" in "config/packages/doctrine.yaml".
 
 		return nil
 	},
-	"cloud:tunnel:close": func(c *console.Context) error {
+	"tunnel:close": func(c *console.Context) error {
 		terminal.Eprintln("Stop exposing tunnel service environment variables")
 
 		app := c.String("app")

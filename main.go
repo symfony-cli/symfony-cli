@@ -31,6 +31,7 @@ import (
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/commands"
 	"github.com/symfony-cli/symfony-cli/local/php"
+	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	"github.com/symfony-cli/terminal"
 )
 
@@ -100,7 +101,7 @@ func main() {
 	}
 
 	cmds := commands.CommonCommands()
-	psh, err := commands.GetPSH()
+	psh, err := platformsh.Get()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
