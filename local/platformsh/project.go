@@ -42,9 +42,13 @@ type Project struct {
 }
 
 func ProjectFromDir(dir string, debug bool) (*Project, error) {
-	projectRoot, projectID := guessProjectRoot(dir, debug)
+	projectRoot := repositoryRootDir(dir)
+	if projectRoot == "" {
+		return nil, errors.New("unable to get project repository root")
+	}
+	projectID := getProjectID(projectRoot, debug)
 	if projectID == "" {
-		return nil, errors.New("unable to get project root")
+		return nil, errors.New("unable to get project id")
 	}
 	envID := git.GetCurrentBranch(projectRoot)
 	if envID == "" {
@@ -67,7 +71,7 @@ func GetProjectRoot(debug bool) (string, error) {
 		return "", errors.WithStack(err)
 	}
 
-	if projectRoot, _ := guessProjectRoot(currentDir, debug); projectRoot != "" {
+	if projectRoot := repositoryRootDir(currentDir); projectRoot != "" {
 		return projectRoot, nil
 	}
 
@@ -91,19 +95,7 @@ func repositoryRootDir(currentDir string) string {
 	return ""
 }
 
-func guessProjectRoot(currentDir string, debug bool) (string, string) {
-	rootDir := repositoryRootDir(currentDir)
-	if rootDir == "" {
-		return "", ""
-	}
-	config := getProjectConfig(rootDir, debug)
-	if config == "" {
-		return "", ""
-	}
-	return rootDir, config
-}
-
-func getProjectConfig(projectRoot string, debug bool) string {
+func getProjectID(projectRoot string, debug bool) string {
 	contents, err := os.ReadFile(filepath.Join(projectRoot, ".platform", "local", "project.yaml"))
 	if err != nil {
 		if debug {
