@@ -21,13 +21,12 @@ package platformsh
 
 import (
 	goerr "errors"
-	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/symfony-cli/symfony-cli/git"
-	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -96,21 +95,9 @@ func repositoryRootDir(currentDir string) string {
 }
 
 func getProjectID(projectRoot string, debug bool) string {
-	contents, err := os.ReadFile(filepath.Join(projectRoot, ".platform", "local", "project.yaml"))
-	if err != nil {
-		if debug {
-			fmt.Fprintf(os.Stderr, "WARNING: unable to find Platform.sh config file: %s\n", err)
-		}
+	out, ok := psh.RunInteractive(zerolog.Nop(), projectRoot, []string{"project:info", "id"}, false, nil)
+	if !ok {
 		return ""
 	}
-	var config struct {
-		ID string `yaml:"id"`
-	}
-	if err := yaml.Unmarshal(contents, &config); err != nil {
-		if debug {
-			fmt.Fprintf(os.Stderr, "ERROR: unable to decode Platform.sh config file: %s\n", err)
-		}
-		return ""
-	}
-	return config.ID
+	return out.String()
 }
