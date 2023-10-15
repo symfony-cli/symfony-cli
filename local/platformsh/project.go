@@ -107,7 +107,7 @@ func getProjectID(projectRoot string, debug bool) string {
 }
 
 func getProjectIDFromConfigFile(brand CloudBrand, projectRoot string, debug bool) string {
-	contents, err := os.ReadFile(filepath.Join(projectRoot, "."+brand.Slug, "local", "project.yaml"))
+	contents, err := os.ReadFile(filepath.Join(projectRoot, brand.ProjectConfigPath, "local", "project.yaml"))
 	if err != nil {
 		if debug {
 			fmt.Fprintf(os.Stderr, "WARNING: unable to find %s config file: %s\n", brand, err)

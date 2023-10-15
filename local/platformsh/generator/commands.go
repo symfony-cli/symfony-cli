@@ -88,7 +88,7 @@ func generateCommands() {
 		panic(err)
 	}
 	// as platform.sh and upsun have the same commands, we can use either one
-	cloudPath, err := platformsh.Install(home, "platform")
+	cloudPath, err := platformsh.Install(home, platformsh.PlatformshBrand)
 	if err != nil {
 		panic(err.Error())
 	}

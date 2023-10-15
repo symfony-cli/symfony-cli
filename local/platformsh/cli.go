@@ -26,6 +26,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -88,7 +89,7 @@ func (p *CLI) AddBeforeHook(name string, f console.BeforeFunc) {
 	}
 }
 
-func (p *CLI) getPath(brand string) string {
+func (p *CLI) getPath(brand CloudBrand) string {
 	if p.path != "" {
 		return p.path
 	}
@@ -99,7 +100,7 @@ func (p *CLI) getPath(brand string) string {
 	}
 
 	// the Platform.sh CLI is always available on the containers thanks to the configurator
-	p.path = BinaryPath(home, brand)
+	p.path = filepath.Join(home, brand.BinaryPath())
 	if !util.InCloud() {
 		if cloudPath, err := Install(home, brand); err == nil {
 			p.path = cloudPath
@@ -156,7 +157,7 @@ func (p *CLI) executor(brand CloudBrand, args []string) *exec.Cmd {
 		env = append(env, fmt.Sprintf("%sUPDATES_CHECK=0", prefix))
 	}
 	args[0] = strings.TrimPrefix(strings.TrimPrefix(args[0], "upsun:"), "cloud:")
-	cmd := exec.Command(p.getPath(brand.Slug), args...)
+	cmd := exec.Command(p.getPath(brand), args...)
 	cmd.Env = append(os.Environ(), env...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

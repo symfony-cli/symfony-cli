@@ -26,30 +26,41 @@ import (
 )
 
 type CloudBrand struct {
-	Name          string
-	Slug          string
-	CommandPrefix string
-	CLIPrefix     string
-	GitRemoteName string
+	Name              string
+	ProjectConfigPath string
+	CommandPrefix     string
+	CLIConfigPath     string
+	CLIPrefix         string
+	GitRemoteName     string
+	BinName           string
 }
 
 var UpsunBrand = CloudBrand{
-	Name:          "Upsun",
-	Slug:          "upsun",
-	CommandPrefix: "upsun:",
-	CLIPrefix:     "UPSUN_CLI_",
-	GitRemoteName: "upsun",
+	Name:              "Upsun",
+	ProjectConfigPath: ".upsun",
+	CommandPrefix:     "upsun:",
+	CLIConfigPath:     ".upsun",
+	CLIPrefix:         "UPSUN_CLI_",
+	GitRemoteName:     "upsun",
+	BinName:           "upsun",
 }
 var PlatformshBrand = CloudBrand{
-	Name:          "Platform.sh",
-	Slug:          "platform",
-	CommandPrefix: "cloud:",
-	CLIPrefix:     "PLATFORMSH_CLI_",
-	GitRemoteName: "platform",
+	Name:              "Platform.sh",
+	ProjectConfigPath: ".platform",
+	CLIConfigPath:     ".platformsh",
+	CLIPrefix:         "PLATFORMSH_CLI_",
+	CommandPrefix:     "cloud:",
+	GitRemoteName:     "platform",
+	BinName:           "platform",
 }
 
 func (b CloudBrand) String() string {
 	return b.Name
+}
+
+// BinaryPath returns the cloud binary path.
+func (b CloudBrand) BinaryPath() string {
+	return filepath.Join(b.CLIConfigPath, "bin", b.BinName)
 }
 
 func GuessCloudFromCommandName(name string) CloudBrand {
@@ -67,7 +78,7 @@ func GuessCloudFromCommandName(name string) CloudBrand {
 
 func GuessCloudFromDirectory(dir string) CloudBrand {
 	for _, brand := range []CloudBrand{UpsunBrand, PlatformshBrand} {
-		if _, err := os.Stat(filepath.Join(dir, "."+brand.Slug)); err == nil {
+		if _, err := os.Stat(filepath.Join(dir, brand.ProjectConfigPath)); err == nil {
 			return brand
 		}
 	}

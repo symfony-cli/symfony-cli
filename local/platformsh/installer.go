@@ -48,18 +48,9 @@ type versionCheck struct {
 	Timestamp      int64
 }
 
-// BinaryPath returns the cloud binary path.
-func BinaryPath(home, brand string) string {
-	if brand == "upsun" {
-		return filepath.Join(home, ".upsun", "bin", "upsun")
-	}
-
-	return filepath.Join(home, ".platformsh", "bin", "platform")
-}
-
 // Install installs or updates the Platform.sh CLI tool.
-func Install(home, brand string) (string, error) {
-	binPath := BinaryPath(home, brand)
+func Install(home string, brand CloudBrand) (string, error) {
+	binPath := filepath.Join(home, brand.BinaryPath())
 	versionCheckPath := binPath + ".json"
 
 	// do we already have the binary?
@@ -105,7 +96,7 @@ download:
 	return binPath, nil
 }
 
-func getLatestVersion(brand string) (*githubAsset, error) {
+func getLatestVersion(brand CloudBrand) (*githubAsset, error) {
 	spinner := terminal.NewSpinner(terminal.Stderr)
 	spinner.Start()
 	defer spinner.Stop()
@@ -140,7 +131,7 @@ func getLatestVersion(brand string) (*githubAsset, error) {
 		if !strings.HasSuffix(a.Name, ".gz") && !strings.HasSuffix(a.Name, ".zip") {
 			continue
 		}
-		if !strings.Contains(a.Name, brand) {
+		if !strings.Contains(a.Name, brand.BinName) {
 			continue
 		}
 		if (strings.Contains(a.Name, info.Architecture) && strings.Contains(a.Name, info.Family)) ||
@@ -157,7 +148,7 @@ func getLatestVersion(brand string) (*githubAsset, error) {
 	return asset, nil
 }
 
-func downloadAndExtract(asset *githubAsset, brand, binPath string) error {
+func downloadAndExtract(asset *githubAsset, brand CloudBrand, binPath string) error {
 	resp, err := http.Get(asset.URL)
 	if err != nil {
 		return err
@@ -201,7 +192,7 @@ func downloadAndExtract(asset *githubAsset, brand, binPath string) error {
 				if header.Typeflag != tar.TypeReg {
 					continue
 				}
-				if header.Name != brand {
+				if header.Name != brand.BinName {
 					continue
 				}
 				if _, err := os.Stat(filepath.Dir(binPath)); os.IsNotExist(err) {
