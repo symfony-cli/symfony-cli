@@ -28,7 +28,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kr/pty"
 	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -137,14 +136,7 @@ func (p *CLI) proxyPSHCmd(commandName string) console.ActionFunc {
 					return err
 				}
 			}
-
-			cmd := p.executor(append([]string{ctx.Command.UserName}, ctx.Args().Slice()...))
-			f, err := pty.Start(cmd)
-			if err != nil {
-				return err
-			}
-			_, err = io.Copy(cmd.Stdout, f)
-			return err
+			return p.executor(append([]string{ctx.Command.UserName}, ctx.Args().Slice()...)).Run()
 		}
 	}(commandName)
 }
@@ -164,6 +156,7 @@ func (p *CLI) executor(args []string) *exec.Cmd {
 	cmd.Env = append(os.Environ(), env...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
 	return cmd
 }
 
