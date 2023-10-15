@@ -193,6 +193,7 @@ func parseCommands(cloudPath string) (string, error) {
 		if command.Name == "environment:push" {
 			aliases = append(aliases, "{Name: \"deploy\"}")
 			aliases = append(aliases, "{Name: \"cloud:deploy\"}")
+			aliases = append(aliases, "{Name: \"upsun:deploy\", Hidden: true}")
 		}
 		aliasesAsString := ""
 		if len(aliases) > 0 {

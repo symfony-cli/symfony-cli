@@ -1025,6 +1025,7 @@ var Commands = []*console.Command{
 			{Name: "push", Hidden: true},
 			{Name: "deploy"},
 			{Name: "cloud:deploy"},
+			{Name: "upsun:deploy", Hidden: true},
 		},
 		Usage:    "Push code to an environment",
 		Flags:    []console.Flag{
