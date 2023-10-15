@@ -137,13 +137,13 @@ func (p *CLI) proxyPSHCmd(commandName string) console.ActionFunc {
 					return err
 				}
 			}
-			return p.executor(append([]string{ctx.Command.UserName}, ctx.Args().Slice()...)).Run()
+			brand := GuessCloudFromCommandName(ctx.Command.UserName)
+			return p.executor(brand, append([]string{commandName}, ctx.Args().Slice()...)).Run()
 		}
 	}(commandName)
 }
 
-func (p *CLI) executor(args []string) *exec.Cmd {
-	brand := GuessCloudFromCommandName(args[0])
+func (p *CLI) executor(brand CloudBrand, args []string) *exec.Cmd {
 	prefix := brand.CLIPrefix
 
 	env := []string{
@@ -166,7 +166,8 @@ func (p *CLI) executor(args []string) *exec.Cmd {
 
 func (p *CLI) RunInteractive(logger zerolog.Logger, projectDir string, args []string, debug bool, stdin io.Reader) (bytes.Buffer, bool) {
 	var buf bytes.Buffer
-	cmd := p.executor(args)
+	brand := GuessCloudFromCommandName(args[0])
+	cmd := p.executor(brand, args)
 	if projectDir != "" {
 		cmd.Dir = projectDir
 	}
@@ -193,7 +194,8 @@ func (p *CLI) WrapHelpPrinter() func(w io.Writer, templ string, data interface{}
 		switch cmd := data.(type) {
 		case *console.Command:
 			if strings.HasPrefix(cmd.Category, "cloud") {
-				cmd := p.executor([]string{cmd.UserName, "--help"})
+				brand := GuessCloudFromCommandName(cmd.UserName)
+				cmd := p.executor(brand, []string{cmd.FullName(), "--help"})
 				cmd.Run()
 			} else {
 				currentHelpPrinter(w, templ, data)

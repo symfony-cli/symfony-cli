@@ -67,7 +67,7 @@ func GuessCloudFromCommandName(name string) CloudBrand {
 
 func GuessCloudFromDirectory(dir string) CloudBrand {
 	for _, brand := range []CloudBrand{UpsunBrand, PlatformshBrand} {
-		if _, err := os.Stat(filepath.Join(dir, "."+brand.Slug)); err != nil {
+		if _, err := os.Stat(filepath.Join(dir, "."+brand.Slug)); err == nil {
 			return brand
 		}
 	}
