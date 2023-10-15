@@ -42,7 +42,7 @@ var UpsunBrand = CloudBrand{
 }
 var PlatformshBrand = CloudBrand{
 	Name:          "Platform.sh",
-	Slug:          "platformsh",
+	Slug:          "platform",
 	CommandPrefix: "cloud:",
 	CLIPrefix:     "PLATFORMSH_CLI_",
 	GitRemoteName: "platform",

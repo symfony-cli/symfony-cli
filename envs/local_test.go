@@ -47,7 +47,7 @@ func (s *LocalSuite) TestTunnelFilePath(c *C) {
 	defer func() {
 		os.Rename("testdata/project/.git", "testdata/project/git")
 	}()
-	project, err := platformsh.ProjectFromDir(l.Dir, false)
+	project, err := platformsh.ProjectFromDir(l.Dir, true)
 	if err != nil {
 		panic(err)
 	}
