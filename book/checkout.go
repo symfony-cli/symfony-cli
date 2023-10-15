@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	"github.com/symfony-cli/terminal"
 )
 
@@ -119,7 +120,8 @@ func (b *Book) Checkout(step string) error {
 	printBanner("<comment>[WEB]</> Stopping the Local Web Server", b.Debug)
 	executeCommand([]string{"symfony", "server:stop"}, b.Debug, true, nil)
 
-	printBanner("<comment>[WEB]</> Stopping the Platform.sh tunnel", b.Debug)
+	brand := platformsh.GuessCloudFromDirectory(b.Dir)
+	printBanner(fmt.Sprintf("<comment>[WEB]</> Stopping the %s tunnel", brand.Name), b.Debug)
 	if err := executeCommand([]string{"symfony", "tunnel:close", "-y"}, b.Debug, true, nil); err != nil {
 		return err
 	}

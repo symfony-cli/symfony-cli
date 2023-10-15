@@ -107,7 +107,7 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 			ui.Section("Next Steps")
 
 			terminal.Println(" * Adapt the generated files if needed")
-			terminal.Printf(" * Commit them: <info>git add %s && git commit -m\"Add Platform.sh configuration\"</>\n", strings.Join(createdFiles, " "))
+			terminal.Printf(" * Commit them: <info>git add %s && git commit -m\"Add %s configuration\"</>\n", strings.Join(createdFiles, " "), brand.Name)
 			terminal.Printf(" * Deploy: <info>%s deploy</>\n", c.App.HelpName)
 		} else {
 			terminal.Printf("Deploy the project via <info>%s deploy</>.\n", c.App.HelpName)

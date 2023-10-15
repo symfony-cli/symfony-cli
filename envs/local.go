@@ -160,7 +160,8 @@ func (l *Local) Relationships() Relationships {
 	project, err := platformsh.ProjectFromDir(l.Dir, l.Debug)
 	if err != nil {
 		if l.Debug {
-			fmt.Fprint(os.Stderr, "ERROR: unable to get Platform.sh project information\n")
+			brand := platformsh.GuessCloudFromDirectory(l.Dir)
+			fmt.Fprintf(os.Stderr, "ERROR: unable to get %s project information\n", brand.Name)
 		}
 		return dockerRel
 	}
@@ -195,9 +196,10 @@ func (l *Local) Extra() Envs {
 		sc = "1"
 	}
 	env := Envs{
-		"SYMFONY_TUNNEL":     l.Tunnel,
-		"SYMFONY_TUNNEL_ENV": sc,
-		"SYMFONY_DOCKER_ENV": docker,
+		"SYMFONY_TUNNEL":       l.Tunnel,
+		"SYMFONY_TUNNEL_ENV":   sc,
+		"SYMFONY_TUNNEL_BRAND": platformsh.GuessCloudFromDirectory(l.Dir).Name,
+		"SYMFONY_DOCKER_ENV":   docker,
 	}
 	if _, err := os.Stat(filepath.Join(l.Dir, ".prod")); err == nil {
 		env["APP_ENV"] = "prod"

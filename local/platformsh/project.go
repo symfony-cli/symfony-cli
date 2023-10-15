@@ -32,8 +32,8 @@ import (
 )
 
 var (
-	ErrProjectRootNotFoundNoGitRemote = goerr.New("project root not found, current directory not linked to a Platform.sh project")
-	ErrNoGitBranchMatching            = goerr.New("current git branch name doesn't match any Platform.sh environments")
+	ErrProjectRootNotFoundNoGitRemote = goerr.New("project root not found, current directory not linked to a Platform.sh/Upsun project")
+	ErrNoGitBranchMatching            = goerr.New("current git branch name doesn't match any Platform.sh/Upsun environments")
 )
 
 type Project struct {

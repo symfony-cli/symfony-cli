@@ -258,6 +258,7 @@ func parseCommands(cloudPath string) (string, error) {
 			flagsAsString += "\t\t},"
 		}
 
+		command.Description = strings.ReplaceAll(command.Description, "Platform.sh", "Platform.sh/Upsun")
 		definitionAsString += fmt.Sprintf(`	{
 		Category: "%s",
 		Name:     "%s",%s

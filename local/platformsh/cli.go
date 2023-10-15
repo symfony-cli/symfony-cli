@@ -54,7 +54,7 @@ func Get() (*CLI, error) {
 	pshOnce.Do(func() {
 		psh, err = newCLI()
 		if err != nil {
-			err = errors.Wrap(err, "Unable to setup Platform.sh CLI")
+			err = errors.Wrap(err, "Unable to setup Platform.sh/Upsun CLI")
 		}
 	})
 	return psh, err
