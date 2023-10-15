@@ -183,7 +183,11 @@ var localNewCmd = &console.Command{
 				fmt.Print(buf.String())
 				return err
 			}
-			if err := initCloud(c, s, minorPHPVersion, dir); err != nil {
+			brand := platformsh.PlatformshBrand
+			if c.Bool("upsun") {
+				brand = platformsh.UpsunBrand
+			}
+			if err := initCloud(c, brand, s, minorPHPVersion, dir); err != nil {
 				return err
 			}
 		}
@@ -212,9 +216,7 @@ func isEmpty(dir string) (bool, error) {
 	return false, err
 }
 
-func initCloud(c *console.Context, s *terminal.Spinner, minorPHPVersion, dir string) error {
-	brand := platformsh.GuessCloudFromCommandName(c.Command.UserName)
-
+func initCloud(c *console.Context, brand platformsh.CloudBrand, s *terminal.Spinner, minorPHPVersion, dir string) error {
 	terminal.Printfln("* Adding %s configuration", brand)
 
 	cloudServices, err := parseCloudServices(dir, c.StringSlice("service"))

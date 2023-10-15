@@ -46,6 +46,7 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 		&console.StringFlag{Name: "title", Usage: "Project title", DefaultText: "autodetermined based on directory name"},
 		&console.StringFlag{Name: "slug", DefaultValue: "app", Usage: "Project slug"},
 		&console.StringFlag{Name: "php", Usage: "PHP version to use"},
+		&console.BoolFlag{Name: "upsun", Usage: "Initialize Upsun"},
 		// FIXME: services should also be used to configure Docker? Instead of Flex?
 		// FIXME: services can also be guessed via the existing Docker Compose file?
 		&console.StringSliceFlag{Name: "service", Usage: "Configure some services", Hidden: true},
@@ -80,7 +81,10 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 			return err
 		}
 
-		brand := platformsh.GuessCloudFromCommandName(c.Command.UserName)
+		brand := platformsh.PlatformshBrand
+		if c.Bool("upsun") {
+			brand = platformsh.UpsunBrand
+		}
 		createdFiles, err := createRequiredFilesProject(brand, projectDir, slug, c.String("template"), minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
 		if err != nil {
 			return err

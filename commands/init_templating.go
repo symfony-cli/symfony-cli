@@ -187,7 +187,7 @@ func getTemplates(brand platformsh.CloudBrand, rootDirectory, chosenTemplateName
 	}
 
 	if brand == platformsh.UpsunBrand {
-		chosenTemplateName = filepath.Join(brand.Slug, chosenTemplateName)
+		directory = filepath.Join(directory, "upsun")
 	}
 	if isURL, isFile := isValidURL(chosenTemplateName), isValidFilePath(chosenTemplateName); isURL || isFile {
 		var (
@@ -293,14 +293,21 @@ func getTemplates(brand platformsh.CloudBrand, rootDirectory, chosenTemplateName
 `
 
 	templateFuncs := getTemplateFuncs(rootDirectory, minorPHPVersion)
-
-	templates := map[string]*template.Template{
-		".platform.app.yaml":      template.Must(template.New("output").Funcs(templateFuncs).Parse(foundTemplate.Template)),
-		".platform/services.yaml": template.Must(template.New("output").Funcs(templateFuncs).Parse(servicesyaml)),
-		".platform/routes.yaml": template.Must(template.New("output").Funcs(templateFuncs).Parse(`"https://{all}/": { type: upstream, upstream: "{{.Slug}}:http" }
+	var templates map[string]*template.Template
+	if brand == platformsh.UpsunBrand {
+		templates = map[string]*template.Template{
+			".upsun/config.yaml": template.Must(template.New("output").Funcs(templateFuncs).Parse(foundTemplate.Template)),
+			"php.ini":            template.Must(template.New("output").Funcs(templateFuncs).Parse(string(phpini))),
+		}
+	} else {
+		templates = map[string]*template.Template{
+			".platform.app.yaml":      template.Must(template.New("output").Funcs(templateFuncs).Parse(foundTemplate.Template)),
+			".platform/services.yaml": template.Must(template.New("output").Funcs(templateFuncs).Parse(servicesyaml)),
+			".platform/routes.yaml": template.Must(template.New("output").Funcs(templateFuncs).Parse(`"https://{all}/": { type: upstream, upstream: "{{.Slug}}:http" }
 "http://{all}/": { type: redirect, to: "https://{all}/" }
 `)),
-		"php.ini": template.Must(template.New("output").Funcs(templateFuncs).Parse(string(phpini))),
+			"php.ini": template.Must(template.New("output").Funcs(templateFuncs).Parse(string(phpini))),
+		}
 	}
 
 	for path, tpl := range foundTemplate.ExtraFiles {
