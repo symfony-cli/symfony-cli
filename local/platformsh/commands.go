@@ -53,7 +53,6 @@ var Commands = []*console.Command{
 		Category: "cloud",
 		Name:     "clear-cache",
 		Aliases:  []*console.Alias{
-			{Name: "cloud:clearcache"},
 			{Name: "cloud:cc"},
 		},
 		Usage:    "Clear the CLI cache",
@@ -235,6 +234,14 @@ var Commands = []*console.Command{
 	},
 	{
 		Category: "cloud:app",
+		Name:     "config-validate",
+		Aliases:  []*console.Alias{
+			{Name: "app:config-validate", Hidden: true},
+		},
+		Usage:    "Validate the config files of a project",
+	},
+	{
+		Category: "cloud:app",
 		Name:     "list",
 		Aliases:  []*console.Alias{
 			{Name: "app:list", Hidden: true},
@@ -411,7 +418,7 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "blue-green:conclude", Hidden: true},
 		},
-		Usage:    "<fg=white;bg=red> ALPHA </> Conclude a blue/green deployment",
+		Usage:    " ALPHA  Conclude a blue/green deployment",
 		Hidden:   console.Hide,
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
@@ -424,7 +431,7 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "blue-green:deploy", Hidden: true},
 		},
-		Usage:    "<fg=white;bg=red> ALPHA </> Perform a blue/green deployment",
+		Usage:    " ALPHA  Perform a blue/green deployment",
 		Hidden:   console.Hide,
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
@@ -438,7 +445,7 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "blue-green:enable", Hidden: true},
 		},
-		Usage:    "<fg=white;bg=red> ALPHA </> Enable blue/green deployments",
+		Usage:    " ALPHA  Enable blue/green deployments",
 		Hidden:   console.Hide,
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
@@ -964,6 +971,8 @@ var Commands = []*console.Command{
 			{Name: "environment:relationships", Hidden: true},
 			{Name: "cloud:relationships"},
 			{Name: "relationships", Hidden: true},
+			{Name: "cloud:rel"},
+			{Name: "rel", Hidden: true},
 		},
 		Usage:    "Show an environment's relationships",
 		Flags:    []console.Flag{
@@ -1112,8 +1121,8 @@ var Commands = []*console.Command{
 		Name:     "activity:list",
 		Aliases:  []*console.Alias{
 			{Name: "integration:activity:list", Hidden: true},
-			{Name: "cloud:i:act"},
-			{Name: "i:act", Hidden: true},
+			{Name: "cloud:int:act"},
+			{Name: "int:act", Hidden: true},
 		},
 		Usage:    "Get a list of activities for an integration",
 		Flags:    []console.Flag{
@@ -1318,12 +1327,12 @@ var Commands = []*console.Command{
 		Name:     "all",
 		Aliases:  []*console.Alias{
 			{Name: "metrics:all", Hidden: true},
-			{Name: "cloud:met"},
-			{Name: "met", Hidden: true},
 			{Name: "cloud:metrics"},
 			{Name: "metrics", Hidden: true},
+			{Name: "cloud:met"},
+			{Name: "met", Hidden: true},
 		},
-		Usage:    "<fg=white;bg=red> BETA </> Show CPU, disk and memory metrics for an environment",
+		Usage:    " BETA  Show CPU, disk and memory metrics for an environment",
 		Flags:    []console.Flag{
 			&console.BoolFlag{Name: "bytes", Aliases: []string{"B"},},
 			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
@@ -1348,7 +1357,7 @@ var Commands = []*console.Command{
 			{Name: "cloud:cpu"},
 			{Name: "cpu", Hidden: true},
 		},
-		Usage:    "<fg=white;bg=red> BETA </> Show CPU usage of an environment",
+		Usage:    " BETA  Show CPU usage of an environment",
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
@@ -1422,7 +1431,7 @@ var Commands = []*console.Command{
 			{Name: "cloud:memory"},
 			{Name: "memory", Hidden: true},
 		},
-		Usage:    "<fg=white;bg=red> BETA </> Show memory usage of an environment",
+		Usage:    " BETA  Show memory usage of an environment",
 		Flags:    []console.Flag{
 			&console.BoolFlag{Name: "bytes", Aliases: []string{"B"},},
 			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
@@ -1536,7 +1545,7 @@ var Commands = []*console.Command{
 			{Name: "cloud:ops"},
 			{Name: "ops", Hidden: true},
 		},
-		Usage:    "<fg=white;bg=red> BETA </> List runtime operations on an environment",
+		Usage:    " BETA  List runtime operations on an environment",
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "app", Aliases: []string{"A"},},
 			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
@@ -1554,7 +1563,7 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "operation:run", Hidden: true},
 		},
-		Usage:    "<fg=white;bg=red> BETA </> Run an operation on the environment",
+		Usage:    " BETA  Run an operation on the environment",
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "app", Aliases: []string{"A"},},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
@@ -1684,8 +1693,8 @@ var Commands = []*console.Command{
 		Name:     "subscription:list",
 		Aliases:  []*console.Alias{
 			{Name: "organization:subscription:list", Hidden: true},
-			{Name: "cloud:organization:subscriptions"},
-			{Name: "organization:subscriptions", Hidden: true},
+			{Name: "cloud:org:subs"},
+			{Name: "org:subs", Hidden: true},
 		},
 		Usage:    "List subscriptions within an organization",
 		Flags:    []console.Flag{
@@ -1745,8 +1754,8 @@ var Commands = []*console.Command{
 		Name:     "user:list",
 		Aliases:  []*console.Alias{
 			{Name: "organization:user:list", Hidden: true},
-			{Name: "cloud:organization:users"},
-			{Name: "organization:users", Hidden: true},
+			{Name: "cloud:org:users"},
+			{Name: "org:users", Hidden: true},
 		},
 		Usage:    "List organization users",
 		Flags:    []console.Flag{
@@ -1818,7 +1827,7 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "environments",},
 			&console.BoolFlag{Name: "no-set-remote",},
 			&console.StringFlag{Name: "org", Aliases: []string{"o"},},
-			&console.StringFlag{Name: "plan", DefaultValue: "development",},
+			&console.StringFlag{Name: "plan",},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
 			&console.StringFlag{Name: "region",},
 			&console.BoolFlag{Name: "set-remote",},
@@ -1910,13 +1919,13 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "count", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
-			&console.StringFlag{Name: "host",},
 			&console.BoolFlag{Name: "my",},
 			&console.BoolFlag{Name: "no-header",},
 			&console.StringFlag{Name: "org", Aliases: []string{"o"},},
 			&console.StringFlag{Name: "page",},
 			&console.BoolFlag{Name: "pipe",},
 			&console.StringFlag{Name: "refresh",},
+			&console.StringFlag{Name: "region",},
 			&console.BoolFlag{Name: "reverse",},
 			&console.StringFlag{Name: "sort", DefaultValue: "title",},
 			&console.StringFlag{Name: "title",},
@@ -2083,31 +2092,6 @@ var Commands = []*console.Command{
 		Hidden:   console.Hide,
 	},
 	{
-		Category: "cloud:self",
-		Name:     "install",
-		Usage:    "Install or update CLI configuration files",
-		Hidden:   console.Hide,
-		Flags:    []console.Flag{
-			&console.StringFlag{Name: "shell-type",},
-		},
-	},
-	{
-		Category: "cloud:self",
-		Name:     "update",
-		Aliases:  []*console.Alias{
-			{Name: "cloud:self-update"},
-		},
-		Usage:    "Update the CLI to the latest version",
-		Hidden:   console.Hide,
-		Flags:    []console.Flag{
-			&console.StringFlag{Name: "current-version",},
-			&console.StringFlag{Name: "manifest",},
-			&console.BoolFlag{Name: "no-major",},
-			&console.StringFlag{Name: "timeout",},
-			&console.BoolFlag{Name: "unstable",},
-		},
-	},
-	{
 		Category: "cloud:service",
 		Name:     "list",
 		Aliases:  []*console.Alias{
@@ -2226,7 +2210,7 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "session:switch", Hidden: true},
 		},
-		Usage:    "<fg=white;bg=red> BETA </> Switch between sessions",
+		Usage:    " BETA  Switch between sessions",
 		Hidden:   console.Hide,
 	},
 	{
@@ -2605,7 +2589,7 @@ var Commands = []*console.Command{
 			{Name: "cloud:versions"},
 			{Name: "versions", Hidden: true},
 		},
-		Usage:    "<fg=white;bg=red> ALPHA </> List environment versions",
+		Usage:    " ALPHA  List environment versions",
 		Hidden:   console.Hide,
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "columns", Aliases: []string{"c"},},
