@@ -28,7 +28,9 @@ jobs:
                         ${{ runner.os }}-go-
             -
                 name: Prepare
-                run: go generate ./
+                run: |
+                    rm -rf ~/.platformsh/bin/
+                    go generate ./
             -
                 name: Check Git status
                 id: git
