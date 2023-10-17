@@ -67,7 +67,8 @@ var localNewCmd = &console.Command{
 		&console.BoolFlag{Name: "book", Usage: "Clone the Symfony: The Fast Track book project"},
 		&console.BoolFlag{Name: "docker", Usage: "Enable Docker support"},
 		&console.BoolFlag{Name: "no-git", Usage: "Do not initialize Git"},
-		&console.BoolFlag{Name: "cloud", Usage: "Initialize Platform.sh"},
+		&console.BoolFlag{Name: "upsun", Usage: "Initialize Upsun configuration"},
+		&console.BoolFlag{Name: "cloud", Usage: "Initialize Platform.sh configuration"},
 		&console.StringSliceFlag{Name: "service", Usage: "Configure some services", Hidden: true},
 		&console.BoolFlag{Name: "debug", Usage: "Display commands output"},
 		&console.StringFlag{Name: "php", Usage: "PHP version to use"},
@@ -130,8 +131,9 @@ var localNewCmd = &console.Command{
 		if c.Bool("webapp") && c.Bool("no-git") {
 			return console.Exit("The --webapp flag cannot be used with --no-git", 1)
 		}
-		if len(c.StringSlice("service")) > 0 && !c.Bool("cloud") {
-			return console.Exit("The --service flag cannot be used without --cloud", 1)
+		withCloud := c.Bool("cloud") || c.Bool("upsun")
+		if len(c.StringSlice("service")) > 0 && !withCloud {
+			return console.Exit("The --service flag cannot be used without --cloud or --upsun", 1)
 		}
 
 		s := terminal.NewSpinner(terminal.Stderr)
@@ -147,7 +149,7 @@ var localNewCmd = &console.Command{
 			return err
 		}
 
-		if "" != c.String("php") && !c.Bool("cloud") {
+		if "" != c.String("php") && !withCloud {
 			if err := createPhpVersionFile(c.String("php"), dir); err != nil {
 				return err
 			}
@@ -172,7 +174,7 @@ var localNewCmd = &console.Command{
 			}
 		}
 
-		if c.Bool("cloud") {
+		if withCloud {
 			if err := runComposer(c, dir, []string{"require", "platformsh"}, c.Bool("debug")); err != nil {
 				return err
 			}
@@ -181,7 +183,11 @@ var localNewCmd = &console.Command{
 				fmt.Print(buf.String())
 				return err
 			}
-			if err := initCloud(c, s, minorPHPVersion, dir); err != nil {
+			brand := platformsh.PlatformshBrand
+			if c.Bool("upsun") {
+				brand = platformsh.UpsunBrand
+			}
+			if err := initCloud(c, brand, s, minorPHPVersion, dir); err != nil {
 				return err
 			}
 		}
@@ -210,8 +216,8 @@ func isEmpty(dir string) (bool, error) {
 	return false, err
 }
 
-func initCloud(c *console.Context, s *terminal.Spinner, minorPHPVersion, dir string) error {
-	terminal.Println("* Adding Platform.sh configuration")
+func initCloud(c *console.Context, brand platformsh.CloudBrand, s *terminal.Spinner, minorPHPVersion, dir string) error {
+	terminal.Printfln("* Adding %s configuration", brand)
 
 	cloudServices, err := parseCloudServices(dir, c.StringSlice("service"))
 	if err != nil {
@@ -219,12 +225,12 @@ func initCloud(c *console.Context, s *terminal.Spinner, minorPHPVersion, dir str
 	}
 
 	// FIXME: display or hide output based on debug flag
-	_, err = createRequiredFilesProject(dir, "app", "", minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
+	_, err = createRequiredFilesProject(brand, dir, "app", "", minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
 	if err != nil {
 		return err
 	}
 
-	buf, err := git.AddAndCommit(dir, []string{"."}, "Add Platform.sh configuration", c.Bool("debug"))
+	buf, err := git.AddAndCommit(dir, []string{"."}, fmt.Sprintf("Add %s configuration", brand), c.Bool("debug"))
 	if err != nil {
 		fmt.Print(buf.String())
 	}
@@ -320,7 +326,7 @@ func initProjectGit(c *console.Context, s *terminal.Spinner, dir string) error {
 	terminal.Printfln("  (running git init %s)\n", dir)
 	// Only force the branch to be "main" when running a Cloud context to make
 	// onboarding simpler.
-	if buf, err := git.Init(dir, c.Bool("cloud"), c.Bool("debug")); err != nil {
+	if buf, err := git.Init(dir, c.Bool("cloud") || c.Bool("upsun"), c.Bool("debug")); err != nil {
 		fmt.Print(buf.String())
 		return err
 	}

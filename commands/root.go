@@ -167,7 +167,7 @@ func initCLI() {
 	console.AppHelpTemplate += `
 <comment>Available wrappers:</>
 Runs PHP (version depends on project's configuration).
-Environment variables to use Platform.sh relationships or Docker services are automatically defined.
+Environment variables to use Platform.sh/Upsun relationships or Docker services are automatically defined.
 
 {{with .Command "composer"}}  <info>{{.PreferredName}}</>{{"\t"}}{{.Usage}}{{end}}
 {{with .Command "console"}}  <info>{{.PreferredName}}</>{{"\t"}}{{.Usage}}{{end}}

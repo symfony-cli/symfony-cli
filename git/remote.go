@@ -81,3 +81,14 @@ func GetUpstreamBranch(cwd string, remoteNames ...string) string {
 
 	return ""
 }
+
+func GetRemoteURL(cwd, remote string) string {
+	args := []string{"config", "--get", fmt.Sprintf("remote.%s.url", remote)}
+
+	out, err := execGitQuiet(cwd, args...)
+	if err != nil {
+		return ""
+	}
+
+	return strings.Trim(out.String(), " \n")
+}

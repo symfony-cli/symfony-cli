@@ -103,7 +103,7 @@ func printWebServerStatus(projectDir string) error {
 	env := envs.AsMap(data)
 	envVars := `<comment>None</>`
 	if env["SYMFONY_TUNNEL"] != "" && env["SYMFONY_TUNNEL_ENV"] != "" {
-		envVars = `Exposed from <info>Platform.sh</>`
+		envVars = fmt.Sprintf(`Exposed from <info>%s</>`, env["SYMFONY_TUNNEL_BRAND"])
 	}
 	if env["SYMFONY_DOCKER_ENV"] == "1" && env["SYMFONY_TUNNEL_ENV"] == "" {
 		envVars = `Exposed from <info>Docker</>`

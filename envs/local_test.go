@@ -35,9 +35,20 @@ var _ = Suite(&LocalSuite{})
 func (s *LocalSuite) TestExtra(c *C) {
 	l := &Local{}
 	c.Assert(l.Extra(), DeepEquals, Envs{
-		"SYMFONY_TUNNEL":     "",
-		"SYMFONY_TUNNEL_ENV": "",
-		"SYMFONY_DOCKER_ENV": "",
+		"SYMFONY_TUNNEL":       "",
+		"SYMFONY_TUNNEL_ENV":   "",
+		"SYMFONY_TUNNEL_BRAND": "Platform.sh",
+		"SYMFONY_DOCKER_ENV":   "",
+	})
+
+	l = &Local{
+		Dir: "testdata/upsun",
+	}
+	c.Assert(l.Extra(), DeepEquals, Envs{
+		"SYMFONY_TUNNEL":       "",
+		"SYMFONY_TUNNEL_ENV":   "",
+		"SYMFONY_TUNNEL_BRAND": "Upsun",
+		"SYMFONY_DOCKER_ENV":   "",
 	})
 }
 
@@ -47,7 +58,7 @@ func (s *LocalSuite) TestTunnelFilePath(c *C) {
 	defer func() {
 		os.Rename("testdata/project/.git", "testdata/project/git")
 	}()
-	project, err := platformsh.ProjectFromDir(l.Dir, false)
+	project, err := platformsh.ProjectFromDir(l.Dir, true)
 	if err != nil {
 		panic(err)
 	}

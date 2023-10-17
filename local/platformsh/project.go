@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/symfony-cli/git"
@@ -31,8 +32,8 @@ import (
 )
 
 var (
-	ErrProjectRootNotFoundNoGitRemote = goerr.New("project root not found, current directory not linked to a Platform.sh project")
-	ErrNoGitBranchMatching            = goerr.New("current git branch name doesn't match any Platform.sh environments")
+	ErrProjectRootNotFoundNoGitRemote = goerr.New("project root not found, current directory not linked to a Platform.sh/Upsun project")
+	ErrNoGitBranchMatching            = goerr.New("current git branch name doesn't match any Platform.sh/Upsun environments")
 )
 
 type Project struct {
@@ -96,10 +97,20 @@ func repositoryRootDir(currentDir string) string {
 }
 
 func getProjectID(projectRoot string, debug bool) string {
-	contents, err := os.ReadFile(filepath.Join(projectRoot, ".platform", "local", "project.yaml"))
+	brand := GuessCloudFromDirectory(projectRoot)
+	id := getProjectIDFromConfigFile(brand, projectRoot, debug)
+	if id != "" {
+		return id
+	}
+
+	return getProjectIDFromGitConfig(brand, projectRoot, debug)
+}
+
+func getProjectIDFromConfigFile(brand CloudBrand, projectRoot string, debug bool) string {
+	contents, err := os.ReadFile(filepath.Join(projectRoot, brand.ProjectConfigPath, "local", "project.yaml"))
 	if err != nil {
 		if debug {
-			fmt.Fprintf(os.Stderr, "WARNING: unable to find Platform.sh config file: %s\n", err)
+			fmt.Fprintf(os.Stderr, "WARNING: unable to find %s config file: %s\n", brand, err)
 		}
 		return ""
 	}
@@ -108,9 +119,24 @@ func getProjectID(projectRoot string, debug bool) string {
 	}
 	if err := yaml.Unmarshal(contents, &config); err != nil {
 		if debug {
-			fmt.Fprintf(os.Stderr, "ERROR: unable to decode Platform.sh config file: %s\n", err)
+			fmt.Fprintf(os.Stderr, "ERROR: unable to decode %s config file: %s\n", brand, err)
 		}
 		return ""
 	}
 	return config.ID
+}
+
+func getProjectIDFromGitConfig(brand CloudBrand, projectRoot string, debug bool) string {
+	for _, remote := range []string{brand.GitRemoteName, "origin"} {
+		url := git.GetRemoteURL(projectRoot, remote)
+		matches := regexp.MustCompile(`^([a-z0-9]{12,})@git\.`).FindStringSubmatch(url)
+		if len(matches) > 1 {
+			return string(matches[1])
+		}
+		return ""
+	}
+	if debug {
+		fmt.Fprintf(os.Stderr, "ERROR: unable to read the git config file\n")
+	}
+	return ""
 }

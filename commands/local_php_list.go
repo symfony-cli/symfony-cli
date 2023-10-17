@@ -90,7 +90,7 @@ var localPhpListCmd = &console.Command{
 		terminal.Println("")
 		terminal.Println("To control the version used in a directory, create a <comment>.php-version</> file that contains the version number (e.g. 7.2 or 7.2.15),")
 		terminal.Println("or define <href=https://getcomposer.org/doc/06-config.md#platform>config.platform.php</> inside <comment>composer.json</>.")
-		terminal.Println("If you're using Platform.sh, the version can also be specified in the <comment>.platform.app.yaml</> file.")
+		terminal.Println("If you're using Platform.sh or Upsun, the version can also be specified in their configuration files.")
 
 		return nil
 	},

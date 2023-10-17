@@ -48,14 +48,9 @@ type versionCheck struct {
 	Timestamp      int64
 }
 
-// BinaryPath returns the cloud binary path.
-func BinaryPath(home string) string {
-	return filepath.Join(home, ".platformsh", "bin", "platform")
-}
-
 // Install installs or updates the Platform.sh CLI tool.
-func Install(home string) (string, error) {
-	binPath := BinaryPath(home)
+func Install(home string, brand CloudBrand) (string, error) {
+	binPath := filepath.Join(home, brand.BinaryPath())
 	versionCheckPath := binPath + ".json"
 
 	// do we already have the binary?
@@ -73,7 +68,7 @@ func Install(home string) (string, error) {
 		}
 		// don't check for the next 24 hours
 		versionCheck.store(versionCheckPath)
-		if asset, err := getLatestVersion(); err == nil {
+		if asset, err := getLatestVersion(brand); err == nil {
 			// no new version
 			if asset.version == string(versionCheck.CurrentVersion) {
 				return binPath, nil
@@ -82,7 +77,7 @@ func Install(home string) (string, error) {
 	}
 
 download:
-	asset, err := getLatestVersion()
+	asset, err := getLatestVersion(brand)
 	if err != nil {
 		if binExists {
 			// unable to get the latest version, but we already have a bin, use it
@@ -90,7 +85,7 @@ download:
 		}
 		return "", err
 	}
-	if err := downloadAndExtract(asset, binPath); err != nil {
+	if err := downloadAndExtract(asset, brand, binPath); err != nil {
 		return "", err
 	}
 
@@ -101,7 +96,7 @@ download:
 	return binPath, nil
 }
 
-func getLatestVersion() (*githubAsset, error) {
+func getLatestVersion(brand CloudBrand) (*githubAsset, error) {
 	spinner := terminal.NewSpinner(terminal.Stderr)
 	spinner.Start()
 	defer spinner.Stop()
@@ -136,7 +131,7 @@ func getLatestVersion() (*githubAsset, error) {
 		if !strings.HasSuffix(a.Name, ".gz") && !strings.HasSuffix(a.Name, ".zip") {
 			continue
 		}
-		if !strings.Contains(a.Name, "platform") {
+		if !strings.Contains(a.Name, brand.BinName) {
 			continue
 		}
 		if (strings.Contains(a.Name, info.Architecture) && strings.Contains(a.Name, info.Family)) ||
@@ -146,14 +141,14 @@ func getLatestVersion() (*githubAsset, error) {
 		}
 	}
 	if asset == nil {
-		return nil, errors.New(fmt.Sprintf("unable to find a suitable Platform.sh CLI tool for your machine (%s/%s)", info.Family, info.Architecture))
+		return nil, errors.New(fmt.Sprintf("unable to find a suitable %s CLI tool for your machine (%s/%s)", brand, info.Family, info.Architecture))
 	}
 	asset.version = manifest.Name
 
 	return asset, nil
 }
 
-func downloadAndExtract(asset *githubAsset, binPath string) error {
+func downloadAndExtract(asset *githubAsset, brand CloudBrand, binPath string) error {
 	resp, err := http.Get(asset.URL)
 	if err != nil {
 		return err
@@ -165,7 +160,7 @@ func downloadAndExtract(asset *githubAsset, binPath string) error {
 	pr, pw := io.Pipe()
 	errs := make(chan error, 1)
 	go func() {
-		bar := progressbar.DefaultBytes(resp.ContentLength, fmt.Sprintf("Downloading Platform.sh CLI version %s", asset.version))
+		bar := progressbar.DefaultBytes(resp.ContentLength, fmt.Sprintf("Downloading %s CLI version %s", brand, asset.version))
 		if _, err := io.Copy(io.MultiWriter(pw, bar), resp.Body); err != nil {
 			errs <- err
 		}
@@ -197,7 +192,7 @@ func downloadAndExtract(asset *githubAsset, binPath string) error {
 				if header.Typeflag != tar.TypeReg {
 					continue
 				}
-				if header.Name != "platform" {
+				if header.Name != brand.BinName {
 					continue
 				}
 				if _, err := os.Stat(filepath.Dir(binPath)); os.IsNotExist(err) {

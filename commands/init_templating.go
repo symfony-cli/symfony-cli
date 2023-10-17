@@ -47,9 +47,9 @@ type nopCloser struct {
 
 func (nopCloser) Close() error { return nil }
 
-func createRequiredFilesProject(rootDirectory, projectSlug, templateName string, minorPHPVersion string, cloudServices []*CloudService, dump, force bool) ([]string, error) {
+func createRequiredFilesProject(brand platformsh.CloudBrand, rootDirectory, projectSlug, templateName string, minorPHPVersion string, cloudServices []*CloudService, dump, force bool) ([]string, error) {
 	createdFiles := []string{}
-	templates, err := getTemplates(rootDirectory, templateName, minorPHPVersion)
+	templates, err := getTemplates(brand, rootDirectory, templateName, minorPHPVersion)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not determine template to use")
 	}
@@ -158,7 +158,7 @@ func isValidFilePath(toTest string) bool {
 	return true
 }
 
-func getTemplates(rootDirectory, chosenTemplateName string, minorPHPVersion string) (map[string]*template.Template, error) {
+func getTemplates(brand platformsh.CloudBrand, rootDirectory, chosenTemplateName string, minorPHPVersion string) (map[string]*template.Template, error) {
 	var foundTemplate *configTemplate
 
 	s := terminal.NewSpinner(terminal.Stderr)
@@ -186,6 +186,9 @@ func getTemplates(rootDirectory, chosenTemplateName string, minorPHPVersion stri
 		}
 	}
 
+	if brand == platformsh.UpsunBrand {
+		directory = filepath.Join(directory, "upsun")
+	}
 	if isURL, isFile := isValidURL(chosenTemplateName), isValidFilePath(chosenTemplateName); isURL || isFile {
 		var (
 			templateConfigBytes []byte
@@ -290,14 +293,21 @@ func getTemplates(rootDirectory, chosenTemplateName string, minorPHPVersion stri
 `
 
 	templateFuncs := getTemplateFuncs(rootDirectory, minorPHPVersion)
-
-	templates := map[string]*template.Template{
-		".platform.app.yaml":      template.Must(template.New("output").Funcs(templateFuncs).Parse(foundTemplate.Template)),
-		".platform/services.yaml": template.Must(template.New("output").Funcs(templateFuncs).Parse(servicesyaml)),
-		".platform/routes.yaml": template.Must(template.New("output").Funcs(templateFuncs).Parse(`"https://{all}/": { type: upstream, upstream: "{{.Slug}}:http" }
+	var templates map[string]*template.Template
+	if brand == platformsh.UpsunBrand {
+		templates = map[string]*template.Template{
+			".upsun/config.yaml": template.Must(template.New("output").Funcs(templateFuncs).Parse(foundTemplate.Template)),
+			"php.ini":            template.Must(template.New("output").Funcs(templateFuncs).Parse(string(phpini))),
+		}
+	} else {
+		templates = map[string]*template.Template{
+			".platform.app.yaml":      template.Must(template.New("output").Funcs(templateFuncs).Parse(foundTemplate.Template)),
+			".platform/services.yaml": template.Must(template.New("output").Funcs(templateFuncs).Parse(servicesyaml)),
+			".platform/routes.yaml": template.Must(template.New("output").Funcs(templateFuncs).Parse(`"https://{all}/": { type: upstream, upstream: "{{.Slug}}:http" }
 "http://{all}/": { type: redirect, to: "https://{all}/" }
 `)),
-		"php.ini": template.Must(template.New("output").Funcs(templateFuncs).Parse(string(phpini))),
+			"php.ini": template.Must(template.New("output").Funcs(templateFuncs).Parse(string(phpini))),
+		}
 	}
 
 	for path, tpl := range foundTemplate.ExtraFiles {

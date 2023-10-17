@@ -46,6 +46,15 @@ var skippedDirectories = map[string]interface{}{
 	"src":          nil,
 }
 
+type UpsunDotYaml struct {
+	Applications map[string]struct {
+		LocalApplication `yaml:",inline"`
+		Source           struct {
+			Root string
+		}
+	}
+}
+
 // Only a wrapper type around LocalApplication used to get Access to
 // `source.root` when unmarshalling
 type ApplicationsDotYaml []struct {
@@ -92,6 +101,7 @@ func FindLocalApplications(rootDirectory string) LocalApplications {
 		return apps
 	}
 
+	brand := GuessCloudFromDirectory(rootDirectory)
 	go func() {
 		for file := range appParser {
 			content, err := os.ReadFile(file)
@@ -100,8 +110,22 @@ func FindLocalApplications(rootDirectory string) LocalApplications {
 				continue
 			}
 
+			if brand == UpsunBrand {
+				var config UpsunDotYaml
+				if err := yaml.Unmarshal(content, &config); err != nil {
+					terminal.Logger.Error().Msgf("Could not decode %s YAML file: %s\n", file, err)
+					continue
+				}
+				for _, app := range config.Applications {
+					app.DefinitionFile = file
+					app.LocalRootDir = filepath.Join(rootDirectory, app.Source.Root)
+					apps = append(apps, app.LocalApplication)
+				}
+				continue
+			}
+
 			if strings.HasSuffix(file, filepath.Join(".platform", "applications.yaml")) {
-				multiApps := ApplicationsDotYaml{}
+				var multiApps ApplicationsDotYaml
 				if err := yaml.Unmarshal(content, &multiApps); err != nil {
 					terminal.Logger.Error().Msgf("Could not decode %s YAML file: %s\n", file, err)
 					continue
@@ -127,7 +151,7 @@ func FindLocalApplications(rootDirectory string) LocalApplications {
 		appParsingDone <- true
 	}()
 
-	for _, path := range findAppConfigFiles(rootDirectory) {
+	for _, path := range findAppConfigFiles(brand, rootDirectory) {
 		appParser <- path
 	}
 
@@ -138,8 +162,22 @@ func FindLocalApplications(rootDirectory string) LocalApplications {
 	return apps
 }
 
-func findAppConfigFiles(dir string) []string {
-	dirs := []string{}
+func findAppConfigFiles(brand CloudBrand, dir string) []string {
+	files := []string{}
+	if brand == UpsunBrand {
+		dir = filepath.Join(dir, brand.CLIConfigPath)
+		fs, err := os.ReadDir(dir)
+		if err != nil {
+			return files
+		}
+		for _, f := range fs {
+			if strings.HasSuffix(f.Name(), ".yaml") {
+				files = append(files, filepath.Join(dir, f.Name()))
+			}
+		}
+		return files
+	}
+
 	separator := string(filepath.Separator)
 	rootDirectoryLen := len(dir) + 1
 	_ = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -165,12 +203,12 @@ func findAppConfigFiles(dir string) []string {
 		}
 
 		if info.Name() == "applications.yaml" || info.Name() == ".platform.app.yaml" {
-			dirs = append(dirs, path)
+			files = append(files, path)
 		}
 
 		return nil
 	})
-	return dirs
+	return files
 }
 
 func GuessSelectedAppByWd(apps LocalApplications) *LocalApplication {

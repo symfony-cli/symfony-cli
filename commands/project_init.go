@@ -28,6 +28,7 @@ import (
 
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/git"
+	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	"github.com/symfony-cli/terminal"
 )
 
@@ -45,6 +46,7 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 		&console.StringFlag{Name: "title", Usage: "Project title", DefaultText: "autodetermined based on directory name"},
 		&console.StringFlag{Name: "slug", DefaultValue: "app", Usage: "Project slug"},
 		&console.StringFlag{Name: "php", Usage: "PHP version to use"},
+		&console.BoolFlag{Name: "upsun", Usage: "Initialize Upsun"},
 		// FIXME: services should also be used to configure Docker? Instead of Flex?
 		// FIXME: services can also be guessed via the existing Docker Compose file?
 		&console.StringSliceFlag{Name: "service", Usage: "Configure some services", Hidden: true},
@@ -79,7 +81,11 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 			return err
 		}
 
-		createdFiles, err := createRequiredFilesProject(projectDir, slug, c.String("template"), minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
+		brand := platformsh.PlatformshBrand
+		if c.Bool("upsun") {
+			brand = platformsh.UpsunBrand
+		}
+		createdFiles, err := createRequiredFilesProject(brand, projectDir, slug, c.String("template"), minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
 		if err != nil {
 			return err
 		}
@@ -101,7 +107,7 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 			ui.Section("Next Steps")
 
 			terminal.Println(" * Adapt the generated files if needed")
-			terminal.Printf(" * Commit them: <info>git add %s && git commit -m\"Add Platform.sh configuration\"</>\n", strings.Join(createdFiles, " "))
+			terminal.Printf(" * Commit them: <info>git add %s && git commit -m\"Add %s configuration\"</>\n", strings.Join(createdFiles, " "), brand)
 			terminal.Printf(" * Deploy: <info>%s deploy</>\n", c.App.HelpName)
 		} else {
 			terminal.Printf("Deploy the project via <info>%s deploy</>.\n", c.App.HelpName)
