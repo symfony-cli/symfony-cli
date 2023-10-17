@@ -161,7 +161,7 @@ func (l *Local) Relationships() Relationships {
 	if err != nil {
 		if l.Debug {
 			brand := platformsh.GuessCloudFromDirectory(l.Dir)
-			fmt.Fprintf(os.Stderr, "ERROR: unable to get %s project information\n", brand.Name)
+			fmt.Fprintf(os.Stderr, "ERROR: unable to get %s project information\n", brand)
 		}
 		return dockerRel
 	}

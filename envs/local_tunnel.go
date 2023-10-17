@@ -48,7 +48,7 @@ func (l *Local) relationshipsFromTunnel() Relationships {
 	if err != nil {
 		if l.Debug {
 			brand := platformsh.GuessCloudFromDirectory(l.Dir)
-			fmt.Fprintf(os.Stderr, "WARNING: unable to detect %s project: %s\n", brand.Name, err)
+			fmt.Fprintf(os.Stderr, "WARNING: unable to detect %s project: %s\n", brand, err)
 		}
 		return nil
 	}
