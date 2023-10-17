@@ -93,8 +93,10 @@ func tlsToLocalWebServer(proxy *goproxy.ProxyHttpServer, tlsConfig *tls.Config, 
 			ctx.Logf("Assuming CONNECT is TLS, TLS proxying it")
 			targetSiteCon, err := connectDial(proxy, "tcp", fmt.Sprintf("127.0.0.1:%d", localPort))
 			if err != nil {
-				targetSiteCon.Close()
 				httpError(proxyClientTls, ctx, err)
+				if targetSiteCon != nil {
+					targetSiteCon.Close()
+				}
 				return
 			}
 
