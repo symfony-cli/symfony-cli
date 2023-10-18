@@ -44,10 +44,10 @@ type pshtunnel struct {
 }
 
 func (l *Local) relationshipsFromTunnel() Relationships {
+	brand := platformsh.GuessCloudFromDirectory(l.Dir)
 	project, err := platformsh.ProjectFromDir(l.Dir, l.Debug)
 	if err != nil {
 		if l.Debug {
-			brand := platformsh.GuessCloudFromDirectory(l.Dir)
 			fmt.Fprintf(os.Stderr, "WARNING: unable to detect %s project: %s\n", brand, err)
 		}
 		return nil
@@ -57,7 +57,7 @@ func (l *Local) relationshipsFromTunnel() Relationships {
 	if err != nil {
 		userHomeDir = ""
 	}
-	tunnelFile := filepath.Join(userHomeDir, ".platformsh", "tunnel-info.json")
+	tunnelFile := filepath.Join(userHomeDir, brand.CLIConfigPath, "tunnel-info.json")
 	data, err := os.ReadFile(tunnelFile)
 	if err != nil {
 		if l.Debug {

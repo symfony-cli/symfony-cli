@@ -116,7 +116,8 @@ func FindLocalApplications(rootDirectory string) LocalApplications {
 					terminal.Logger.Error().Msgf("Could not decode %s YAML file: %s\n", file, err)
 					continue
 				}
-				for _, app := range config.Applications {
+				for name, app := range config.Applications {
+					app.Name = name
 					app.DefinitionFile = file
 					app.LocalRootDir = filepath.Join(rootDirectory, app.Source.Root)
 					apps = append(apps, app.LocalApplication)
@@ -165,7 +166,7 @@ func FindLocalApplications(rootDirectory string) LocalApplications {
 func findAppConfigFiles(brand CloudBrand, dir string) []string {
 	files := []string{}
 	if brand == UpsunBrand {
-		dir = filepath.Join(dir, brand.CLIConfigPath)
+		dir = filepath.Join(dir, brand.ProjectConfigPath)
 		fs, err := os.ReadDir(dir)
 		if err != nil {
 			return files
