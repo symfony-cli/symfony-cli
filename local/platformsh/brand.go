@@ -38,9 +38,9 @@ type CloudBrand struct {
 var UpsunBrand = CloudBrand{
 	Name:              "Upsun",
 	ProjectConfigPath: ".upsun",
-	CommandPrefix:     "upsun:",
-	CLIConfigPath:     ".upsun",
+	CLIConfigPath:     ".upsun-cli",
 	CLIPrefix:         "UPSUN_CLI_",
+	CommandPrefix:     "upsun:",
 	GitRemoteName:     "upsun",
 	BinName:           "upsun",
 }
