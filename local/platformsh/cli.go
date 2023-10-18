@@ -69,6 +69,7 @@ func newCLI() (*CLI, error) {
 		command.Args = []*console.Arg{
 			{Name: "anything", Slice: true, Optional: true},
 		}
+		command.FlagParsing = console.FlagParsingSkipped
 		command.Flags = append(command.Flags,
 			&console.BoolFlag{Name: "no", Aliases: []string{"n"}},
 			&console.BoolFlag{Name: "yes", Aliases: []string{"y"}},
@@ -82,8 +83,7 @@ func (p *CLI) AddBeforeHook(name string, f console.BeforeFunc) {
 	p.Hooks[name] = f
 	for _, command := range p.Commands {
 		if command.FullName() == name {
-			// do not parse flags if we don't have hooks
-			command.FlagParsing = console.FlagParsingSkipped
+			command.FlagParsing = console.FlagParsingNormal
 			break
 		}
 	}
@@ -139,7 +139,14 @@ func (p *CLI) proxyPSHCmd(commandName string) console.ActionFunc {
 				}
 			}
 			brand := GuessCloudFromCommandName(ctx.Command.UserName)
-			return p.executor(brand, append([]string{commandName}, ctx.Args().Slice()...)).Run()
+			args := os.Args[1:]
+			for i := range args {
+				if args[i] == ctx.Command.UserName {
+					args[i] = commandName
+					break
+				}
+			}
+			return p.executor(brand, args).Run()
 		}
 	}(commandName)
 }
