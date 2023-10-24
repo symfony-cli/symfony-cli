@@ -87,7 +87,7 @@ release:
     **Full Changelog**: https://github.com/symfony-cli/symfony-cli/compare/{{ .PreviousTag }}...{{ .Tag }}
 
 brews:
-  - tap:
+  - repository:
       owner: symfony-cli
       name: homebrew-tap
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
