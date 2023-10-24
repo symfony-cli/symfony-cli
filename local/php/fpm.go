@@ -107,6 +107,9 @@ php_admin_flag[log_errors] = on
 
 ; we want to expose env vars (like in FOO=bar symfony server:start)
 clear_env = no
+
+env['PGGSSENCMODE'] = disable
+env['LC_ALL'] = C
 `, logLevel, logLimit, userConfig, listen, workerConfig)
 }
 
