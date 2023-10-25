@@ -102,13 +102,14 @@ func (b *Book) Checkout(step string) error {
 		terminal.Println("<info>[ OK ]</>")
 	}
 
-	_, err = os.Stat(filepath.Join(b.Dir, "docker-compose.yaml"))
-	hasDocker := err == nil
-	if !hasDocker {
-		_, err = os.Stat(filepath.Join(b.Dir, "docker-compose.yml"))
-		hasDocker = err == nil
-	}
 	printBanner("<comment>[WEB]</> Stopping Docker Containers", b.Debug)
+	hasDocker := false
+	for _, filename := range []string{"compose.yaml", "compose.yml", "docker-compose.yaml", "docker-compose.yml"} {
+		if _, err = os.Stat(filepath.Join(b.Dir, filename)); err == nil {
+			hasDocker = true
+			break
+		}
+	}
 	if hasDocker {
 		if err := executeCommand(append(dockerComposeBin(), "down", "--remove-orphans"), b.Debug, false, nil); err != nil {
 			return err
