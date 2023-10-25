@@ -515,17 +515,15 @@ func (l *Local) getComposeDir() string {
 	// look for the first dir up with a docker-composer.ya?ml file (in case of a multi-project)
 	dir := l.Dir
 	for {
-		if _, err := os.Stat(filepath.Join(dir, "docker-compose.yaml")); err == nil {
-			return dir
-		}
-		// both .yml and .yaml are supported by Docker composer
-		if _, err := os.Stat(filepath.Join(dir, "docker-compose.yml")); err == nil {
-			return dir
+		for _, filename := range []string{"compose.yaml", "compose.yml", "docker-compose.yaml", "docker-compose.yml"} {
+			if _, err := os.Stat(filepath.Join(dir, filename)); err == nil {
+				return dir
+			}
 		}
 		upDir := filepath.Dir(dir)
 		if upDir == dir || upDir == "." {
 			if l.Debug {
-				fmt.Fprintln(os.Stderr, "ERROR: unable to find a docker-compose.yaml or docker-compose.yml for the current directory")
+				fmt.Fprintln(os.Stderr, "ERROR: unable to find a docker-compose.ya?ml or compose.ya?ml for the current directory")
 			}
 			return ""
 		}
