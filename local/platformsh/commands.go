@@ -1987,7 +1987,6 @@ var Commands = []*console.Command{
 		},
 		Usage:    "Create a new project",
 		Flags:    []console.Flag{
-			&console.StringFlag{Name: "check-timeout",},
 			&console.StringFlag{Name: "default-branch", DefaultValue: "main",},
 			&console.StringFlag{Name: "environments",},
 			&console.BoolFlag{Name: "no-set-remote",},
@@ -1997,7 +1996,6 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "region",},
 			&console.BoolFlag{Name: "set-remote",},
 			&console.StringFlag{Name: "storage",},
-			&console.StringFlag{Name: "timeout",},
 			&console.StringFlag{Name: "title", DefaultValue: "Untitled Project",},
 		},
 	},
