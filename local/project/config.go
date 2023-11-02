@@ -29,6 +29,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const DockerComposeWorkerKey = "docker_compose"
+
 // Config is the struct taken by New (should not be used for anything else)
 type Config struct {
 	HomeDir       string
@@ -143,6 +145,17 @@ func (c *FileConfig) parseWorkers() error {
 		return nil
 	}
 
+	if v, ok := c.Workers[DockerComposeWorkerKey]; ok && v == nil {
+		c.Workers[DockerComposeWorkerKey] = &Worker{
+			Cmd: []string{"docker", "compose", "up"},
+			Watch: []string{
+				"compose.yaml", "compose.override.yaml",
+				"compose.yml", "compose.override.yml",
+				"docker-compose.yml", "docker-compose.override.yml",
+				"docker-compose.yaml", "docker-compose.override.yaml",
+			},
+		}
+	}
 	if v, ok := c.Workers["yarn_encore_watch"]; ok && v == nil {
 		c.Workers["yarn_encore_watch"] = &Worker{
 			Cmd: []string{"yarn", "encore", "dev", "--watch"},

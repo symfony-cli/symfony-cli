@@ -60,6 +60,7 @@ type Runner struct {
 	pidFile *pid.PidFile
 
 	BuildCmdHook        func(*exec.Cmd) error
+	SuccessHook         func(*Runner, *exec.Cmd)
 	AlwaysRestartOnExit bool
 }
 
@@ -225,6 +226,10 @@ func (r *Runner) Run() error {
 		// Command exited
 		case err := <-cmdExitChan:
 			err = errors.Wrapf(err, `command "%s" failed`, r.pidFile)
+
+			if err == nil && r.SuccessHook != nil {
+				r.SuccessHook(r, cmd)
+			}
 
 			// Command is NOT set up to loop, stop here and remove the pidFile
 			// if the command is successful
