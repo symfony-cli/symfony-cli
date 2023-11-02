@@ -222,30 +222,37 @@ func (r *Runner) Run() error {
 			cmd.Process.Signal(syscall.SIGTERM)
 			// we need to drain cmdExit channel to unblock cmd channel receiver
 			<-cmdExitChan
+		// Command exited
 		case err := <-cmdExitChan:
 			err = errors.Wrapf(err, `command "%s" failed`, r.pidFile)
 
+			// Command is NOT set up to loop, stop here and remove the pidFile
+			// if the command is successful
 			if !looping {
-				if err == nil {
-					err = r.pidFile.Remove()
+				if err != nil {
+					return err
 				}
 
-				return err
+				return r.pidFile.Remove()
 			}
 
+			// Command is set up to restart on exit (usually PHP builtin
+			// server), so we restart immediately without waiting
 			if r.AlwaysRestartOnExit {
 				terminal.Logger.Error().Msgf(`command "%s" exited, restarting it immediately`, r.pidFile)
 				continue
 			}
 
-			// Command exited: let's wait for a signal to just exit on a change
-			// on the filesystem, or 5 seconds in case of error, before
-			// restarting the command.
+			// In case of error we want to wait up-to 5 seconds before
+			// restarting the command, this avoids overloading the system with a
+			// failing command
 			if err != nil {
 				terminal.Logger.Error().Msgf("%s, waiting 5 seconds before restarting it", err)
 				timer.Reset(5 * time.Second)
 			}
 
+			// Wait for a timer to expire or a file to be changed to restart
+			// or a signal to be received to exit
 			select {
 			case sig := <-sigChan:
 				terminal.Logger.Info().Msgf(`Signal "%s" received, exiting`, sig)
