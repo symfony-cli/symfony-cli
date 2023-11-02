@@ -186,7 +186,7 @@ func (r *Runner) Run() error {
 
 				timer.Stop()
 				// when the command is really fast to run, it will be already
-				// done here, so we need to forward exit status as it has
+				// done here, so we need to forward exit status as if it has
 				// finished later one
 				go func() { cmdExitChan <- err }()
 			case <-timer.C:
@@ -222,26 +222,45 @@ func (r *Runner) Run() error {
 			cmd.Process.Signal(syscall.SIGTERM)
 			// we need to drain cmdExit channel to unblock cmd channel receiver
 			<-cmdExitChan
+		// Command exited
 		case err := <-cmdExitChan:
 			err = errors.Wrapf(err, `command "%s" failed`, r.pidFile)
 
-			if looping {
-				// Command exited, let's wait for a change or 5 seconds to restart the command or a signal to exit
+			// Command is NOT set up to loop, stop here and remove the pidFile
+			// if the command is successful
+			if !looping {
 				if err != nil {
-					terminal.Logger.Error().Msgf("%s, waiting 5 seconds before restarting it", err)
-					timer.Reset(5 * time.Second)
-				} else if r.AlwaysRestartOnExit {
-					terminal.Logger.Error().Msgf(`command "%s" exited, restarting it immediately`, r.pidFile)
+					return err
 				}
 
-				continue
-			}
-
-			if err == nil {
 				return r.pidFile.Remove()
 			}
 
-			return err
+			// Command is set up to restart on exit (usually PHP builtin
+			// server), so we restart immediately without waiting
+			if r.AlwaysRestartOnExit {
+				terminal.Logger.Error().Msgf(`command "%s" exited, restarting it immediately`, r.pidFile)
+				continue
+			}
+
+			// In case of error we want to wait up-to 5 seconds before
+			// restarting the command, this avoids overloading the system with a
+			// failing command
+			if err != nil {
+				terminal.Logger.Error().Msgf("%s, waiting 5 seconds before restarting it", err)
+				timer.Reset(5 * time.Second)
+			}
+
+			// Wait for a timer to expire or a file to be changed to restart
+			// or a signal to be received to exit
+			select {
+			case sig := <-sigChan:
+				terminal.Logger.Info().Msgf(`Signal "%s" received, exiting`, sig)
+				return nil
+			case <-restartChan:
+				timer.Stop()
+			case <-timer.C:
+			}
 		}
 
 		terminal.Logger.Info().Msgf(`Restarting command "%s"`, r.pidFile)
