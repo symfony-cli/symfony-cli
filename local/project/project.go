@@ -76,7 +76,7 @@ func New(c *Config) (*Project, error) {
 			return nil
 		}
 	} else {
-		p.PHPServer, err = php.NewServer(c.HomeDir, c.ProjectDir, documentRoot, passthru, c.Logger)
+		p.PHPServer, err = php.NewServer(c.HomeDir, c.ProjectDir, documentRoot, passthru, c.AppVersion, c.Logger)
 		if err != nil {
 			return nil, err
 		}

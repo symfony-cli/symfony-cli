@@ -51,6 +51,7 @@ import (
 type Server struct {
 	Version      *phpstore.Version
 	logger       zerolog.Logger
+	appVersion   string
 	homeDir      string
 	projectDir   string
 	documentRoot string
@@ -62,7 +63,7 @@ type Server struct {
 var addslashes = strings.NewReplacer("\\", "\\\\", "'", "\\'")
 
 // NewServer creates a new PHP server backend
-func NewServer(homeDir, projectDir, documentRoot, passthru string, logger zerolog.Logger) (*Server, error) {
+func NewServer(homeDir, projectDir, documentRoot, passthru, appVersion string, logger zerolog.Logger) (*Server, error) {
 	logger.Debug().Str("source", "PHP").Msg("Reloading PHP versions")
 	phpStore := phpstore.New(homeDir, true, nil)
 	version, source, warning, err := phpStore.BestVersionForDir(projectDir)
@@ -76,6 +77,7 @@ func NewServer(homeDir, projectDir, documentRoot, passthru string, logger zerolo
 	return &Server{
 		Version:      version,
 		logger:       logger.With().Str("source", "PHP").Str("php", version.Version).Str("path", version.ServerPath()).Logger(),
+		appVersion:   appVersion,
 		homeDir:      homeDir,
 		projectDir:   projectDir,
 		documentRoot: documentRoot,
