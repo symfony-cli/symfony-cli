@@ -129,7 +129,10 @@ func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.Rea
 	<div class="sf-toolbar-info" style="left: 0px;">
 		<div class="sf-toolbar-info-group">
 			<div class="sf-toolbar-info-piece">
-				<b>Server</b>` + p.Version.ServerTypeName() + ` ` + p.Version.Version + `
+				<b>Symfony CLI</b>` + p.appVersion + `
+			</div>
+			<div class="sf-toolbar-info-piece">
+				<b>PHP</b>` + p.Version.ServerTypeName() + ` ` + p.Version.Version + `
 			</div>
 			<div class="sf-toolbar-info-piece">
 				<b>Tunnel</b>` + tunnel + `
