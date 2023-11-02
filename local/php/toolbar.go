@@ -107,7 +107,7 @@ func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.Rea
 		}
 
 		if len(extraLinks) > 0 {
-			extraLinks = `<hr/>` + extraLinks
+			extraLinks = `</div><div class="sf-toolbar-info-group">` + extraLinks
 		}
 	}
 
@@ -127,23 +127,25 @@ func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.Rea
 		<span class="sf-toolbar-value">Server</span>
 	</div>
 	<div class="sf-toolbar-info" style="left: 0px;">
-		<div class="sf-toolbar-info-piece">
-			<b>Server</b>` + p.Version.ServerTypeName() + ` ` + p.Version.Version + `
+		<div class="sf-toolbar-info-group">
+			<div class="sf-toolbar-info-piece">
+				<b>Server</b>` + p.Version.ServerTypeName() + ` ` + p.Version.Version + `
+			</div>
+			<div class="sf-toolbar-info-piece">
+				<b>Tunnel</b>` + tunnel + `
+			</div>
+			<div class="sf-toolbar-info-piece">
+				<b>Docker Compose</b>` + docker + `
+			</div>
+			<div class="sf-toolbar-info-piece">
+				<b>Env Vars</b>` + envVars + `
+			</div>
+			<div class="sf-toolbar-info-piece">` + rabbitmqui + `</div>
+			<div class="sf-toolbar-info-piece">` + webmail + `</div>
+			<div class="sf-toolbar-info-piece">
+				<b><a class="sf-cli-blackfire" href="https://blackfire.io/" rel="noopener" target="_blank">Blackfire.io Agent</a></b>` + blackfire + `</div>
+		` + extraLinks + `
 		</div>
-		<div class="sf-toolbar-info-piece">
-			<b>Tunnel</b>` + tunnel + `
-		</div>
-		<div class="sf-toolbar-info-piece">
-			<b>Docker Compose</b>` + docker + `
-		</div>
-		<div class="sf-toolbar-info-piece">
-			<b>Env Vars</b>` + envVars + `
-		</div>
-		<div class="sf-toolbar-info-piece">` + rabbitmqui + `</div>
-		<div class="sf-toolbar-info-piece">` + webmail + `</div>
-		<div class="sf-toolbar-info-piece">
-			<b><a class="sf-cli-blackfire" href="https://blackfire.io/" rel="noopener" target="_blank">Blackfire.io Agent</a></b>` + blackfire + `</div>
-	` + extraLinks + `
 	</div>
 	<div></div>
 </div>
