@@ -29,6 +29,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"sync"
 	"syscall"
 
 	"github.com/pkg/errors"
@@ -309,6 +310,13 @@ var localServerStartCmd = &console.Command{
 
 		if fileConfig != nil {
 			reexec.NotifyForeground("workers")
+
+			_, isDockerComposeWorkerConfigured := fileConfig.Workers[project.DockerComposeWorkerKey]
+			var dockerWg sync.WaitGroup
+			if isDockerComposeWorkerConfigured {
+				dockerWg.Add(1)
+			}
+
 			for name, worker := range fileConfig.Workers {
 				pidFile := pid.New(projectDir, worker.Cmd)
 				if pidFile.IsRunning() {
@@ -335,8 +343,41 @@ var localServerStartCmd = &console.Command{
 
 					runner.BuildCmdHook = func(cmd *exec.Cmd) error {
 						cmd.Env = append(cmd.Env, envs.AsSlice(env)...)
-
 						return nil
+					}
+
+					if name == project.DockerComposeWorkerKey {
+						originalBuildCmdHook := runner.BuildCmdHook
+
+						runner.BuildCmdHook = func(cmd *exec.Cmd) error {
+							cmd.Args = append(cmd.Args, "--detach")
+
+							return originalBuildCmdHook(cmd)
+						}
+
+						runner.SuccessHook = func(runner *local.Runner, cmd *exec.Cmd) {
+							terminal.Eprintln("<info>INFO</> Docker Compose is now up, switching to non detached mode")
+
+							// set up the worker for an immediate restart so
+							// that it starts monitoring the containers as soon
+							// as possible after the initial startup
+							runner.AlwaysRestartOnExit = true
+							// but next time this process is successful we don't
+							// have to do anything specific
+							runner.SuccessHook = nil
+							// and we move back AlwaysRestartOnExit to false
+
+							runner.BuildCmdHook = func(cmd *exec.Cmd) error {
+								runner.AlwaysRestartOnExit = false
+
+								return originalBuildCmdHook(cmd)
+							}
+
+							dockerWg.Done()
+						}
+					} else if isDockerComposeWorkerConfigured {
+						terminal.Eprintfln("<info>INFO</> Worker \"%s\" waiting for Docker Compose to be up", name)
+						dockerWg.Wait()
 					}
 
 					ui.Success(fmt.Sprintf("Started worker \"%s\"", name))
