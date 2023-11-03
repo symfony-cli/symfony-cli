@@ -3,9 +3,9 @@ module github.com/symfony-cli/symfony-cli
 require (
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/blackfireio/osinfo v1.0.4
-	github.com/compose-spec/compose-go v1.19.0
+	github.com/compose-spec/compose-go v1.20.0
 	github.com/docker/docker v24.0.7+incompatible
-	github.com/elazarl/goproxy v0.0.0-20230808193330-2592e75ae04a
+	github.com/elazarl/goproxy v0.0.0-20231031074852-3ec07828be7a
 	github.com/fabpot/local-php-security-checker/v2 v2.0.6
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/hashicorp/go-version v1.6.0
@@ -39,7 +39,7 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/ferhatelmas/levenshtein v0.0.0-20160518143259-a12aecc52d76 // indirect
-	github.com/fsnotify/fsnotify v1.6.0 // indirect
+	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
@@ -47,7 +47,7 @@ require (
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mattn/go-shellwords v1.0.12 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
@@ -75,7 +75,7 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	howett.net/plist v1.0.0 // indirect
-	software.sslmate.com/src/go-pkcs12 v0.2.1 // indirect
+	software.sslmate.com/src/go-pkcs12 v0.3.0 // indirect
 )
 
 go 1.21
