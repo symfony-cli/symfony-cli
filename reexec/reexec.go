@@ -29,11 +29,11 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rjeczalik/notify"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/inotify"
 	"github.com/symfony-cli/symfony-cli/util"
 	"github.com/symfony-cli/terminal"
-	"github.com/syncthing/notify"
 )
 
 const UP = "up"
