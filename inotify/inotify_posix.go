@@ -22,7 +22,7 @@
 
 package inotify
 
-import "github.com/syncthing/notify"
+import "github.com/rjeczalik/notify"
 
 func Watch(path string, c chan<- notify.EventInfo, events ...notify.Event) error {
 	return simpleWatch(path, c, events...)

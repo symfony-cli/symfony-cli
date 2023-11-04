@@ -30,12 +30,12 @@ import (
 
 	"github.com/hpcloud/tail"
 	"github.com/pkg/errors"
+	realinotify "github.com/rjeczalik/notify"
 	"github.com/stoicperlman/fls"
 	"github.com/symfony-cli/symfony-cli/humanlog"
 	"github.com/symfony-cli/symfony-cli/inotify"
 	"github.com/symfony-cli/symfony-cli/local/pid"
 	"github.com/symfony-cli/terminal"
-	realinotify "github.com/syncthing/notify"
 )
 
 type namedLine struct {

@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
-	"github.com/syncthing/notify"
+	"github.com/rjeczalik/notify"
 )
 
 func Watch(path string, c chan<- notify.EventInfo, events ...notify.Event) error {

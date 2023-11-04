@@ -15,6 +15,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pkg/errors v0.9.1
+	github.com/rjeczalik/notify v0.9.3
 	github.com/rs/xid v1.5.0
 	github.com/rs/zerolog v1.31.0
 	github.com/schollz/progressbar/v3 v3.13.1
@@ -25,7 +26,6 @@ require (
 	github.com/symfony-cli/console v1.0.3
 	github.com/symfony-cli/phpstore v1.0.10
 	github.com/symfony-cli/terminal v1.0.4
-	github.com/syncthing/notify v0.0.0-20210616190510-c6b7342338d2
 	golang.org/x/sync v0.4.0
 	golang.org/x/text v0.13.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c

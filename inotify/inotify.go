@@ -19,7 +19,7 @@
 
 package inotify
 
-import "github.com/syncthing/notify"
+import "github.com/rjeczalik/notify"
 
 // Create, Remove, Write and Rename are the only event values guaranteed to be
 // present on all platforms.
