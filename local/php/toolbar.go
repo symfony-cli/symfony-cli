@@ -23,7 +23,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net/http"
 	"regexp"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/symfony-cli/envs"
@@ -32,19 +34,52 @@ import (
 	"golang.org/x/text/language"
 )
 
+func (p *Server) processToolbarInResponse(resp *http.Response) (error, bool) {
+	req := resp.Request
+	env := req.Context().Value(environmentContextKey).(map[string]string)
+	if env["SYMFONY_TUNNEL"] != "" && env["SYMFONY_TUNNEL_ENV"] == "" {
+		p.logger.Warn().Msgf("Tunnel to %s open but environment variables not exposed", env["SYMFONY_TUNNEL_BRAND"])
+	}
+
+	if req.Method != http.MethodGet || req.Header.Get("x-requested-with") != "XMLHttpRequest" {
+		return nil, false
+	}
+
+	if !strings.HasPrefix(resp.Header.Get("content-type"), "text/html") {
+		return nil, false
+	}
+
+	var err error
+	if resp.Body, err = p.tweakToolbar(resp.Body, env); err != nil {
+		return err, true
+	}
+
+	// we changed the body content, so we drop the incoming Content-Length, Go
+	// will recompute it automatically anyway
+	resp.Header.Del("content-length")
+
+	return nil, true
+}
+
 func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.ReadCloser, error) {
 	// CGI adds a \n at the start of the toolbar code
 	bn := bytes.Repeat([]byte{' '}, 1)
 	n, err := body.Read(bn)
 	// if body is empty, return immediately
 	if n == 0 && err == io.EOF {
-		return io.NopCloser(bytes.NewReader([]byte{})), nil
+		return body, nil
 	}
 	if n == len(bn) && err != nil {
 		return nil, errors.WithStack(err)
 	}
 	if bn[0] != '\n' && bn[0] != '<' {
-		return io.NopCloser(io.MultiReader(bytes.NewReader(bn), body)), nil
+		return struct {
+			io.Reader
+			io.Closer
+		}{
+			io.MultiReader(bytes.NewReader(bn), body),
+			body,
+		}, nil
 	}
 
 	toolbarHint := []byte("<!-- START of Symfony Web Debug Toolbar -->")
@@ -57,7 +92,13 @@ func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.Rea
 		return nil, errors.WithStack(err)
 	}
 	if n != len(toolbarHint) || !bytes.Equal(start, toolbarHint) {
-		return io.NopCloser(io.MultiReader(bytes.NewReader(bn), bytes.NewReader(start), body)), nil
+		return struct {
+			io.Reader
+			io.Closer
+		}{
+			io.MultiReader(bytes.NewReader(bn), bytes.NewReader(start), body),
+			body,
+		}, nil
 	}
 
 	logoBg := "sf-toolbar-status-normal"
@@ -157,5 +198,11 @@ $1`)
 	re := regexp.MustCompile(`(<(?:a|button)[^"]+?class="hide-button")`)
 	b = re.ReplaceAll(b, content)
 
-	return io.NopCloser(io.MultiReader(bytes.NewReader(bn), bytes.NewReader(start), bytes.NewReader(b))), nil
+	return struct {
+		io.Reader
+		io.Closer
+	}{
+		io.MultiReader(bytes.NewReader(bn), bytes.NewReader(start), bytes.NewReader(b)),
+		body,
+	}, nil
 }
