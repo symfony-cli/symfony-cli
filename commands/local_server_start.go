@@ -350,7 +350,7 @@ var localServerStartCmd = &console.Command{
 						originalBuildCmdHook := runner.BuildCmdHook
 
 						runner.BuildCmdHook = func(cmd *exec.Cmd) error {
-							cmd.Args = append(cmd.Args, "--detach")
+							cmd.Args = append(cmd.Args, "--wait")
 
 							return originalBuildCmdHook(cmd)
 						}
