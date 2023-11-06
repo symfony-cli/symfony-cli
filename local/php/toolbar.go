@@ -23,9 +23,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/symfony-cli/envs"
@@ -45,7 +45,7 @@ func (p *Server) processToolbarInResponse(resp *http.Response) (error, bool) {
 		return nil, false
 	}
 
-	if !strings.HasPrefix(resp.Header.Get("content-type"), "text/html") {
+	if baseCT, _, _ := mime.ParseMediaType(resp.Header.Get("content-type")); baseCT != "text/html" {
 		return nil, false
 	}
 
