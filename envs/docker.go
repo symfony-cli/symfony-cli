@@ -397,7 +397,7 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 				"scheme": "http",
 			}
 			return rels
-		} else if p.PrivatePort == 27017 {
+		} else if p.PrivatePort == 27017 || p.PrivatePort == 27018 || p.PrivatePort == 27019 {
 			username := ""
 			password := ""
 			path := ""
