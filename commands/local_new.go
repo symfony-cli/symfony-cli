@@ -64,6 +64,7 @@ var localNewCmd = &console.Command{
 		&console.BoolFlag{Name: "full", Usage: "Use github.com/symfony/website-skeleton (deprecated, use --webapp instead)"},
 		&console.BoolFlag{Name: "demo", Usage: "Use github.com/symfony/demo"},
 		&console.BoolFlag{Name: "webapp", Usage: "Add the webapp pack to get a fully configured web project"},
+		&console.BoolFlag{Name: "api", Usage: "Add the api pack to get a fully configured api project"},
 		&console.BoolFlag{Name: "book", Usage: "Clone the Symfony: The Fast Track book project"},
 		&console.BoolFlag{Name: "docker", Usage: "Enable Docker support"},
 		&console.BoolFlag{Name: "no-git", Usage: "Do not initialize Git"},
@@ -131,6 +132,9 @@ var localNewCmd = &console.Command{
 		if c.Bool("webapp") && c.Bool("no-git") {
 			return console.Exit("The --webapp flag cannot be used with --no-git", 1)
 		}
+		if c.Bool("webapp") && c.Bool("api") {
+			return console.Exit("The --api flag cannot be used with --webapp", 1)
+		}
 		withCloud := c.Bool("cloud") || c.Bool("upsun")
 		if len(c.StringSlice("service")) > 0 && !withCloud {
 			return console.Exit("The --service flag cannot be used without --cloud or --upsun", 1)
@@ -170,6 +174,12 @@ var localNewCmd = &console.Command{
 			buf, err := git.AddAndCommit(dir, []string{"."}, "Add webapp packages", c.Bool("debug"))
 			if err != nil {
 				fmt.Print(buf.String())
+				return err
+			}
+		}
+
+		if c.Bool("api") {
+			if err := runComposer(c, dir, []string{"require", "api"}, c.Bool("debug")); err != nil {
 				return err
 			}
 		}
