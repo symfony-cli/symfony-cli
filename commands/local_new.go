@@ -293,6 +293,8 @@ func parseDockerComposeServices(dir string) []*CloudService {
 	if err != nil {
 		return nil
 	}
+
+	seen := map[string]bool{}
 	for _, service := range project.Services {
 		for _, port := range service.Ports {
 			var s *CloudService
@@ -313,7 +315,9 @@ func parseDockerComposeServices(dir string) []*CloudService {
 			} else if port.Target == 9092 {
 				s = &CloudService{Type: "kafka"}
 			}
-			if s != nil {
+			_, done := seen[service.Name]
+			if s != nil && !done {
+				seen[service.Name] = true
 				s.Name = service.Name
 				parts := strings.Split(service.Image, ":")
 				s.Version = regexp.MustCompile(`\d+(\.\d+)?`).FindString(parts[len(parts)-1])
