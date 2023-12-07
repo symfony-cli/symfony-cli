@@ -236,6 +236,10 @@ func getTemplates(brand platformsh.CloudBrand, rootDirectory, chosenTemplateName
 				continue
 			}
 
+			if !strings.HasSuffix(file.Name(), ".yaml") {
+				continue
+			}
+
 			templateName := strings.TrimSuffix(file.Name(), ".yaml")[strings.Index(file.Name(), "-")+1:]
 			isTemplateChosen := chosenTemplateName == templateName
 			if chosenTemplateName != "" && !isTemplateChosen {
