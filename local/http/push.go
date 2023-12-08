@@ -56,6 +56,9 @@ func (s *Server) servePreloadLinks(w http.ResponseWriter, r *http.Request) ([]st
 			if _, exists := resource.params["nopush"]; exists {
 				continue
 			}
+			if rel, exists := resource.params["rel"]; exists && rel != "preload" {
+				continue
+			}
 			if isRemoteResource(resource.uri) {
 				continue
 			}
