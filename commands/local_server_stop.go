@@ -21,6 +21,7 @@ package commands
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/pid"
@@ -47,25 +48,52 @@ var localServerStopCmd = &console.Command{
 		var g errgroup.Group
 		running := 0
 		for _, p := range pids {
-			terminal.Printf("Stopping <comment>%s</>", p.ShortName())
-			if p.IsRunning() {
-				running++
-				g.Go(p.Stop)
-				terminal.Println("")
-			} else {
-				terminal.Println(": <comment>not running</>")
+			if !p.IsRunning() {
+				continue
 			}
+
+			running++
+			g.Go(p.WaitForExit)
+
+			// we first notify the webserver in order to let it know it should
+			// not restart any workers anymore
+			if p.CustomName == pid.WebServerName {
+				p.Signal(os.Interrupt)
+				continue
+			}
+		}
+
+		if running == 0 {
+			ui.Success("The web server is not running")
+			return nil
+		}
+
+		for _, p := range pids {
+			terminal.Printf("Stopping <comment>%s</>", p.ShortName())
+			if !p.IsRunning() {
+				terminal.Println(": <comment>not running</>")
+				continue
+			}
+
+			// we don't "stop" the webserver because it acts as a monitoring
+			// process and as such we already signaled it earlier (see previous
+			// loop). If we do, the signal would be broadcast to the full
+			// process group, breaking some workers (as docker compose for
+			// example) because they would receive too many signals for a single
+			// stop request.
+			if p.CustomName == pid.WebServerName {
+			} else if err := p.Stop(); err != nil {
+				terminal.Printf(": <error>%s</>", err)
+			}
+			terminal.Println("")
 		}
 
 		terminal.Println("")
 		if err := g.Wait(); err != nil {
 			return err
 		}
-		if running == 0 {
-			ui.Success("The web server is not running")
-		} else {
-			ui.Success(fmt.Sprintf("Stopped %d process(es) successfully", running))
-		}
+
+		ui.Success(fmt.Sprintf("Stopped %d process(es) successfully", running))
 		return nil
 	},
 }
