@@ -67,7 +67,7 @@ func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.Rea
 	n, err := body.Read(bn)
 	// if body is empty, return immediately
 	if n == 0 && err == io.EOF {
-		return body, nil
+		return io.NopCloser(bytes.NewReader([]byte{})), nil
 	}
 	if n == len(bn) && err != nil {
 		return nil, errors.WithStack(err)
