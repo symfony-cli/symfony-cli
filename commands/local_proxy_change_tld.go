@@ -20,53 +20,36 @@
 package commands
 
 import (
-	"strings"
-
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/proxy"
 	"github.com/symfony-cli/symfony-cli/util"
 	"github.com/symfony-cli/terminal"
 )
 
-var localProxyAttachDomainCmd = &console.Command{
+var localProxyTLD = &console.Command{
 	Category: "local",
-	Name:     "proxy:domain:attach",
-	Aliases:  []*console.Alias{{Name: "proxy:domain:attach"}, {Name: "proxy:domain:add", Hidden: true}},
-	Usage:    "Attach a local domain for the proxy",
+	Name:     "proxy:change:tld",
+	Aliases:  []*console.Alias{{Name: "proxy:change:tld"}},
+	Usage:    "Change the TLD for the proxy",
 	Flags: []console.Flag{
 		dirFlag,
 	},
 	Args: []*console.Arg{
-		{Name: "tld", Optional: true, Default: ".wip", Description: "The TLD for the project proxy domains", Slice: false},
-		{Name: "domains", Optional: true, Description: "The project's domains", Slice: true},
+		{Name: "tld", Optional: false, Description: "The TLD for the project proxy", Slice: false},
 	},
 	Action: func(c *console.Context) error {
-		projectDir, err := getProjectDir(c.String("dir"))
-		if err != nil {
-			return err
-		}
-
 		homeDir := util.GetHomeDir()
 		config, err := proxy.Load(homeDir)
 		if err != nil {
 			return err
 		}
 
-		var domains []string
-		if strings.HasPrefix(c.Args().Slice()[0], ".") {
-			config.TLD = strings.TrimPrefix(c.Args().Slice()[0], ".")
-			domains = c.Args().Slice()[1:]
-		} else {
-			domains = c.Args().Slice()
-		}
-
-		if err := config.AddDirDomains(projectDir, domains); err != nil {
+		config.TLD = c.Args().Get("tld")
+		if err = config.Save(); err != nil {
 			return err
 		}
-		terminal.Println("<info>The proxy is now configured with the following domains for this directory:</>")
-		for _, domain := range config.GetDomains(projectDir) {
-			terminal.Printfln(" * http://%s", domain)
-		}
+
+		terminal.Printfln("<info>The proxy is now configured with the following tld: %s</>", config.TLD)
 		return nil
 	},
 }
