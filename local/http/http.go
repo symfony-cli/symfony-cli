@@ -203,7 +203,7 @@ func (s *Server) ProxyHandler(w http.ResponseWriter, r *http.Request) {
 	} else if status >= 400 {
 		l = s.Logger.Warn()
 	}
-	l = l.Str("ip", ip).Int("status", status).Str("method", r.Method).Str("scheme", "https").Str("host", "127.0.0.1:8004")
+	l = l.Str("ip", ip).Int("status", status).Str("method", r.Method).Str("scheme", "https").Str("host", r.Host)
 	if len(resources) > 0 {
 		l.Strs("preloaded_resources", resources)
 	}
