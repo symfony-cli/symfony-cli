@@ -88,7 +88,7 @@ var localServerStartCmd = &console.Command{
 			return err
 		}
 		pidFile := pid.New(projectDir, nil)
-		pidFile.CustomName = "Web Server"
+		pidFile.CustomName = pid.WebServerName
 		if pidFile.IsRunning() {
 			ui.Warning("The local web server is already running")
 			return errors.WithStack(printWebServerStatus(projectDir))
@@ -98,15 +98,6 @@ var localServerStartCmd = &console.Command{
 		}
 
 		homeDir := util.GetHomeDir()
-
-		shutdownCh := make(chan bool, 1)
-		go func() {
-			sigsCh := make(chan os.Signal, 1)
-			signal.Notify(sigsCh, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
-			<-sigsCh
-			signal.Stop(sigsCh)
-			shutdownCh <- true
-		}()
 
 		if err := reexec.NotifyForeground("boot"); err != nil {
 			terminal.Logger.Error().Msg("Unable to go to the background: %s.\nAborting\n" + err.Error())
@@ -137,6 +128,15 @@ var localServerStartCmd = &console.Command{
 				return nil
 			}
 		}
+
+		shutdownCh := make(chan bool)
+		go func() {
+			sigsCh := make(chan os.Signal, 10)
+			signal.Notify(sigsCh, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
+			<-sigsCh
+			signal.Stop(sigsCh)
+			shutdownCh <- true
+		}()
 
 		reexec.NotifyForeground("proxy")
 		proxyConfig, err := proxy.Load(homeDir)
@@ -398,8 +398,8 @@ var localServerStartCmd = &console.Command{
 			return err
 		case <-shutdownCh:
 			terminal.Eprintln("")
-			terminal.Eprintln("Shutting down!")
-			if err := cleanupWebServerFiles(projectDir, pidFile); err != nil {
+			terminal.Eprintln("Shutting down! Waiting for all workers to be done.")
+			if err := waitForWorkers(projectDir, pidFile); err != nil {
 				return err
 			}
 			terminal.Eprintln("")
@@ -416,6 +416,25 @@ func cleanupWebServerFiles(projectDir string, pidFile *pid.PidFile) error {
 		if p.IsRunning() {
 			g.Go(p.Stop)
 		}
+	}
+	if err := g.Wait(); err != nil {
+		return err
+	}
+	if err := pidFile.Remove(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForWorkers(projectDir string, pidFile *pid.PidFile) error {
+	pids := pid.AllWorkers(projectDir)
+	if len(pids) < 1 {
+		return nil
+	}
+
+	var g errgroup.Group
+	for _, p := range pids {
+		g.Go(p.WaitForExit)
 	}
 	if err := g.Wait(); err != nil {
 		return err

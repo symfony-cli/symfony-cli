@@ -108,7 +108,7 @@ func (r *Runner) Run() error {
 	cmdExitChan := make(chan error) // receives command exit status, allow to cmd.Wait() in non-blocking way
 	restartChan := make(chan bool)  // receives requests to restart the command
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Kill, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigChan, os.Kill, os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM)
 	defer signal.Stop(sigChan)
 
 	if len(r.pidFile.Watched) > 0 {
@@ -276,6 +276,10 @@ func (r *Runner) buildCmd() (*exec.Cmd, error) {
 	cmd := exec.Command(r.binary, r.pidFile.Args[1:]...)
 	cmd.Env = os.Environ()
 	cmd.Dir = r.pidFile.Dir
+
+	if err := buildCmd(cmd); err != nil {
+		return nil, err
+	}
 
 	if r.mode == RunnerModeOnce {
 		cmd.Stdout = os.Stdout
