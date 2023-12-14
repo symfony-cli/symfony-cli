@@ -98,6 +98,9 @@ func repositoryRootDir(currentDir string) string {
 
 func getProjectID(projectRoot string, debug bool) string {
 	brand := GuessCloudFromDirectory(projectRoot)
+	if brand == NoBrand {
+		return ""
+	}
 	id := getProjectIDFromConfigFile(brand, projectRoot, debug)
 	if id != "" {
 		return id

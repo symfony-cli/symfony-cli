@@ -148,7 +148,8 @@ func extractRelationshipsEnvs(env Environment) Envs {
 				}
 				url += fmt.Sprintf("%s:%s/%s?sslmode=disable", endpoint["host"].(string), formatInt(endpoint["port"]), path)
 				values[fmt.Sprintf("%sURL", prefix)] = url
-				if env.Language() != "golang" {
+				detectedLanguage := env.Language()
+				if detectedLanguage != "golang" {
 					charset := "utf8"
 					if envCharset := os.Getenv(fmt.Sprintf("%sCHARSET", prefix)); envCharset != "" {
 						charset = envCharset
@@ -157,7 +158,7 @@ func extractRelationshipsEnvs(env Environment) Envs {
 					}
 					values[fmt.Sprintf("%sURL", prefix)] = values[fmt.Sprintf("%sURL", prefix)] + "&charset=" + charset
 				}
-				if env.Language() == "php" {
+				if detectedLanguage == "php" {
 					if v, ok := endpoint["type"]; ok {
 						versionKey := fmt.Sprintf("%sVERSION", prefix)
 						if version, hasVersionInEnv := os.LookupEnv(versionKey); hasVersionInEnv {

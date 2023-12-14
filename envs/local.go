@@ -160,8 +160,9 @@ func (l *Local) Relationships() Relationships {
 	project, err := platformsh.ProjectFromDir(l.Dir, l.Debug)
 	if err != nil {
 		if l.Debug {
-			brand := platformsh.GuessCloudFromDirectory(l.Dir)
-			fmt.Fprintf(os.Stderr, "ERROR: unable to get %s project information\n", brand)
+			if brand := platformsh.GuessCloudFromDirectory(l.Dir); brand != platformsh.NoBrand {
+				fmt.Fprintf(os.Stderr, "ERROR: unable to get %s project information\n", brand)
+			}
 		}
 		return dockerRel
 	}
@@ -228,7 +229,9 @@ func (l *Local) Language() string {
 	app := platformsh.GuessSelectedAppByWd(platformsh.FindLocalApplications(projectRoot))
 	if app == nil {
 		if l.Debug {
-			fmt.Fprint(os.Stderr, "ERROR: unable to get project configuration\n")
+			if platformsh.GuessCloudFromDirectory(l.Dir) != platformsh.NoBrand {
+				fmt.Fprint(os.Stderr, "ERROR: unable to get project configuration\n")
+			}
 		}
 		return "php"
 	}

@@ -53,6 +53,7 @@ var PlatformshBrand = CloudBrand{
 	GitRemoteName:     "platform",
 	BinName:           "platform",
 }
+var NoBrand = CloudBrand{}
 
 func (b CloudBrand) String() string {
 	return b.Name
@@ -82,5 +83,5 @@ func GuessCloudFromDirectory(dir string) CloudBrand {
 			return brand
 		}
 	}
-	return PlatformshBrand
+	return NoBrand
 }
