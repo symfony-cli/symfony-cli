@@ -79,7 +79,7 @@ jobs:
                 if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
                 with:
                     version: latest
-                    args: release --rm-dist --snapshot --skip-publish --skip-sign
+                    args: release --clean --snapshot --skip-publish --skip-sign
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             -
@@ -89,7 +89,7 @@ jobs:
                 if: startsWith(github.ref, 'refs/tags/v')
                 with:
                     version: latest
-                    args: release --rm-dist
+                    args: release --clean
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                     TAP_GITHUB_TOKEN: ${{ secrets.GH_PAT }}
