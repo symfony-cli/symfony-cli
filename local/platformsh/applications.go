@@ -34,9 +34,9 @@ var skippedDirectories = map[string]interface{}{
 	"vendor":       nil,
 	"node_modules": nil,
 	"bundles":      nil,
-	"var":          nil,
 	"cache":        nil,
 	"config":       nil,
+	"public":       nil,
 	"tests":        nil,
 	"templates":    nil,
 	"assets":       nil,
@@ -44,6 +44,8 @@ var skippedDirectories = map[string]interface{}{
 	"fonts":        nil,
 	"js":           nil,
 	"src":          nil,
+	"var":          nil,
+	"web":          nil,
 }
 
 type UpsunDotYaml struct {
@@ -102,6 +104,9 @@ func FindLocalApplications(rootDirectory string) LocalApplications {
 	}
 
 	brand := GuessCloudFromDirectory(rootDirectory)
+	if brand == NoBrand {
+		return apps
+	}
 	go func() {
 		for file := range appParser {
 			content, err := os.ReadFile(file)
@@ -198,7 +203,7 @@ func findAppConfigFiles(brand CloudBrand, dir string) []string {
 			}
 
 			// don't go too deep down the tree
-			if len(strings.Split(path[rootDirectoryLen:], separator)) > 5 {
+			if len(strings.Split(path[rootDirectoryLen:], separator)) > 3 {
 				return filepath.SkipDir
 			}
 		}
