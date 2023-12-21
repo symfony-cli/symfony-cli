@@ -20,6 +20,9 @@
 package commands
 
 import (
+	"fmt"
+	"regexp"
+
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/proxy"
 	"github.com/symfony-cli/symfony-cli/util"
@@ -42,6 +45,9 @@ var localProxyTLD = &console.Command{
 		}
 
 		config.TLD = c.Args().Get("tld")
+		if !regexp.MustCompile(`^[a-z0-9-]{2,63}$`).MatchString(config.TLD) {
+			return fmt.Errorf("the TLD must not contain any dot and must be at least two characters long")
+		}
 		if err = config.Save(); err != nil {
 			return err
 		}
