@@ -35,7 +35,7 @@ var localProxyTLD = &console.Command{
 		dirFlag,
 	},
 	Args: []*console.Arg{
-		{Name: "tld", Optional: false, Description: "The TLD for the project proxy", Slice: false},
+		{Name: "tld", Description: "The TLD for the project proxy"},
 	},
 	Action: func(c *console.Context) error {
 		homeDir := util.GetHomeDir()
