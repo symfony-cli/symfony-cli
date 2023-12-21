@@ -46,7 +46,7 @@ var localProxyTLD = &console.Command{
 
 		config.TLD = c.Args().Get("tld")
 		if !regexp.MustCompile(`^[a-z0-9-]{2,63}$`).MatchString(config.TLD) {
-			return fmt.Errorf("the TLD must not contain any dot and must be at least two characters long")
+			return fmt.Errorf("the TLD must only contain lowercase letters, numbers and hyphens")
 		}
 		if err = config.Save(); err != nil {
 			return err
