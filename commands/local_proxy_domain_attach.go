@@ -20,8 +20,6 @@
 package commands
 
 import (
-	"strings"
-
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/proxy"
 	"github.com/symfony-cli/symfony-cli/util"
@@ -37,7 +35,6 @@ var localProxyAttachDomainCmd = &console.Command{
 		dirFlag,
 	},
 	Args: []*console.Arg{
-		{Name: "tld", Optional: true, Default: ".wip", Description: "The TLD for the project proxy domains", Slice: false},
 		{Name: "domains", Optional: true, Description: "The project's domains", Slice: true},
 	},
 	Action: func(c *console.Context) error {
@@ -51,16 +48,7 @@ var localProxyAttachDomainCmd = &console.Command{
 		if err != nil {
 			return err
 		}
-
-		var domains []string
-		if strings.HasPrefix(c.Args().Slice()[0], ".") {
-			config.TLD = strings.TrimPrefix(c.Args().Slice()[0], ".")
-			domains = c.Args().Slice()[1:]
-		} else {
-			domains = c.Args().Slice()
-		}
-
-		if err := config.AddDirDomains(projectDir, domains); err != nil {
+		if err := config.AddDirDomains(projectDir, c.Args().Tail()); err != nil {
 			return err
 		}
 		terminal.Println("<info>The proxy is now configured with the following domains for this directory:</>")
