@@ -31,7 +31,7 @@ import (
 
 var localProxyTLD = &console.Command{
 	Category: "local",
-	Name:     "proxy:change:tld",
+	Name:     "proxy:tld",
 	Aliases:  []*console.Alias{{Name: "proxy:change:tld"}},
 	Usage:    "Change the TLD for the proxy",
 	Args: []*console.Arg{
