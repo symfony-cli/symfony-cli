@@ -52,7 +52,7 @@ var localProxyTLD = &console.Command{
 			return err
 		}
 
-		terminal.Printfln("<info>The proxy is now configured with the following tld: %s</>", config.TLD)
+		terminal.Printfln("<info>The proxy is now configured with the following TLD: %s</>", config.TLD)
 		return nil
 	},
 }
