@@ -22,12 +22,40 @@
 
 package pid
 
-import "syscall"
+import (
+	"errors"
+	"syscall"
+	"time"
+)
 
 func kill(pid int) error {
 	pgid, err := syscall.Getpgid(pid)
 	if err != nil {
 		return err
 	}
-	return syscall.Kill(-pgid, syscall.SIGTERM)
+
+	// Send SIGTERM to the process group
+	err = syscall.Kill(-pgid, syscall.SIGINT)
+	if err != nil {
+		return err
+	}
+
+	// Wait for the process group to exit gracefully with a timeout of 5 seconds
+	done := make(chan error, 1)
+	go func() {
+		_, err := syscall.Wait4(-pgid, nil, 0, nil)
+		done <- err
+	}()
+
+	select {
+	case err := <-done:
+		if err != nil {
+			return err
+		}
+	case <-time.After(5 * time.Second):
+		return errors.New("timeout waiting for process group to exit gracefully")
+	}
+
+	// Send SIGKILL to the process group
+	return syscall.Kill(-pgid, syscall.SIGKILL)
 }
