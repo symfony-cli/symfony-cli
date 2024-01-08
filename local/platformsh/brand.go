@@ -53,7 +53,17 @@ var PlatformshBrand = CloudBrand{
 	GitRemoteName:     "platform",
 	BinName:           "platform",
 }
-var NoBrand = CloudBrand{}
+
+// NoBrand is used when there is no explicit setting for the brand.
+var NoBrand = CloudBrand{
+	Name:              "",
+	ProjectConfigPath: "",
+	CLIConfigPath:     "",
+	CLIPrefix:         "PLATFORMSH_CLI_",
+	CommandPrefix:     "cloud:",
+	GitRemoteName:     "",
+	BinName:           "platform",
+}
 
 func (b CloudBrand) String() string {
 	return b.Name
