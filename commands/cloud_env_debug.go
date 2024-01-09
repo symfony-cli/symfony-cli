@@ -92,21 +92,21 @@ var cloudEnvDebugCmd = &console.Command{
 		terminal.Println("Setting APP_ENV and APP_DEBUG to dev/debug (can take some time, --debug to tail commands)")
 		if out, ok := psh.RunInteractive(terminal.Logger, "", append(defaultArgs, prefix+"var:create", "--name=env:APP_ENV", "--value=dev"), c.Bool("debug"), nil); !ok {
 			if !strings.Contains(out.String(), "already exists on the environment") {
-				return errors.New("An error occurred while adding APP_ENV")
+				return errors.New("An error occurred while adding APP_ENV: it already exists on the environment")
 			}
 			if out, ok := psh.RunInteractive(terminal.Logger, "", append(defaultArgs, prefix+"var:update", "--value=dev", "env:APP_ENV"), c.Bool("debug"), nil); !ok {
 				if !strings.Contains(out.String(), "No changes were provided") {
-					return errors.New("An error occurred while adding APP_ENV")
+					return errors.New("An error occurred while adding APP_ENV: no changes provided")
 				}
 			}
 		}
 		if out, ok := psh.RunInteractive(terminal.Logger, "", append(defaultArgs, prefix+"var:create", "--name=env:APP_DEBUG", "--value=1"), c.Bool("debug"), nil); !ok {
 			if !strings.Contains(out.String(), "already exists on the environment") {
-				return errors.New("An error occurred while adding APP_DEBUG")
+				return errors.New("An error occurred while adding APP_DEBUG: it already exists on the environment")
 			}
 			if out, ok := psh.RunInteractive(terminal.Logger, "", append(defaultArgs, prefix+"var:update", "--value=1", "env:APP_DEBUG"), c.Bool("debug"), nil); !ok {
 				if !strings.Contains(out.String(), "No changes were provided") {
-					return errors.New("An error occurred while adding APP_DEBUG")
+					return errors.New("An error occurred while adding APP_DEBUG: no changes provided")
 				}
 			}
 		}
