@@ -1,0 +1,65 @@
+name: slug
+
+type: php:8.0
+
+dependencies:
+    php:
+        composer/composer: "^2"
+
+runtime:
+    extensions:
+        - apcu
+        - blackfire
+        - ctype
+        - iconv
+        - mbstring
+        - pdo_pgsql
+        - sodium
+        - xsl
+        
+
+variables:
+    php:
+        opcache.preload: config/preload.php
+build:
+    flavor: none
+
+disk: 1024
+
+web:
+    locations:
+        "/":
+            root: "public"
+            expires: 1h
+            passthru: "/index.php"
+
+mounts:
+    "/var": { source: local, source_path: var }
+    
+
+relationships:
+    foo: "foo:bar"
+    foo1: "foo1:bar1"
+    foo2: "foo2:postgresql"
+    
+hooks:
+    build: |
+        set -x -e
+
+        curl -fs https://get.symfony.com/cloud/configurator | bash
+        
+        NODE_VERSION=18 symfony-build
+
+    deploy: |
+        set -x -e
+
+        symfony-deploy
+
+crons:
+    security-check:
+        # Check that no security issues have been found for PHP packages deployed in production
+        # See https://github.com/fabpot/local-php-security-checker
+        spec: '50 23 * * *'
+        cmd: if [ "$PLATFORM_ENVIRONMENT_TYPE" = "production" ]; then croncape php-security-checker; fi
+
+

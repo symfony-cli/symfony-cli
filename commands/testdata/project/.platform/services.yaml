@@ -1,0 +1,12 @@
+
+foo:
+    type: bar:baz
+
+foo1:
+    type: bar1:baz1
+
+foo2:
+    type: postgresql:baz2
+    disk: 1024
+
+
