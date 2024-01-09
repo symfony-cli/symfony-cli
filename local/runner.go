@@ -295,7 +295,7 @@ func (r *Runner) buildCmd() (*exec.Cmd, error) {
 	cmd.Env = os.Environ()
 	cmd.Dir = r.pidFile.Dir
 
-	if err := buildCmd(cmd, r.mode == RunnerModeOnce); err != nil {
+	if err := buildCmd(cmd, r.mode == RunnerModeOnce && terminal.Stdin.IsInteractive()); err != nil {
 		return nil, err
 	}
 
