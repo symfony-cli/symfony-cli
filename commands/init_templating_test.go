@@ -20,118 +20,66 @@
 package commands
 
 import (
+	"bytes"
+	"fmt"
+	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/symfony-cli/symfony-cli/local/platformsh"
 )
 
-var validurlcases = []string{
-	"http://symfony.com",
-	"https://symfony.com",
-	"https://symfony.com/blog",
-	"https://symfony.com/blog?foo=bar",
-	"https://foo:bar@symfony.com/blog?foo=bar",
-}
-
-var invalidurlcases = []string{
-	"symfony.com",
-	"/Users/tucksaun/Work/src/github.com/symfony-cli/symfony-cli/cloud/init-templates/00-flex.yaml",
-	"c:\\windows\test.yaml",
-}
-
-func TestIsValidUrl(t *testing.T) {
-	for _, test := range validurlcases {
-		if !isValidURL(test) {
-			t.Errorf("isValidUrl(%q): got false, expected true", test)
-		}
+func TestCreateRequiredFilesProject(t *testing.T) {
+	projectDir, err := os.MkdirTemp("", "clitest")
+	if err != nil {
+		panic(err)
 	}
-	for _, test := range invalidurlcases {
-		if isValidURL(test) {
-			t.Errorf("isValidUrl(%q): got true, expected false", test)
-		}
-	}
-}
-
-var validfilecases = []string{
-	"init_templating.go",
-}
-
-var invalidfilecases = []string{
-	"../cmd",
-	"foo.go",
-	"http://symfony.com",
-	"https://symfony.com",
-	"https://symfony.com/blog",
-	"https://symfony.com/blog?foo=bar",
-	"https://foo:bar@symfony.com/blog?foo=bar",
-}
-
-func TestIsValidFilePath(t *testing.T) {
-	for _, test := range validfilecases {
-		if !isValidFilePath(test) {
-			t.Errorf("isValidFilePath(%q): got false, expected true", test)
-		}
-	}
-	for _, test := range invalidfilecases {
-		if isValidFilePath(test) {
-			t.Errorf("isValidFilePath(%q): got true, expected false", test)
-		}
-	}
-}
-
-func TestHasComposerPackage(t *testing.T) {
-	for pkg, expected := range map[string]bool{
-		"foo/bar":         false,
-		"symfony/symfony": false,
-	} {
-		result := hasComposerPackage(filepath.Join("tests", "composer_packages", "none"), pkg)
-
-		if result != expected {
-			t.Errorf("hasComposerPackage(none/%q): got %v, expected %v", pkg, result, expected)
-		}
+	slug := "slug"
+	services := []*CloudService{
+		{
+			Name:    "foo",
+			Type:    "bar",
+			Version: "baz",
+		},
+		{
+			Name:    "foo1",
+			Type:    "bar1",
+			Version: "baz1",
+		},
+		{
+			Name:    "foo2",
+			Type:    "postgresql",
+			Version: "baz2",
+		},
 	}
 
-	packages := map[string]bool{
-		"foo/bar":        false,
-		"symfony/flex":   true,
-		"symfony/dotenv": true,
+	createdFiles, err := createRequiredFilesProject(platformsh.PlatformshBrand, projectDir, slug, "", "8.0", services, false, true)
+	if err != nil {
+		panic(err)
 	}
 
-	for _, testCase := range []string{"lock", "json", "both"} {
-		for pkg, expected := range packages {
-			result := hasComposerPackage(filepath.Join("tests", "composer_packages", testCase), pkg)
+	fmt.Printf("%v", createdFiles)
 
-			if result != expected {
-				t.Errorf("hasComposerPackage(%q/%q): got %v, expected %v", testCase, pkg, result, expected)
-			}
-		}
+	path := filepath.Join(projectDir, ".platform", "services.yaml")
+	result, err := os.ReadFile(path)
+	if err != nil {
+		panic(err)
 	}
-}
+	expected := `
+foo:
+    type: bar:baz
 
-func TestHasPHPExtension(t *testing.T) {
-	for pkg, expected := range map[string]bool{
-		"iconv": false,
-		"pdo":   false,
-	} {
-		result := hasPHPExtension(filepath.Join("tests", "composer_packages", "none"), pkg)
+foo1:
+    type: bar1:baz1
 
-		if result != expected {
-			t.Errorf("hasPHPExtension(none/%q): got %v, expected %v", pkg, result, expected)
-		}
-	}
-
-	exts := map[string]bool{
-		"pdo":       false,
-		"iconv":     true,
-		"ext-iconv": true,
-	}
-
-	for _, testCase := range []string{"lock", "json", "both"} {
-		for ext, expected := range exts {
-			result := hasPHPExtension(filepath.Join("tests", "composer_packages", testCase), ext)
-
-			if result != expected {
-				t.Errorf("hasPHPExtension(%q/%q): got %v, expected %v", testCase, ext, result, expected)
-			}
-		}
+foo2:
+    type: postgresql:baz2
+    disk: 1024
+`
+	result = bytes.TrimSpace(result)
+	expected = strings.TrimSpace(expected)
+	if string(result) != expected {
+		t.Errorf("services.yaml: got %v, expected %v", string(result), expected)
 	}
 }

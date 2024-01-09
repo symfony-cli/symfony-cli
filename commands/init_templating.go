@@ -291,7 +291,7 @@ func getTemplates(brand platformsh.CloudBrand, rootDirectory, chosenTemplateName
     type: {{ $service.Type }}{{ if $service.Version }}:{{ $service.Version }}{{ end }}
 {{- if index $.ServiceDiskSizes $service.Type }}
     disk: {{ index $.ServiceDiskSizes $service.Type }}
-{{ end -}}
+{{ end }}
 
 {{ end -}}
 `
