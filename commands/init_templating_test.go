@@ -21,7 +21,6 @@ package commands
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,10 +30,7 @@ import (
 )
 
 func TestCreateRequiredFilesProject(t *testing.T) {
-	projectDir, err := os.MkdirTemp("", "clitest")
-	if err != nil {
-		panic(err)
-	}
+	projectDir := "./testdata/project"
 	slug := "slug"
 	services := []*CloudService{
 		{
@@ -54,12 +50,9 @@ func TestCreateRequiredFilesProject(t *testing.T) {
 		},
 	}
 
-	createdFiles, err := createRequiredFilesProject(platformsh.PlatformshBrand, projectDir, slug, "", "8.0", services, false, true)
-	if err != nil {
+	if _, err := createRequiredFilesProject(platformsh.PlatformshBrand, projectDir, slug, "", "8.0", services, false, true); err != nil {
 		panic(err)
 	}
-
-	fmt.Printf("%v", createdFiles)
 
 	path := filepath.Join(projectDir, ".platform", "services.yaml")
 	result, err := os.ReadFile(path)
@@ -80,6 +73,55 @@ foo2:
 	result = bytes.TrimSpace(result)
 	expected = strings.TrimSpace(expected)
 	if string(result) != expected {
-		t.Errorf("services.yaml: got %v, expected %v", string(result), expected)
+		t.Errorf("platform/services.yaml: got %v, expected %v", string(result), expected)
+	}
+}
+
+func TestCreateRequiredFilesProjectForUpsun(t *testing.T) {
+	projectDir := "./testdata/project"
+	slug := "slug"
+	services := []*CloudService{
+		{
+			Name:    "foo",
+			Type:    "bar",
+			Version: "baz",
+		},
+		{
+			Name:    "foo1",
+			Type:    "bar1",
+			Version: "baz1",
+		},
+		{
+			Name:    "foo2",
+			Type:    "postgresql",
+			Version: "baz2",
+		},
+	}
+
+	if _, err := createRequiredFilesProject(platformsh.UpsunBrand, projectDir, slug, "", "8.0", services, false, true); err != nil {
+		panic(err)
+	}
+
+	path := filepath.Join(projectDir, ".upsun", "config.yaml")
+	result, err := os.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	expected := `
+services:
+	foo:
+		type: bar:baz
+
+	foo1:
+		type: bar1:baz1
+
+	foo2:
+		type: postgresql:baz2
+		disk: 1024
+`
+	result = bytes.TrimSpace(result)
+	expected = strings.TrimSpace(expected)
+	if strings.Contains(string(result), expected) {
+		t.Errorf("upsun/config.yaml: got %v, expected %v", string(result), expected)
 	}
 }
