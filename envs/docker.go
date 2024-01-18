@@ -199,7 +199,7 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 	for _, p := range exposedPorts {
 		rels := make(map[string]map[string]interface{})
 		if p.PrivatePort == 1025 {
-			// recommended image: schickling/mailcatcher
+			// recommended image: sj26/mailcatcher or axllent/mailpit (default now)
 			for _, pw := range exposedPorts {
 				if pw.PrivatePort == 1080 || pw.PrivatePort == 8025 {
 					rels["-web"] = map[string]interface{}{
