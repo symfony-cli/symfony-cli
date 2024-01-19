@@ -28,7 +28,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/hpcloud/tail"
+	"github.com/nxadm/tail"
 	"github.com/pkg/errors"
 	realinotify "github.com/rjeczalik/notify"
 	"github.com/stoicperlman/fls"
