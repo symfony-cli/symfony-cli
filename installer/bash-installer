@@ -23,6 +23,7 @@ CLI_EXECUTABLE="symfony"
 CLI_TMP_NAME="$CLI_EXECUTABLE-"$(date +"%s")
 CLI_NAME="Symfony CLI"
 CLI_DOWNLOAD_URL_PATTERN="https://github.com/symfony-cli/symfony-cli/releases/latest/download/symfony-cli_~platform~.tar.gz"
+CLI_TMPDIR="${TMPDIR:-/tmp}"
 
 function output {
     style_start=""
@@ -166,10 +167,10 @@ latest_url=${CLI_DOWNLOAD_URL_PATTERN/~platform~/${platform}}
 output "  Downloading ${latest_url}...";
 case $downloader in
     "curl")
-        curl --fail --location "${latest_url}" > "/tmp/${CLI_TMP_NAME}.tar.gz"
+        curl --fail --location "${latest_url}" > "${CLI_TMPDIR}/${CLI_TMP_NAME}.tar.gz"
         ;;
     "wget")
-        wget -q --show-progress "${latest_url}" -O "/tmp/${CLI_TMP_NAME}.tar.gz"
+        wget -q --show-progress "${latest_url}" -O "${CLI_TMPDIR}/${CLI_TMP_NAME}.tar.gz"
         ;;
 esac
 
@@ -180,8 +181,8 @@ if [ $? != 0 ]; then
 fi
 
 output "  Uncompress binary..."
-tar -xz --directory "/tmp" -f "/tmp/${CLI_TMP_NAME}.tar.gz"
-rm "/tmp/${CLI_TMP_NAME}.tar.gz"
+tar -xz --directory "${CLI_TMPDIR}" -f "${CLI_TMPDIR}/${CLI_TMP_NAME}.tar.gz"
+rm "${CLI_TMPDIR}/${CLI_TMP_NAME}.tar.gz"
 
 if [ ! -d "${binary_dest}" ]; then
     if ! mkdir -p "${binary_dest}"; then
@@ -195,11 +196,11 @@ else
     output "  Installing the binary into your home directory..."
 fi
 
-if mv "/tmp/${CLI_EXECUTABLE}" "${binary_dest}/${CLI_EXECUTABLE}"; then
+if mv "${CLI_TMPDIR}/${CLI_EXECUTABLE}" "${binary_dest}/${CLI_EXECUTABLE}"; then
     output "  The binary was saved to: ${binary_dest}/${CLI_EXECUTABLE}"
 else
     output "  Failed to move the binary to ${binary_dest}." "error"
-    rm "/tmp/${CLI_EXECUTABLE}"
+    rm "${CLI_TMPDIR}/${CLI_EXECUTABLE}"
     exit 1
 fi
 
