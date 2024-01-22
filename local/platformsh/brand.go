@@ -58,7 +58,7 @@ var PlatformshBrand = CloudBrand{
 var NoBrand = CloudBrand{
 	Name:              "",
 	ProjectConfigPath: "",
-	CLIConfigPath:     "",
+	CLIConfigPath:     ".platformsh",
 	CLIPrefix:         "PLATFORMSH_CLI_",
 	CommandPrefix:     "cloud:",
 	GitRemoteName:     "",
