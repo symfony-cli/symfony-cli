@@ -112,7 +112,7 @@ func CheckRequirements() (bool, error) {
 					ready = false
 					terminal.Printfln(`<error>[KO]</> PHP extension "%s" <error>not found</>, please install it - <comment>%s</>`, ext, reason)
 				} else {
-					terminal.Printfln(`<warning>[KO]</> PHP extension "%s" <warning>not found</>, <comment>%s</>`, ext, reason)
+					terminal.Printfln(`<info>[OK]</> PHP extension "%s" <warning>not found</>, <comment>%s</>`, ext, reason)
 				}
 			} else {
 				terminal.Printfln(`<info>[OK]</> PHP extension "%s" installed - <comment>%s</>`, ext, reason)
