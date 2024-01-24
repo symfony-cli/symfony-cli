@@ -122,9 +122,6 @@ func extractRelationshipsEnvs(env Environment) Envs {
 			prefix = strings.Replace(prefix, "-", "_", -1)
 
 			if scheme == "pgsql" || scheme == "mysql" {
-				if !isMaster(endpoint) {
-					continue
-				}
 				if scheme == "pgsql" {
 					// works for both Doctrine and Go
 					endpoint["scheme"] = "postgres"
