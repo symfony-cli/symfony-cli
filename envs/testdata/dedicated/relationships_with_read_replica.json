@@ -1,0 +1,46 @@
+{
+    "db": [
+        {
+        "username": "mysql",
+        "scheme": "mysql",
+        "service": "db",
+        "fragment": null,
+        "ip": "169.254.193.18",
+        "hostname": "x2.db.service.._.platform.sh",
+        "port": 3306,
+        "cluster": "zz-master-7rqtwti",
+        "host": "db.internal",
+        "rel": "mysql",
+        "path": "main",
+        "query": {
+            "is_master": true
+        },
+        "password": "xxx",
+        "type": "mariadb:10.6",
+        "public": false,
+        "host_mapped": false
+        }
+    ],
+    "dbread": [
+        {
+        "username": "mysql",
+        "scheme": "mysql",
+        "service": "db",
+        "fragment": null,
+        "ip": "169.254.150.110",
+        "hostname": "x2.db.service.._.platform.sh",
+        "port": 3306,
+        "cluster": "zz-master-7rqtwti",
+        "host": "dbread.internal",
+        "rel": "mysql-replica",
+        "path": "main",
+        "query": {
+            "is_master": false
+        },
+        "password": "xxx",
+        "type": "mariadb:10.6",
+        "public": false,
+        "host_mapped": false
+        }
+    ]
+}

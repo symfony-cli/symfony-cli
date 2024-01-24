@@ -20,6 +20,7 @@
 package envs
 
 import (
+	"encoding/base64"
 	"os"
 
 	. "gopkg.in/check.v1"
@@ -256,6 +257,7 @@ func (s *RemoteSuite) TestDefaultRoute(c *C) {
 
 func (s *RemoteSuite) TestRelationships(c *C) {
 	r := &Remote{}
+	os.Setenv("PLATFORM_RELATIONSHIPS", "")
 	c.Assert(extractRelationshipsEnvs(r), DeepEquals, Envs{})
 
 	os.Setenv("PLATFORM_RELATIONSHIPS", "eyJzZWN1cml0eS1zZXJ2ZXIiOiBbeyJpcCI6ICIxNjkuMjU0LjI2LjIzMSIsICJob3N0IjogInNlY3VyaXR5LXNlcnZlci5pbnRlcm5hbCIsICJzY2hlbWUiOiAiaHR0cCIsICJwb3J0IjogODAsICJyZWwiOiAiaHR0cCJ9XSwgImRhdGFiYXNlIjogW3sidXNlcm5hbWUiOiAibWFpbiIsICJzY2hlbWUiOiAicGdzcWwiLCAiaXAiOiAiMTY5LjI1NC4xMjAuNDgiLCAiaG9zdCI6ICJkYXRhYmFzZS5pbnRlcm5hbCIsICJyZWwiOiAicG9zdGdyZXNxbCIsICJwYXRoIjogIm1haW4iLCAicXVlcnkiOiB7ImlzX21hc3RlciI6IHRydWV9LCAicGFzc3dvcmQiOiAibWFpbiIsICJwb3J0IjogNTQzMn1dfQ==")
@@ -402,4 +404,20 @@ func (s *RemoteSuite) TestRelationships(c *C) {
 		"DATABASE_DATABASE": "main",
 		"DATABASE_NAME":     "main",
 	})
+}
+
+func (s *RemoteSuite) TestMySQLReadReplicaForDedicated(c *C) {
+	r := &Remote{}
+	value, err := os.ReadFile("testdata/dedicated/relationships_with_read_replica.json")
+	if err != nil {
+		panic(err)
+	}
+	if err := os.Setenv("PLATFORM_RELATIONSHIPS", base64.StdEncoding.EncodeToString(value)); err != nil {
+		panic(err)
+	}
+
+	e := extractRelationshipsEnvs(r)
+
+	c.Assert("mysql://mysql:xxx@dbread.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.6.0-MariaDB", DeepEquals, e["DBREAD_URL"])
+	c.Assert("mysql://mysql:xxx@db.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.6.0-MariaDB", DeepEquals, e["DB_URL"])
 }
