@@ -1821,7 +1821,6 @@ var Commands = []*console.Command{
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "org", Aliases: []string{"o"},},
 			&console.StringFlag{Name: "permission",},
-			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
 		},
 	},
 	{
@@ -1834,7 +1833,6 @@ var Commands = []*console.Command{
 		Usage:    "Remove a user from an organization",
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "org", Aliases: []string{"o"},},
-			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
 		},
 	},
 	{
@@ -1851,7 +1849,6 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.BoolFlag{Name: "no-header",},
 			&console.StringFlag{Name: "org", Aliases: []string{"o"},},
-			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
 			&console.StringFlag{Name: "property", Aliases: []string{"P"},},
 		},
 	},
@@ -1873,7 +1870,6 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.BoolFlag{Name: "no-header",},
 			&console.StringFlag{Name: "org", Aliases: []string{"o"},},
-			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
 			&console.BoolFlag{Name: "reverse",},
 			&console.StringFlag{Name: "sort", DefaultValue: "created_at",},
 		},
@@ -1896,9 +1892,6 @@ var Commands = []*console.Command{
 			&console.BoolFlag{Name: "list-all",},
 			&console.BoolFlag{Name: "no-header",},
 			&console.StringFlag{Name: "org", Aliases: []string{"o"},},
-			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
-			&console.BoolFlag{Name: "reverse",},
-			&console.BoolFlag{Name: "sort-granted",},
 		},
 	},
 	{
@@ -1912,7 +1905,6 @@ var Commands = []*console.Command{
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "org", Aliases: []string{"o"},},
 			&console.StringFlag{Name: "permission",},
-			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
 		},
 	},
 	{
@@ -1944,7 +1936,6 @@ var Commands = []*console.Command{
 			&console.BoolFlag{Name: "no-set-remote",},
 			&console.StringFlag{Name: "org", Aliases: []string{"o"},},
 			&console.StringFlag{Name: "plan",},
-			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
 			&console.StringFlag{Name: "region",},
 			&console.BoolFlag{Name: "set-remote",},
 			&console.StringFlag{Name: "storage",},
