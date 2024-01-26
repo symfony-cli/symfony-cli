@@ -94,3 +94,97 @@ func (s *ScenvSuite) TestElasticsearchURLEndsWithTrailingSlash(c *C) {
 	rels = extractRelationshipsEnvs(env)
 	c.Assert(rels["ELASTICSEARCH_URL"], Equals, "http://localhost:9200")
 }
+
+func (s *ScenvSuite) TestDockerDatabaseURLs(c *C) {
+	env := fakeEnv{
+		Rels: map[string][]map[string]interface{}{
+			"mysql": {
+				map[string]interface{}{
+					"host":     "127.0.0.1",
+					"ip":       "127.0.0.1",
+					"password": "!ChangeMe!",
+					"path":     "root",
+					"port":     "56614",
+					"query":    map[string]bool{"is_master": true},
+					"rel":      "mysql",
+					"scheme":   "mysql",
+					"username": "root",
+					"version":  "10.0.38+maria-1~xenial",
+				},
+			},
+			"postgresql": {
+				map[string]interface{}{
+					"host":     "127.0.0.1",
+					"ip":       "127.0.0.1",
+					"password": "main",
+					"path":     "main",
+					"port":     "63574",
+					"query":    map[string]bool{"is_master": true},
+					"rel":      "pgsql",
+					"scheme":   "pgsql",
+					"username": "main",
+					"version":  "13.13",
+				},
+			},
+		},
+	}
+
+	rels := extractRelationshipsEnvs(env)
+	c.Assert(rels["MYSQL_URL"], Equals, "mysql://root:!ChangeMe!@127.0.0.1:56614/root?sslmode=disable&charset=utf8mb4&serverVersion=10.0.38%2Bmaria-1~xenial")
+	c.Assert(rels["POSTGRESQL_URL"], Equals, "postgres://main:main@127.0.0.1:63574/main?sslmode=disable&charset=utf8&serverVersion=13.13")
+}
+
+func (s *ScenvSuite) TestCloudTunnelDatabaseURLs(c *C) {
+	env := fakeEnv{
+		Rels: map[string][]map[string]interface{}{
+			"mysql": {
+				{
+					"cluster":      "d3xkaapt4cyik-main-bvxea6i",
+					"epoch":        0,
+					"fragment":     interface{}(nil),
+					"host":         "127.0.0.1",
+					"host_mapped":  false,
+					"hostname":     "vd4wb3toqpyybms2qktcjmdng4.database.service._.eu-5.platformsh.site",
+					"instance_ips": []interface{}{"249.175.144.213"},
+					"ip":           "127.0.0.1",
+					"password":     "",
+					"path":         "main",
+					"port":         "30001",
+					"public":       false,
+					"query":        map[string]interface{}{"is_master": true},
+					"rel":          "mysql",
+					"scheme":       "mysql",
+					"service":      "database",
+					"type":         "mysql:10.0",
+					"username":     "user",
+				},
+			},
+			"postgresql": {
+				{
+					"cluster":      "xxx-master-yyy",
+					"epoch":        0,
+					"fragment":     interface{}(nil),
+					"host":         "127.0.0.1",
+					"host_mapped":  false,
+					"hostname":     "xxx.pgsqldb.service._.fr-4.platformsh.site",
+					"instance_ips": []interface{}{"240.7.208.71"},
+					"ip":           "127.0.0.1",
+					"password":     "main",
+					"path":         "main",
+					"port":         "30000",
+					"public":       false,
+					"query":        map[string]interface{}{"is_master": true},
+					"rel":          "postgresql",
+					"scheme":       "pgsql",
+					"service":      "pgsqldb",
+					"type":         "postgresql:13",
+					"username":     "main",
+				},
+			},
+		},
+	}
+
+	rels := extractRelationshipsEnvs(env)
+	c.Assert(rels["MYSQL_URL"], Equals, "mysql://user@127.0.0.1:30001/main?sslmode=disable&charset=utf8mb4&serverVersion=10.0.0-MariaDB")
+	c.Assert(rels["POSTGRESQL_URL"], Equals, "postgres://main:main@127.0.0.1:30000/main?sslmode=disable&charset=utf8&serverVersion=13")
+}

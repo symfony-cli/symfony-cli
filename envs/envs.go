@@ -22,6 +22,7 @@ package envs
 import (
 	"encoding/json"
 	"fmt"
+	neturl "net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -156,11 +157,11 @@ func extractRelationshipsEnvs(env Environment) Envs {
 					values[fmt.Sprintf("%sURL", prefix)] = values[fmt.Sprintf("%sURL", prefix)] + "&charset=" + charset
 				}
 				if detectedLanguage == "php" {
+					versionKey := fmt.Sprintf("%sVERSION", prefix)
+					// type is available when in the cloud or locally via a tunnel
 					if v, ok := endpoint["type"]; ok {
-						versionKey := fmt.Sprintf("%sVERSION", prefix)
 						if version, hasVersionInEnv := os.LookupEnv(versionKey); hasVersionInEnv {
 							values[versionKey] = version
-							values[fmt.Sprintf("%sURL", prefix)] = values[fmt.Sprintf("%sURL", prefix)] + "&serverVersion=" + values[versionKey]
 						} else if strings.Contains(v.(string), ":") {
 							version := strings.SplitN(v.(string), ":", 2)[1]
 
@@ -174,8 +175,15 @@ func extractRelationshipsEnvs(env Environment) Envs {
 							}
 
 							values[versionKey] = version
-							values[fmt.Sprintf("%sURL", prefix)] = values[fmt.Sprintf("%sURL", prefix)] + "&serverVersion=" + values[versionKey]
 						}
+					} else if env.Local() {
+						// Docker support
+						if v, ok := endpoint["version"]; ok {
+							values[versionKey] = v.(string)
+						}
+					}
+					if v, ok := values[versionKey]; ok && v != "" {
+						values[fmt.Sprintf("%sURL", prefix)] += "&serverVersion=" + neturl.QueryEscape(v)
 					}
 				}
 				values[fmt.Sprintf("%sSERVER", prefix)] = formatServer(endpoint)
