@@ -39,10 +39,14 @@ func (s *ScenvSuite) TestAppID(c *C) {
 }
 
 type fakeEnv struct {
-	Rels Relationships
+	Rels     Relationships
+	RootPath string
 }
 
 func (f fakeEnv) Path() string {
+	if f.RootPath != "" {
+		return f.RootPath
+	}
 	return "/dev/null"
 }
 
@@ -187,4 +191,37 @@ func (s *ScenvSuite) TestCloudTunnelDatabaseURLs(c *C) {
 	rels := extractRelationshipsEnvs(env)
 	c.Assert(rels["MYSQL_URL"], Equals, "mysql://user@127.0.0.1:30001/main?sslmode=disable&charset=utf8mb4&serverVersion=10.0.0-MariaDB")
 	c.Assert(rels["POSTGRESQL_URL"], Equals, "postgres://main:main@127.0.0.1:30000/main?sslmode=disable&charset=utf8&serverVersion=13")
+}
+
+func (s *ScenvSuite) TestDoctrineConfigTakesPrecedenceDatabaseURLs(c *C) {
+	env := fakeEnv{
+		Rels: map[string][]map[string]interface{}{
+			"mysql": {
+				{
+					"cluster":      "d3xkaapt4cyik-main-bvxea6i",
+					"epoch":        0,
+					"fragment":     interface{}(nil),
+					"host":         "127.0.0.1",
+					"host_mapped":  false,
+					"hostname":     "vd4wb3toqpyybms2qktcjmdng4.database.service._.eu-5.platformsh.site",
+					"instance_ips": []interface{}{"249.175.144.213"},
+					"ip":           "127.0.0.1",
+					"password":     "",
+					"path":         "main",
+					"port":         "30001",
+					"public":       false,
+					"query":        map[string]interface{}{"is_master": true},
+					"rel":          "mysql",
+					"scheme":       "mysql",
+					"service":      "database",
+					"type":         "mysql:10.0",
+					"username":     "user",
+				},
+			},
+		},
+		RootPath: "testdata/doctrine-project",
+	}
+
+	rels := extractRelationshipsEnvs(env)
+	c.Assert(rels["MYSQL_URL"], Equals, "mysql://user@127.0.0.1:30001/main?sslmode=disable&charset=utf8mb4&serverVersion=8.0.33")
 }

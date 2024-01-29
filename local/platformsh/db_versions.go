@@ -1,4 +1,4 @@
-package commands
+package platformsh
 
 import (
 	"errors"
@@ -11,7 +11,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func readDBVersionFromPlatformServiceYAML(projectDir string) (string, string, error) {
+func ReadDBVersionFromPlatformServiceYAML(projectDir string) (string, string, error) {
 	servicesYAML, err := os.ReadFile(filepath.Join(projectDir, ".platform", "services.yaml"))
 	if err != nil {
 		// no services.yaml or unreadable
@@ -42,7 +42,7 @@ func readDBVersionFromPlatformServiceYAML(projectDir string) (string, string, er
 	return dbName, dbVersion, nil
 }
 
-func readDBVersionFromDotEnv(projectDir string) (string, error) {
+func ReadDBVersionFromDotEnv(projectDir string) (string, error) {
 	path := filepath.Join(projectDir, ".env")
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		return "", nil
@@ -70,7 +70,7 @@ func readDBVersionFromDotEnv(projectDir string) (string, error) {
 	return url.Query().Get("serverVersion"), nil
 }
 
-func readDBVersionFromDoctrineConfigYAML(projectDir string) (string, error) {
+func ReadDBVersionFromDoctrineConfigYAML(projectDir string) (string, error) {
 	path := filepath.Join(projectDir, "config", "packages", "doctrine.yaml")
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		return "", nil
@@ -95,7 +95,7 @@ func readDBVersionFromDoctrineConfigYAML(projectDir string) (string, error) {
 	return doctrineConfig.Doctrine.Dbal.ServerVersion, nil
 }
 
-func databaseVersiondUnsynced(providedVersion, dbVersion string) bool {
+func DatabaseVersiondUnsynced(providedVersion, dbVersion string) bool {
 	providedVersion = strings.Replace(providedVersion, "mariadb-", "", 1)
 
 	return providedVersion != "" && !strings.HasPrefix(providedVersion, dbVersion)

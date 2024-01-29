@@ -28,6 +28,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	"github.com/symfony-cli/symfony-cli/util"
 )
 
@@ -158,8 +159,11 @@ func extractRelationshipsEnvs(env Environment) Envs {
 				}
 				if detectedLanguage == "php" {
 					versionKey := fmt.Sprintf("%sVERSION", prefix)
-					// type is available when in the cloud or locally via a tunnel
-					if v, ok := endpoint["type"]; ok {
+					if doctrineConfigVersion, err := platformsh.ReadDBVersionFromDoctrineConfigYAML(env.Path()); err == nil && doctrineConfigVersion != "" {
+						// configuration from doctrine.yaml
+						values[versionKey] = doctrineConfigVersion
+					} else if v, ok := endpoint["type"]; ok {
+						// type is available when in the cloud or locally via a tunnel
 						if version, hasVersionInEnv := os.LookupEnv(versionKey); hasVersionInEnv {
 							values[versionKey] = version
 						} else if strings.Contains(v.(string), ":") {
