@@ -22,11 +22,13 @@ package envs
 import (
 	"encoding/json"
 	"fmt"
+	neturl "net/url"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
+	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	"github.com/symfony-cli/symfony-cli/util"
 )
 
@@ -156,11 +158,14 @@ func extractRelationshipsEnvs(env Environment) Envs {
 					values[fmt.Sprintf("%sURL", prefix)] = values[fmt.Sprintf("%sURL", prefix)] + "&charset=" + charset
 				}
 				if detectedLanguage == "php" {
-					if v, ok := endpoint["type"]; ok {
-						versionKey := fmt.Sprintf("%sVERSION", prefix)
+					versionKey := fmt.Sprintf("%sVERSION", prefix)
+					if doctrineConfigVersion, err := platformsh.ReadDBVersionFromDoctrineConfigYAML(env.Path()); err == nil && doctrineConfigVersion != "" {
+						// configuration from doctrine.yaml
+						values[versionKey] = doctrineConfigVersion
+					} else if v, ok := endpoint["type"]; ok {
+						// type is available when in the cloud or locally via a tunnel
 						if version, hasVersionInEnv := os.LookupEnv(versionKey); hasVersionInEnv {
 							values[versionKey] = version
-							values[fmt.Sprintf("%sURL", prefix)] = values[fmt.Sprintf("%sURL", prefix)] + "&serverVersion=" + values[versionKey]
 						} else if strings.Contains(v.(string), ":") {
 							version := strings.SplitN(v.(string), ":", 2)[1]
 
@@ -174,8 +179,15 @@ func extractRelationshipsEnvs(env Environment) Envs {
 							}
 
 							values[versionKey] = version
-							values[fmt.Sprintf("%sURL", prefix)] = values[fmt.Sprintf("%sURL", prefix)] + "&serverVersion=" + values[versionKey]
 						}
+					} else if env.Local() {
+						// Docker support
+						if v, ok := endpoint["version"]; ok {
+							values[versionKey] = v.(string)
+						}
+					}
+					if v, ok := values[versionKey]; ok && v != "" {
+						values[fmt.Sprintf("%sURL", prefix)] += "&serverVersion=" + neturl.QueryEscape(v)
 					}
 				}
 				values[fmt.Sprintf("%sSERVER", prefix)] = formatServer(endpoint)

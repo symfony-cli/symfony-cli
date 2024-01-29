@@ -41,7 +41,7 @@ var platformshBeforeHooks = map[string]console.BeforeFunc{
 			return nil
 		}
 
-		dbName, dbVersion, err := readDBVersionFromPlatformServiceYAML(projectDir)
+		dbName, dbVersion, err := platformsh.ReadDBVersionFromPlatformServiceYAML(projectDir)
 		if err != nil {
 			return nil
 		}
@@ -58,19 +58,19 @@ but %%s.
 Before deploying, fix the version mismatch.
 `, dbName, dbVersion)
 
-		dotEnvVersion, err := readDBVersionFromDotEnv(projectDir)
+		dotEnvVersion, err := platformsh.ReadDBVersionFromDotEnv(projectDir)
 		if err != nil {
 			return nil
 		}
-		if databaseVersiondUnsynced(dotEnvVersion, dbVersion) {
+		if platformsh.DatabaseVersiondUnsynced(dotEnvVersion, dbVersion) {
 			return fmt.Errorf(errorTpl, fmt.Sprintf("the \".env\" file requires version %s", dotEnvVersion))
 		}
 
-		doctrineConfigVersion, err := readDBVersionFromDoctrineConfigYAML(projectDir)
+		doctrineConfigVersion, err := platformsh.ReadDBVersionFromDoctrineConfigYAML(projectDir)
 		if err != nil {
 			return nil
 		}
-		if databaseVersiondUnsynced(doctrineConfigVersion, dbVersion) {
+		if platformsh.DatabaseVersiondUnsynced(doctrineConfigVersion, dbVersion) {
 			return fmt.Errorf(errorTpl, fmt.Sprintf("the \"config/packages/doctrine.yaml\" file requires version %s", doctrineConfigVersion))
 		}
 
