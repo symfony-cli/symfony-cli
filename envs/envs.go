@@ -22,7 +22,6 @@ package envs
 import (
 	"encoding/json"
 	"fmt"
-	neturl "net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -187,7 +186,7 @@ func extractRelationshipsEnvs(env Environment) Envs {
 						}
 					}
 					if v, ok := values[versionKey]; ok && v != "" {
-						values[fmt.Sprintf("%sURL", prefix)] += "&serverVersion=" + neturl.QueryEscape(v)
+						values[fmt.Sprintf("%sURL", prefix)] += "&serverVersion=" + v
 					}
 				}
 				values[fmt.Sprintf("%sSERVER", prefix)] = formatServer(endpoint)
