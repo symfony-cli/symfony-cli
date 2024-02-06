@@ -324,7 +324,7 @@ func (p *PidFile) Signal(sig os.Signal) error {
 	return process.Signal(sig)
 }
 
-func ToConfiguredProjects() (map[string]*projects.ConfiguredProject, error) {
+func ToConfiguredProjects(shortenHomeDir bool) (map[string]*projects.ConfiguredProject, error) {
 	ps := make(map[string]*projects.ConfiguredProject)
 	userHomeDir, err := homedir.Dir()
 	if err != nil {
@@ -336,7 +336,7 @@ func ToConfiguredProjects() (map[string]*projects.ConfiguredProject, error) {
 		}
 		port := pid.Port
 		shortDir := pid.Dir
-		if strings.HasPrefix(shortDir, userHomeDir) {
+		if strings.HasPrefix(shortDir, userHomeDir) && shortenHomeDir {
 			shortDir = "~" + shortDir[len(userHomeDir):]
 		}
 		ps[shortDir] = &projects.ConfiguredProject{
