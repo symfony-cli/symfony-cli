@@ -232,7 +232,7 @@ func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	env := map[string]string{
 		"SERVER_PORT":     s.serverPort,
-		"SERVER_NAME":     r.Host,
+		"SERVER_NAME":     strings.Split(r.Host, ":")[0],
 		"SERVER_PROTOCOL": r.Proto,
 		"SERVER_SOFTWARE": fmt.Sprintf("symfony-cli/%s", s.Appversion),
 	}
