@@ -135,7 +135,7 @@ func (s *Server) Start(errChan chan error) (int, error) {
 	}
 
 	m := cmux.New(ln)
-	httpl := m.Match(cmux.HTTP1Fast())
+	httpl := m.Match(cmux.HTTP1Fast(http.MethodPatch))
 	tlsl := m.Match(cmux.Any())
 
 	if !s.AllowHTTP {
