@@ -183,6 +183,9 @@ func extractRelationshipsEnvs(env Environment) Envs {
 						// Docker support
 						if v, ok := endpoint["version"]; ok {
 							values[versionKey] = v.(string)
+							if strings.HasPrefix(values[versionKey], "1:") {
+								values[versionKey] = values[versionKey][2:]
+							}
 						}
 					}
 					if v, ok := values[versionKey]; ok && v != "" {
