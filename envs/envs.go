@@ -158,26 +158,29 @@ func extractRelationshipsEnvs(env Environment) Envs {
 				}
 				if detectedLanguage == "php" {
 					versionKey := fmt.Sprintf("%sVERSION", prefix)
-					if doctrineConfigVersion, err := platformsh.ReadDBVersionFromDoctrineConfigYAML(env.Path()); err == nil && doctrineConfigVersion != "" {
-						// configuration from doctrine.yaml
-						values[versionKey] = doctrineConfigVersion
-					} else if v, ok := endpoint["type"]; ok {
-						// type is available when in the cloud or locally via a tunnel
-						if version, hasVersionInEnv := os.LookupEnv(versionKey); hasVersionInEnv {
-							values[versionKey] = version
-						} else if strings.Contains(v.(string), ":") {
-							version := strings.SplitN(v.(string), ":", 2)[1]
+					if v, ok := endpoint["type"]; ok {
+						// configuration from doctrine.yaml takes precedence over psh config
+						if doctrineConfigVersion, err := platformsh.ReadDBVersionFromDoctrineConfigYAML(env.Path()); err == nil && doctrineConfigVersion != "" {
+							// configuration from doctrine.yaml
+							values[versionKey] = doctrineConfigVersion
+						} else {
+							// type is available when in the cloud or locally via a tunnel
+							if version, hasVersionInEnv := os.LookupEnv(versionKey); hasVersionInEnv {
+								values[versionKey] = version
+							} else if strings.Contains(v.(string), ":") {
+								version := strings.SplitN(v.(string), ":", 2)[1]
 
-							// we actually provide mariadb not mysql
-							if endpoint["scheme"].(string) == "mysql" {
-								minor := 0
-								if version == "10.2" {
-									minor = 7
+								// we actually provide mariadb not mysql
+								if endpoint["scheme"].(string) == "mysql" {
+									minor := 0
+									if version == "10.2" {
+										minor = 7
+									}
+									version = fmt.Sprintf("%s.%d-MariaDB", version, minor)
 								}
-								version = fmt.Sprintf("%s.%d-MariaDB", version, minor)
-							}
 
-							values[versionKey] = version
+								values[versionKey] = version
+							}
 						}
 					} else if env.Local() {
 						// Docker support
