@@ -36,23 +36,68 @@ var localServerStopCmd = &console.Command{
 	Usage:    "Stop the local web server",
 	Flags: []console.Flag{
 		dirFlag,
+		&console.BoolFlag{Name: "all", Usage: "Stop all local web servers"},
 	},
 	Action: func(c *console.Context) error {
-		projectDir, err := getProjectDir(c.String("dir"))
+		if c.Bool("all") && c.IsSet("dir") {
+			return fmt.Errorf("you cannot use the --all option with a specific directory")
+		}
+
+		var dirs []string
+
+		if c.Bool("all") {
+			configuredAndRunning, err := pid.ToConfiguredProjects(false)
+			if err != nil {
+				return err
+			}
+
+			for dir := range configuredAndRunning {
+				dirs = append(dirs, dir)
+			}
+		} else {
+			projectDir, err := getProjectDir(c.String("dir"))
+			if err != nil {
+				return err
+			}
+
+			dirs = append(dirs, projectDir)
+		}
+
+		return stopProjects(dirs, c.Bool("all"))
+	},
+}
+
+func stopProjects(dirs []string, allFlag bool) error {
+	ui := terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin)
+	running := 0
+
+	if len(dirs) == 0 {
+		ui.Success("No local web servers to stop")
+
+		return nil
+	}
+
+	for _, dir := range dirs {
+		projectDir, err := getProjectDir(dir)
+		runningProcessesForProject := 0
 		if err != nil {
 			return err
 		}
-		ui := terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin)
+
+		if allFlag {
+			ui.Section(fmt.Sprintf("Stopping project %s", projectDir))
+		}
+
 		webserver := pid.New(projectDir, nil)
 		pids := append(pid.AllWorkers(projectDir), webserver)
 		var g errgroup.Group
-		running := 0
 		for _, p := range pids {
 			if !p.IsRunning() {
 				continue
 			}
 
 			running++
+			runningProcessesForProject++
 			g.Go(p.WaitForExit)
 
 			// we first notify the webserver in order to let it know it should
@@ -63,9 +108,9 @@ var localServerStopCmd = &console.Command{
 			}
 		}
 
-		if running == 0 {
+		if runningProcessesForProject == 0 {
 			ui.Success("The web server is not running")
-			return nil
+			continue
 		}
 
 		for _, p := range pids {
@@ -92,8 +137,11 @@ var localServerStopCmd = &console.Command{
 		if err := g.Wait(); err != nil {
 			return err
 		}
+	}
 
+	if running > 0 {
 		ui.Success(fmt.Sprintf("Stopped %d process(es) successfully", running))
-		return nil
-	},
+	}
+
+	return nil
 }

@@ -50,7 +50,7 @@ func printConfiguredServers() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	runningProjects, err := pid.ToConfiguredProjects()
+	runningProjects, err := pid.ToConfiguredProjects(true)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -345,7 +345,7 @@ func (p *Proxy) serveIndex(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	runningProjects, err := pid.ToConfiguredProjects()
+	runningProjects, err := pid.ToConfiguredProjects(true)
 	if err != nil {
 		return
 	}
