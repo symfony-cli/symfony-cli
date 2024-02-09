@@ -1,0 +1,3 @@
+doctrine:
+    dbal:
+        server_version: '%env(DATABASE_VERSION)%'

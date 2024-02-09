@@ -98,11 +98,19 @@ func ReadDBVersionFromDoctrineConfigYAML(projectDir string) (string, error) {
 		return "", err
 	}
 
-	if doctrineConfig.Doctrine.Dbal.Connections.Default.ServerVersion != "" {
-		return doctrineConfig.Doctrine.Dbal.Connections.Default.ServerVersion, nil
+	version := doctrineConfig.Doctrine.Dbal.Connections.Default.ServerVersion
+	if version == "" {
+		version = doctrineConfig.Doctrine.Dbal.ServerVersion
 	}
-
-	return doctrineConfig.Doctrine.Dbal.ServerVersion, nil
+	if version == "" {
+		// empty version
+		return "", nil
+	}
+	if version[0] == '%' && version[len(version)-1] == '%' {
+		// references an env var, ignore
+		return "", nil
+	}
+	return version, nil
 }
 
 func DatabaseVersiondUnsynced(providedVersion, dbVersion string) bool {
