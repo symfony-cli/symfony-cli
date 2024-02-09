@@ -113,7 +113,7 @@ func (s *ScenvSuite) TestDockerDatabaseURLs(c *C) {
 					"rel":      "mysql",
 					"scheme":   "mysql",
 					"username": "root",
-					"version":  "10.0.38+maria-1~xenial",
+					"version":  "1:10.0.38+maria-1~xenial",
 				},
 			},
 			"postgresql": {
