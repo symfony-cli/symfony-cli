@@ -1,5 +1,7 @@
 module github.com/symfony-cli/symfony-cli
 
+go 1.22
+
 require (
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/blackfireio/osinfo v1.0.5
@@ -76,5 +78,3 @@ require (
 	howett.net/plist v1.0.1 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.4.0 // indirect
 )
-
-go 1.21
