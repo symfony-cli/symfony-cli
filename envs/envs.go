@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -186,8 +187,9 @@ func extractRelationshipsEnvs(env Environment) Envs {
 						// Docker support
 						if v, ok := endpoint["version"]; ok {
 							values[versionKey] = v.(string)
-							if strings.HasPrefix(values[versionKey], "1:") {
-								values[versionKey] = values[versionKey][2:]
+
+							if matches := regexp.MustCompile("^\\d:(\\d+\\.\\d+\\.\\d+).maria").FindStringSubmatch(values[versionKey]); matches != nil {
+								values[versionKey] = fmt.Sprintf("%s-MariaDB", matches[1])
 							}
 						}
 					}

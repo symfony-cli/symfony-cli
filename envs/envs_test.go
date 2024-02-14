@@ -134,7 +134,7 @@ func (s *ScenvSuite) TestDockerDatabaseURLs(c *C) {
 	}
 
 	rels := extractRelationshipsEnvs(env)
-	c.Assert(rels["MYSQL_URL"], Equals, "mysql://root:!ChangeMe!@127.0.0.1:56614/root?sslmode=disable&charset=utf8mb4&serverVersion=10.0.38+maria-1~xenial")
+	c.Assert(rels["MYSQL_URL"], Equals, "mysql://root:!ChangeMe!@127.0.0.1:56614/root?sslmode=disable&charset=utf8mb4&serverVersion=10.0.38-MariaDB")
 	c.Assert(rels["POSTGRESQL_URL"], Equals, "postgres://main:main@127.0.0.1:63574/main?sslmode=disable&charset=utf8&serverVersion=13.13")
 }
 
