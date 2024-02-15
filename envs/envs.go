@@ -263,21 +263,29 @@ func extractRelationshipsEnvs(env Environment) Envs {
 			} else if scheme == "memcached" {
 				values[fmt.Sprintf("%sHOST", prefix)] = endpoint["host"].(string)
 				values[fmt.Sprintf("%sPORT", prefix)] = formatInt(endpoint["port"])
-				values[fmt.Sprintf("%sIP", prefix)] = endpoint["ip"].(string)
+				if v, ok := endpoint["ip"]; ok && v != nil {
+					values[fmt.Sprintf("%sIP", prefix)] = v.(string)
+				}
 			} else if rel == "influxdb" {
 				values[fmt.Sprintf("%sSCHEME", prefix)] = endpoint["scheme"].(string)
 				values[fmt.Sprintf("%sHOST", prefix)] = endpoint["host"].(string)
 				values[fmt.Sprintf("%sPORT", prefix)] = formatInt(endpoint["port"])
-				values[fmt.Sprintf("%sIP", prefix)] = endpoint["ip"].(string)
+				if v, ok := endpoint["ip"]; ok && v != nil {
+					values[fmt.Sprintf("%sIP", prefix)] = v.(string)
+				}
 			} else if scheme == "kafka" {
 				values[fmt.Sprintf("%sURL", prefix)] = fmt.Sprintf("%s://%s:%s", endpoint["scheme"].(string), endpoint["host"].(string), formatInt(endpoint["port"]))
 				values[fmt.Sprintf("%sSCHEME", prefix)] = endpoint["scheme"].(string)
 				values[fmt.Sprintf("%sHOST", prefix)] = endpoint["host"].(string)
 				values[fmt.Sprintf("%sPORT", prefix)] = formatInt(endpoint["port"])
-				values[fmt.Sprintf("%sIP", prefix)] = endpoint["ip"].(string)
+				if v, ok := endpoint["ip"]; ok && v != nil {
+					values[fmt.Sprintf("%sIP", prefix)] = v.(string)
+				}
 			} else if scheme == "tcp" {
 				values[fmt.Sprintf("%sURL", prefix)] = formatServer(endpoint)
-				values[fmt.Sprintf("%sIP", prefix)] = endpoint["ip"].(string)
+				if v, ok := endpoint["ip"]; ok && v != nil {
+					values[fmt.Sprintf("%sIP", prefix)] = v.(string)
+				}
 				values[fmt.Sprintf("%sPORT", prefix)] = formatInt(endpoint["port"])
 				values[fmt.Sprintf("%sSCHEME", prefix)] = endpoint["scheme"].(string)
 				values[fmt.Sprintf("%sHOST", prefix)] = endpoint["host"].(string)
@@ -296,7 +304,9 @@ func extractRelationshipsEnvs(env Environment) Envs {
 					values[fmt.Sprintf("%sURL", prefix)] = fmt.Sprintf("%s://%s:%s", endpoint["scheme"].(string), endpoint["host"].(string), formatInt(endpoint["port"]))
 				}
 				values[fmt.Sprintf("%sSERVER", prefix)] = formatServer(endpoint)
-				values[fmt.Sprintf("%sIP", prefix)] = endpoint["ip"].(string)
+				if v, ok := endpoint["ip"]; ok && v != nil {
+					values[fmt.Sprintf("%sIP", prefix)] = v.(string)
+				}
 				values[fmt.Sprintf("%sPORT", prefix)] = formatInt(endpoint["port"])
 				values[fmt.Sprintf("%sSCHEME", prefix)] = endpoint["scheme"].(string)
 				values[fmt.Sprintf("%sHOST", prefix)] = endpoint["host"].(string)
@@ -323,7 +333,9 @@ func extractRelationshipsEnvs(env Environment) Envs {
 				// for Symfony Mailer, use a MAILER prefix
 				values[fmt.Sprintf("%sDSN", prefix)] = fmt.Sprintf("%s://%s:%s", endpoint["scheme"].(string), endpoint["host"].(string), formatInt(endpoint["port"]))
 			} else if rel == "simple" {
-				values[fmt.Sprintf("%sIP", prefix)] = endpoint["ip"].(string)
+				if v, ok := endpoint["ip"]; ok && v != nil {
+					values[fmt.Sprintf("%sIP", prefix)] = v.(string)
+				}
 				values[fmt.Sprintf("%sPORT", prefix)] = formatInt(endpoint["port"])
 				values[fmt.Sprintf("%sHOST", prefix)] = endpoint["host"].(string)
 			}

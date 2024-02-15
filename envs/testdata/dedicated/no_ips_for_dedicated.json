@@ -1,0 +1,33 @@
+{
+    "database" : [
+       {
+          "host" : "127.0.0.1",
+          "password" : "x",
+          "path" : "x_stg",
+          "port" : "3306",
+          "query" : {
+             "compression" : true,
+             "is_master" : true
+          },
+          "scheme" : "mysql",
+          "username" : "xstg"
+       }
+    ],
+    "rabbitmq" : [
+       {
+          "host" : "localhost",
+          "password" : "x",
+          "port" : "5672",
+          "scheme" : "amqp",
+          "username" : "x_stg",
+          "vhost" : "x_stg"
+       }
+    ],
+    "rediscache" : [
+       {
+          "host" : "localhost",
+          "port" : "6379",
+          "scheme" : "redis"
+       }
+    ]
+}
