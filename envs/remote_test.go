@@ -421,3 +421,17 @@ func (s *RemoteSuite) TestMySQLReadReplicaForDedicated(c *C) {
 	c.Assert("mysql://mysql:xxx@dbread.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.6.0-MariaDB", DeepEquals, e["DBREAD_URL"])
 	c.Assert("mysql://mysql:xxx@db.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.6.0-MariaDB", DeepEquals, e["DB_URL"])
 }
+
+func (s *RemoteSuite) TestSomeBugForDedicated(c *C) {
+	r := &Remote{}
+	value, err := os.ReadFile("testdata/dedicated/no_ips_for_dedicated.json")
+	if err != nil {
+		panic(err)
+	}
+	if err := os.Setenv("PLATFORM_RELATIONSHIPS", base64.StdEncoding.EncodeToString(value)); err != nil {
+		panic(err)
+	}
+
+	rels := extractRelationshipsEnvs(r)
+	c.Assert(rels, DeepEquals, Envs{"DATABASE_DATABASE": "x_stg", "DATABASE_DRIVER": "mysql", "DATABASE_HOST": "127.0.0.1", "DATABASE_NAME": "x_stg", "DATABASE_PASSWORD": "x", "DATABASE_PORT": "3306", "DATABASE_SERVER": "mysql://127.0.0.1:3306", "DATABASE_URL": "mysql://xstg:x@127.0.0.1:3306/x_stg?sslmode=disable&charset=utf8", "DATABASE_USER": "xstg", "DATABASE_USERNAME": "xstg", "RABBITMQ_DSN": "amqp://x_stg:x@localhost:5672", "RABBITMQ_HOST": "localhost", "RABBITMQ_MANAGEMENT_HOST": "localhost", "RABBITMQ_MANAGEMENT_PASSWORD": "x", "RABBITMQ_MANAGEMENT_PORT": "15672", "RABBITMQ_MANAGEMENT_SCHEME": "http", "RABBITMQ_MANAGEMENT_SERVER": "http://localhost:15672", "RABBITMQ_MANAGEMENT_URL": "http://x_stg:x@localhost:15672", "RABBITMQ_MANAGEMENT_USER": "x_stg", "RABBITMQ_MANAGEMENT_USERNAME": "x_stg", "RABBITMQ_PASSWORD": "x", "RABBITMQ_PORT": "5672", "RABBITMQ_SCHEME": "amqp", "RABBITMQ_SERVER": "amqp://localhost:5672", "RABBITMQ_URL": "amqp://x_stg:x@localhost:5672", "RABBITMQ_USER": "x_stg", "RABBITMQ_USERNAME": "x_stg", "REDISCACHE_HOST": "localhost", "REDISCACHE_PORT": "6379", "REDISCACHE_SCHEME": "redis", "REDISCACHE_URL": "redis://localhost:6379"})
+}
