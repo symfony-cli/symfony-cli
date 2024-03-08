@@ -158,7 +158,7 @@ var availableServices = []*service{
 		Type: "kafka",
 		Versions: serviceVersions{
 			Deprecated: []string{"2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7"},
-			Supported:  []string{"3.2", "3.4", "3.6"},
+			Supported:  []string{"3.2", "3.4", "3.6", "3.7"},
 		},
 	},
 	{
