@@ -1,8 +1,10 @@
 package php
 
 import (
+	"bytes"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
@@ -28,6 +30,24 @@ func (p *cgiTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 			return nil, errors.Wrapf(err, "unable to connect to the PHP FastCGI process")
 		}
 		time.Sleep(time.Millisecond * 50)
+	}
+
+	// The CGI spec doesn't allow chunked requests. Go is already assembling the
+	// chunks from the request to a usable Reader (see net/http.readTransfer and
+	// net/http/internal.NewChunkedReader), so the only thing we have to
+	// do to is get the content length and add it to the header but to do so we
+	// have to read and buffer the body content.
+	if len(req.TransferEncoding) > 0 && req.TransferEncoding[0] == "chunked" {
+		bodyBuffer := &bytes.Buffer{}
+		bodyBytes, err := io.Copy(bodyBuffer, req.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Body = io.NopCloser(bodyBuffer)
+		req.TransferEncoding = nil
+		env["CONTENT_LENGTH"] = strconv.FormatInt(bodyBytes, 10)
+		env["HTTP_CONTENT_LENGTH"] = env["CONTENT_LENGTH"]
 	}
 
 	// fetching the response from the fastcgi backend, and check for errors
