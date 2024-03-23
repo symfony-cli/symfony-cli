@@ -34,6 +34,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	docker "github.com/docker/docker/client"
 	"github.com/symfony-cli/terminal"
 )
@@ -89,7 +90,7 @@ func (l *Local) RelationshipsFromDocker() Relationships {
 
 	client.NegotiateAPIVersion(context.Background())
 
-	containers, err := client.ContainerList(context.Background(), types.ContainerListOptions{})
+	containers, err := client.ContainerList(context.Background(), container.ListOptions{})
 	if err != nil {
 		if docker.IsErrConnectionFailed(err) {
 			terminal.Logger.Warn().Msg(err.Error())
