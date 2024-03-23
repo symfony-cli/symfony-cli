@@ -98,7 +98,7 @@ func (l *Local) relationshipsFromTunnel() Relationships {
 	return nil
 }
 
-var pathCleaningRegex = regexp.MustCompile("[^a-zA-Z0-9-\\.]+")
+var pathCleaningRegex = regexp.MustCompile(`[^a-zA-Z0-9-\.]+`)
 
 type Tunnel struct {
 	Project *platformsh.Project

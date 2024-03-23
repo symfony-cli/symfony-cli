@@ -188,7 +188,7 @@ func extractRelationshipsEnvs(env Environment) Envs {
 						if v, ok := endpoint["version"]; ok {
 							values[versionKey] = v.(string)
 
-							if matches := regexp.MustCompile("^\\d:(\\d+\\.\\d+\\.\\d+).maria").FindStringSubmatch(values[versionKey]); matches != nil {
+							if matches := regexp.MustCompile(`^\d:(\d+\.\d+\.\d+).maria`).FindStringSubmatch(values[versionKey]); matches != nil {
 								values[versionKey] = fmt.Sprintf("%s-MariaDB", matches[1])
 							}
 						}
