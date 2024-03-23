@@ -153,7 +153,7 @@ var localNewCmd = &console.Command{
 			return err
 		}
 
-		if "" != c.String("php") && !withCloud {
+		if c.String("php") != "" && !withCloud {
 			if err := createPhpVersionFile(c.String("php"), dir); err != nil {
 				return err
 			}
@@ -161,7 +161,7 @@ var localNewCmd = &console.Command{
 
 		if !c.Bool("no-git") {
 			if _, err := exec.LookPath("git"); err == nil {
-				if err := initProjectGit(c, s, dir); err != nil {
+				if err := initProjectGit(c, dir); err != nil {
 					return err
 				}
 			}
@@ -197,7 +197,7 @@ var localNewCmd = &console.Command{
 			if c.Bool("upsun") {
 				brand = platformsh.UpsunBrand
 			}
-			if err := initCloud(c, brand, s, minorPHPVersion, dir); err != nil {
+			if err := initCloud(c, brand, minorPHPVersion, dir); err != nil {
 				return err
 			}
 		}
@@ -226,7 +226,7 @@ func isEmpty(dir string) (bool, error) {
 	return false, err
 }
 
-func initCloud(c *console.Context, brand platformsh.CloudBrand, s *terminal.Spinner, minorPHPVersion, dir string) error {
+func initCloud(c *console.Context, brand platformsh.CloudBrand, minorPHPVersion, dir string) error {
 	terminal.Printfln("* Adding %s configuration", brand)
 
 	cloudServices, err := parseCloudServices(dir, c.StringSlice("service"))
@@ -335,7 +335,7 @@ func parseDockerComposeServices(dir string) []*CloudService {
 	return cloudServices
 }
 
-func initProjectGit(c *console.Context, s *terminal.Spinner, dir string) error {
+func initProjectGit(c *console.Context, dir string) error {
 	terminal.Println("* Setting up the project under Git version control")
 	terminal.Printfln("  (running git init %s)\n", dir)
 	// Only force the branch to be "main" when running a Cloud context to make

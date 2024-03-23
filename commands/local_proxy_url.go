@@ -45,7 +45,7 @@ e.g. with Cypress:
 	Action: func(c *console.Context) error {
 		pidFile := pid.New("__proxy__", nil)
 		if !pidFile.IsRunning() {
-			return errors.New("The proxy server is not running")
+			return errors.New("the proxy server is not running")
 		}
 
 		url := fmt.Sprintf("%s://127.0.0.1:%d", pidFile.Scheme, pidFile.Port)

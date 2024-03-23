@@ -32,16 +32,6 @@ import (
 	"github.com/symfony-cli/terminal"
 )
 
-var openDocCmd = &console.Command{
-	Category: "open",
-	Name:     "docs",
-	Usage:    "Open the online Web documentation",
-	Action: func(c *console.Context) error {
-		abstractOpenCmd("https://symfony.com/doc/cloud")
-		return nil
-	},
-}
-
 var projectLocalOpenCmd = &console.Command{
 	Category: "open",
 	Name:     "local",
