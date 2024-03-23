@@ -60,12 +60,8 @@ func hasComposerPackage(directory, pkg string) bool {
 		return false
 	}
 
-	if err != nil {
-		terminal.Logger.Warn().Msg(err.Error())
-	}
-	if err2 != nil {
-		terminal.Logger.Warn().Msg(err2.Error())
-	}
+	terminal.Logger.Warn().Msg(err.Error())
+	terminal.Logger.Warn().Msg(err2.Error())
 
 	return false
 }
@@ -136,12 +132,8 @@ func hasPHPExtension(directory, ext string) bool {
 		return false
 	}
 
-	if err != nil {
-		terminal.Logger.Warn().Msg(err.Error())
-	}
-	if err2 != nil {
-		terminal.Logger.Warn().Msg(err2.Error())
-	}
+	terminal.Logger.Warn().Msg(err.Error())
+	terminal.Logger.Warn().Msg(err2.Error())
 
 	return false
 }
