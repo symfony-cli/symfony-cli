@@ -19,13 +19,13 @@ jobs:
         steps:
             -
                 name: Checkout
-                uses: actions/checkout@v3
+                uses: actions/checkout@v4
                 with:
                     fetch-depth: 0
 
             # We need QEMU to use buildx and be able to build ARM Docker images
             -   name: Set up QEMU
-                uses: docker/setup-qemu-action@v2
+                uses: docker/setup-qemu-action@v3
 
             -   name: Login into Github Docker Registry
                 run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -33,10 +33,10 @@ jobs:
 
             -
                 name: Set up Go
-                uses: actions/setup-go@v3
+                uses: actions/setup-go@v5
                 with:
                     go-version: '^1.22.0'
-            -   uses: actions/cache@v3
+            -   uses: actions/cache@v4
                 with:
                     path: |
                         ~/.cache/go-build
@@ -71,10 +71,10 @@ jobs:
                 run: go run .
             -
                 name: Set up cosign
-                uses: sigstore/cosign-installer@v2.7.0
+                uses: sigstore/cosign-installer@v3
             -
                 name: Run GoReleaser for snapshot
-                uses: goreleaser/goreleaser-action@v3
+                uses: goreleaser/goreleaser-action@v5
                 # only for PRs and push on branches
                 if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
                 with:
@@ -84,7 +84,7 @@ jobs:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             -
                 name: Run GoReleaser
-                uses: goreleaser/goreleaser-action@v3
+                uses: goreleaser/goreleaser-action@v5
                 # only for tags
                 if: startsWith(github.ref, 'refs/tags/v')
                 with:
