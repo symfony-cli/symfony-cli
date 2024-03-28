@@ -52,6 +52,7 @@ import (
 
 var localWebServerProdWarningMsg = "The local web server is optimized for local development and MUST never be used in a production setup."
 var localWebServerTlsKeyLogWarningMsg = "Logging TLS master key is enabled. It means TLS connections between the client and this server will be INSECURE. This is NOT recommended unless you are debugging the connections."
+var localWebServerAllowCorsLogWarningMsg = "Cross-origin resource sharing (CORS) is enabled for every requests.\nYou may want to use https://github.com/nelmio/NelmioCorsBundle to have more control on HTTP headers."
 
 var localServerStartCmd = &console.Command{
 	Category:    "local",
@@ -80,6 +81,7 @@ var localServerStartCmd = &console.Command{
 			// from the console argument.
 			EnvVars: []string{"SSLKEYLOGFILE"},
 		},
+		&console.BoolFlag{Name: "allow-cors", Usage: "Allow Cross-origin resource sharing (CORS) requests"},
 	},
 	Action: func(c *console.Context) error {
 		ui := terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin)
@@ -183,6 +185,10 @@ var localServerStartCmd = &console.Command{
 
 		if config.TlsKeyLogFile != "" {
 			ui.Warning(localWebServerTlsKeyLogWarningMsg)
+		}
+
+		if config.AllowCORS {
+			ui.Warning(localWebServerAllowCorsLogWarningMsg)
 		}
 
 		lw, err := pidFile.LogWriter()

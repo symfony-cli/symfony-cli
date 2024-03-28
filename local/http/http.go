@@ -55,6 +55,7 @@ type Server struct {
 	Appversion    string
 	UseGzip       bool
 	TlsKeyLogFile string
+	AllowCORS     bool
 
 	httpserver  *http.Server
 	httpsserver *http.Server
@@ -212,6 +213,10 @@ func (s *Server) ProxyHandler(w http.ResponseWriter, r *http.Request) {
 
 // Handler handles HTTP requests
 func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
+	if s.AllowCORS {
+		w.Header().Add("Access-Control-Allow-Origin", "*")
+	}
+
 	// static file?
 	if !strings.HasSuffix(strings.ToLower(r.URL.Path), ".php") {
 		p := r.URL.Path
