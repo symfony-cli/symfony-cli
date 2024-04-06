@@ -47,6 +47,7 @@ type Config struct {
 	Daemon        bool   `yaml:"daemon"`
 	UseGzip       bool   `yaml:"use_gzip"`
 	TlsKeyLogFile string `yaml:"tls_key_log_file"`
+	NoWorkers     bool   `yaml:"no_workers"`
 }
 
 type FileConfig struct {
@@ -111,6 +112,9 @@ func NewConfigFromContext(c *console.Context, projectDir string) (*Config, *File
 	}
 	if c.IsSet("tls-key-log-file") {
 		config.TlsKeyLogFile = c.String("tls-key-log-file")
+	}
+	if c.IsSet("no-workers") {
+		config.NoWorkers = c.Bool("no-workers")
 	}
 
 	return config, fileConfig, nil

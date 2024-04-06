@@ -80,6 +80,7 @@ var localServerStartCmd = &console.Command{
 			// from the console argument.
 			EnvVars: []string{"SSLKEYLOGFILE"},
 		},
+		&console.BoolFlag{Name: "no-workers", Usage: "Do not start workers"},
 	},
 	Action: func(c *console.Context) error {
 		ui := terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin)
@@ -308,7 +309,7 @@ var localServerStartCmd = &console.Command{
 			go tailer.Tail(terminal.Stderr)
 		}
 
-		if fileConfig != nil {
+		if fileConfig != nil && !config.NoWorkers {
 			reexec.NotifyForeground("workers")
 
 			_, isDockerComposeWorkerConfigured := fileConfig.Workers[project.DockerComposeWorkerKey]
