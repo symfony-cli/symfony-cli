@@ -95,14 +95,14 @@ jobs:
                     TAP_GITHUB_TOKEN: ${{ secrets.GH_PAT }}
             -
                 name: Archive binaries
-                uses: actions/upload-artifact@v3
+                uses: actions/upload-artifact@v4
                 with:
                     retention-days: 5
                     name: binaries
                     path: dist
             -
                 name: Archive Linux binary
-                uses: actions/upload-artifact@v3
+                uses: actions/upload-artifact@v4
                 with:
                     retention-days: 5
                     name: linux-binary
