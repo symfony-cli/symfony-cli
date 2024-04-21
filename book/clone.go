@@ -20,9 +20,12 @@
 package book
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/terminal"
@@ -41,6 +44,25 @@ func (b *Book) Clone(version string) error {
 	}
 
 	ui.Section("Cloning the Repository")
+
+	// check that version exists on Github via the API
+	resp, err := http.Get(fmt.Sprintf("https://api.github.com/repos/the-fast-track/book-%s", version))
+	if err != nil {
+		return errors.Wrap(err, "unable to get version on Github")
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		versions, err := Versions()
+		if err != nil {
+			return errors.Wrap(err, "unable to get book versions")
+		}
+		terminal.Println("The version you requested does not exist; available versions:")
+		for _, v := range versions {
+			terminal.Println(fmt.Sprintf(" - %s", v))
+		}
+		return errors.New("please choose a valid version")
+	}
+
 	cmd := exec.Command("git", "clone", fmt.Sprintf("https://github.com/the-fast-track/book-%s", version), b.Dir)
 	cmd.Env = os.Environ()
 	cmd.Stdout = os.Stdout
@@ -62,4 +84,26 @@ func (b *Book) Clone(version string) error {
 		return err
 	}
 	return nil
+}
+
+func Versions() ([]string, error) {
+	resp, err := http.Get("https://api.github.com/orgs/the-fast-track/repos")
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get repositories from Github")
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("failed to get repositories from Github")
+	}
+	var repos []struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&repos); err != nil {
+		return nil, errors.Wrap(err, "failed to decode response body")
+	}
+	versions := []string{}
+	for _, repo := range repos {
+		versions = append(versions, strings.Replace(repo.Name, "book-", "", 1))
+	}
+	return versions, nil
 }

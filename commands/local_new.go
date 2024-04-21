@@ -113,7 +113,15 @@ var localNewCmd = &console.Command{
 
 		if c.Bool("book") {
 			if symfonyVersion == "" {
-				return console.Exit("The --version flag is required for the Symfony book", 1)
+				versions, err := book.Versions()
+				if err != nil {
+					return errors.Wrap(err, "unable to get book versions")
+				}
+				terminal.Println("The --version flag is required for the Symfony book; available versions:")
+				for _, v := range versions {
+					terminal.Println(fmt.Sprintf(" - %s", v))
+				}
+				return console.Exit("", 1)
 			}
 
 			book := &book.Book{
