@@ -65,8 +65,6 @@ func (b *Book) Checkout(step string) error {
 		terminal.Println("<info>[ OK ]</>")
 	}
 
-	// FIXME: SQL dump?
-
 	if !b.Force && !b.AutoConfirm && !terminal.AskConfirmation("<warning>WARNING</> All current code, data, and containers are going to be REMOVED, do you confirm?", true) {
 		return nil
 	}
@@ -111,7 +109,7 @@ func (b *Book) Checkout(step string) error {
 		}
 	}
 	if hasDocker {
-		if err := executeCommand(append(dockerComposeBin(), "down", "--remove-orphans"), b.Debug, false, nil); err != nil {
+		if err := executeCommand(append(dockerComposeBin(), "down", "--remove-orphans", "--volume"), b.Debug, false, nil); err != nil {
 			return err
 		}
 	} else {
