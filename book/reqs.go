@@ -88,6 +88,7 @@ func CheckRequirements() (bool, error) {
 	// PHP extensions
 	if v != nil {
 		exts := map[string]string{
+			"iconv":     "required",
 			"json":      "required",
 			"session":   "required",
 			"ctype":     "required",
