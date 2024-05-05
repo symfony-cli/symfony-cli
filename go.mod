@@ -24,10 +24,10 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/soheilhy/cmux v0.1.5
 	github.com/stoicperlman/fls v0.0.0-20171222144224-f073b7a01081
-	github.com/symfony-cli/cert v1.0.5
-	github.com/symfony-cli/console v1.0.4
-	github.com/symfony-cli/phpstore v1.0.11
-	github.com/symfony-cli/terminal v1.0.6
+	github.com/symfony-cli/cert v1.0.6
+	github.com/symfony-cli/console v1.0.5
+	github.com/symfony-cli/phpstore v1.0.12
+	github.com/symfony-cli/terminal v1.0.7
 	golang.org/x/sync v0.7.0
 	golang.org/x/text v0.15.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
