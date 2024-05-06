@@ -212,6 +212,10 @@ func (r *Runner) Run() error {
 		select {
 		case sig := <-sigChan:
 			terminal.Logger.Info().Msgf("Signal \"%s\" received, forwarding to command and exiting\n", sig)
+			if sig == os.Interrupt {
+				sig = syscall.SIGTERM
+			}
+			
 			err := cmd.Process.Signal(sig)
 			if err != nil && runtime.GOOS == "windows" && strings.Contains(err.Error(), "not supported by windows") {
 				return exec.Command("CMD", "/C", "TASKKILL", "/F", "/PID", strconv.Itoa(cmd.Process.Pid)).Run()
