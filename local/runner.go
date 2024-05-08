@@ -179,8 +179,10 @@ func (r *Runner) Run() error {
 				reexec.NotifyForeground("started")
 			}
 
+			terminal.Logger.Debug().Msg("Waiting for channels (first boot)")
 			select {
 			case err := <-cmdExitChan:
+				terminal.Logger.Debug().Msg("Received exit (first boot)")
 				if err != nil {
 					return errors.Wrapf(err, `command "%s" failed early`, r.pidFile)
 				}
@@ -191,6 +193,7 @@ func (r *Runner) Run() error {
 				// finished later one
 				go func() { cmdExitChan <- err }()
 			case <-timer.C:
+				terminal.Logger.Debug().Msg("Received timer message (first boot)")
 			}
 		}
 
@@ -218,6 +221,7 @@ func (r *Runner) Run() error {
 			}
 			return err
 		case <-restartChan:
+			terminal.Logger.Debug().Msg("Received restart")
 			// We use SIGTERM here because it's nicer and thus when we use our
 			// wrappers, signal will be nicely forwarded
 			cmd.Process.Signal(syscall.SIGTERM)
@@ -225,9 +229,11 @@ func (r *Runner) Run() error {
 			<-cmdExitChan
 		// Command exited
 		case err := <-cmdExitChan:
+			terminal.Logger.Debug().Msg("Received exit")
 			err = errors.Wrapf(err, `command "%s" failed`, r.pidFile)
 
 			if err == nil && r.SuccessHook != nil {
+				terminal.Logger.Debug().Msg("Running success hook")
 				r.SuccessHook(r, cmd)
 			}
 
@@ -235,11 +241,14 @@ func (r *Runner) Run() error {
 			// if the command is successful
 			if !looping {
 				if err != nil {
+					terminal.Logger.Debug().Msg("Not looping, exiting with error")
 					return err
 				}
 
+				terminal.Logger.Debug().Msg("Removing pid file")
 				return r.pidFile.Remove()
 			}
+			terminal.Logger.Debug().Msg("Looping")
 
 			// Command is set up to restart on exit (usually PHP builtin
 			// server), so we restart immediately without waiting
@@ -258,13 +267,16 @@ func (r *Runner) Run() error {
 
 			// Wait for a timer to expire or a file to be changed to restart
 			// or a signal to be received to exit
+			terminal.Logger.Debug().Msg("Waiting for channels")
 			select {
 			case sig := <-sigChan:
 				terminal.Logger.Info().Msgf(`Signal "%s" received, exiting`, sig)
 				return nil
 			case <-restartChan:
+				terminal.Logger.Debug().Msg("Received restart")
 				timer.Stop()
 			case <-timer.C:
+				terminal.Logger.Debug().Msg("Received timer message")
 			}
 		}
 
