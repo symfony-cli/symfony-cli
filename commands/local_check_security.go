@@ -23,7 +23,7 @@ a specific "composer.lock" file.`,
 		&console.StringFlag{
 			Name:         "format",
 			DefaultValue: "ansi",
-			Usage:        "The output format (ansi, markdown, json, junit, or yaml)",
+			Usage:        "The output format (ansi, text, markdown, json, junit, or yaml)",
 			Validator: func(ctx *console.Context, format string) error {
 				if format != "" && format != "markdown" && format != "json" && format != "yaml" && format != "ansi" && format != "junit" {
 					return errors.Errorf(`format "%s" does not exist (supported formats: markdown, ansi, json, junit, and yaml)`, format)
