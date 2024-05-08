@@ -254,36 +254,23 @@ func (r *Runner) Run() error {
 				logger.Debug().Msg("Removing pid file")
 				return r.pidFile.Remove()
 			}
-			logger.Debug().Msg("Looping")
 
-			// Command is set up to restart on exit (usually PHP builtin
-			// server), so we restart immediately without waiting
+			// Command is set up to restart on exit (usually PHP builtin server)
 			if r.AlwaysRestartOnExit {
-				logger.Error().Msg("command exited, restarting it immediately")
+				logger.Debug().Msg("Looping")
+				// In case of error we want to wait up-to 5 seconds before
+				// restarting the command, this avoids overloading the system with a
+				// failing command
+				if err != nil {
+					logger.Error().Msgf(`command exited: %s, waiting 5 seconds before restarting it`, err)
+					timer.Reset(5 * time.Second)
+				} else {
+					logger.Error().Msg("command exited, restarting it immediately")
+				}
 				continue
 			}
 
-			// In case of error we want to wait up-to 5 seconds before
-			// restarting the command, this avoids overloading the system with a
-			// failing command
-			if err != nil {
-				logger.Error().Msgf(`command exited: %s, waiting 5 seconds before restarting it`, err)
-				timer.Reset(5 * time.Second)
-			}
-
-			// Wait for a timer to expire or a file to be changed to restart
-			// or a signal to be received to exit
-			logger.Debug().Msg("Waiting for channels")
-			select {
-			case sig := <-sigChan:
-				logger.Info().Msgf(`Signal "%s" received, exiting`, sig)
-				return nil
-			case <-restartChan:
-				logger.Debug().Msg("Received restart")
-				timer.Stop()
-			case <-timer.C:
-				logger.Debug().Msg("Received timer message")
-			}
+			return nil
 		}
 
 		logger.Info().Msg("Restarting command")
