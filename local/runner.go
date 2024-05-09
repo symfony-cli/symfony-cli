@@ -80,6 +80,7 @@ func NewRunner(pidFile *pid.PidFile, mode runnerMode) (*Runner, error) {
 }
 
 func (r *Runner) Run() error {
+	logger := terminal.Logger.With().Str("cmd", r.pidFile.String()).Logger()
 	if r.mode == RunnerModeLoopDetached {
 		if !reexec.IsChild() {
 			varDir := filepath.Join(util.GetHomeDir(), "var")
@@ -126,7 +127,7 @@ func (r *Runner) Run() error {
 					continue
 				}
 
-				terminal.Logger.Debug().Str("cmd", r.pidFile.String()).Msg("Got event: " + event.Event().String())
+				logger.Debug().Msg("Got event: " + event.Event().String())
 
 				select {
 				case restartChan <- true:
@@ -139,10 +140,10 @@ func (r *Runner) Run() error {
 			if fi, err := os.Stat(watched); err != nil {
 				continue
 			} else if fi.IsDir() {
-				terminal.Logger.Info().Str("cmd", r.pidFile.String()).Msg("Watching directory " + watched)
+				logger.Info().Msg("Watching directory " + watched)
 				watched = filepath.Join(watched, "...")
 			} else {
-				terminal.Logger.Info().Str("cmd", r.pidFile.String()).Msg("Watching file " + watched)
+				logger.Info().Msg("Watching file " + watched)
 			}
 			if err := inotify.Watch(watched, c, inotify.All); err != nil {
 				return errors.Wrapf(err, `could not watch "%s"`, watched)
@@ -179,10 +180,10 @@ func (r *Runner) Run() error {
 				reexec.NotifyForeground("started")
 			}
 
-			terminal.Logger.Debug().Str("cmd", r.pidFile.String()).Msg("Waiting for channels (first boot)")
+			logger.Debug().Msg("Waiting for channels (first boot)")
 			select {
 			case err := <-cmdExitChan:
-				terminal.Logger.Debug().Str("cmd", r.pidFile.String()).Msg("Received exit (first boot)")
+				logger.Debug().Msg("Received exit (first boot)")
 				if err != nil {
 					return errors.Wrapf(err, `command "%s" failed early`, r.pidFile)
 				}
@@ -193,7 +194,7 @@ func (r *Runner) Run() error {
 				// finished later one
 				go func() { cmdExitChan <- err }()
 			case <-timer.C:
-				terminal.Logger.Debug().Str("cmd", r.pidFile.String()).Msg("Received timer message (first boot)")
+				logger.Debug().Msg("Received timer message (first boot)")
 			}
 		}
 
@@ -214,14 +215,14 @@ func (r *Runner) Run() error {
 
 		select {
 		case sig := <-sigChan:
-			terminal.Logger.Info().Str("cmd", r.pidFile.String()).Msgf("Signal \"%s\" received, forwarding and exiting\n", sig)
+			logger.Info().Msgf("Signal \"%s\" received, forwarding and exiting\n", sig)
 			err := cmd.Process.Signal(sig)
 			if err != nil && runtime.GOOS == "windows" && strings.Contains(err.Error(), "not supported by windows") {
 				return exec.Command("CMD", "/C", "TASKKILL", "/F", "/PID", strconv.Itoa(cmd.Process.Pid)).Run()
 			}
 			return err
 		case <-restartChan:
-			terminal.Logger.Debug().Str("cmd", r.pidFile.String()).Msg("Received restart")
+			logger.Debug().Msg("Received restart")
 			// We use SIGTERM here because it's nicer and thus when we use our
 			// wrappers, signal will be nicely forwarded
 			cmd.Process.Signal(syscall.SIGTERM)
@@ -229,11 +230,11 @@ func (r *Runner) Run() error {
 			<-cmdExitChan
 		// Command exited
 		case err := <-cmdExitChan:
-			terminal.Logger.Debug().Str("cmd", r.pidFile.String()).Msg("Received exit")
+			logger.Debug().Msg("Received exit")
 			err = errors.Wrapf(err, `command "%s" failed`, r.pidFile)
 
 			if err == nil && r.SuccessHook != nil {
-				terminal.Logger.Debug().Str("cmd", r.pidFile.String()).Msg("Running success hook")
+				logger.Debug().Msg("Running success hook")
 				r.SuccessHook(r, cmd)
 			}
 
@@ -241,19 +242,19 @@ func (r *Runner) Run() error {
 			// if the command is successful
 			if !looping {
 				if err != nil {
-					terminal.Logger.Debug().Str("cmd", r.pidFile.String()).Msg("Not looping, exiting with error")
+					logger.Debug().Msg("Not looping, exiting with error")
 					return err
 				}
 
-				terminal.Logger.Debug().Str("cmd", r.pidFile.String()).Msg("Removing pid file")
+				logger.Debug().Msg("Removing pid file")
 				return r.pidFile.Remove()
 			}
-			terminal.Logger.Debug().Msg("Looping")
+			logger.Debug().Msg("Looping")
 
 			// Command is set up to restart on exit (usually PHP builtin
 			// server), so we restart immediately without waiting
 			if r.AlwaysRestartOnExit {
-				terminal.Logger.Error().Str("cmd", r.pidFile.String()).Msg("command exited, restarting it immediately")
+				logger.Error().Msg("command exited, restarting it immediately")
 				continue
 			}
 
@@ -261,26 +262,26 @@ func (r *Runner) Run() error {
 			// restarting the command, this avoids overloading the system with a
 			// failing command
 			if err != nil {
-				terminal.Logger.Error().Str("cmd", r.pidFile.String()).Msgf(`command exited: %s, waiting 5 seconds before restarting it`, err)
+				logger.Error().Msgf(`command exited: %s, waiting 5 seconds before restarting it`, err)
 				timer.Reset(5 * time.Second)
 			}
 
 			// Wait for a timer to expire or a file to be changed to restart
 			// or a signal to be received to exit
-			terminal.Logger.Debug().Msg("Waiting for channels")
+			logger.Debug().Msg("Waiting for channels")
 			select {
 			case sig := <-sigChan:
-				terminal.Logger.Info().Msgf(`Signal "%s" received, exiting`, sig)
+				logger.Info().Msgf(`Signal "%s" received, exiting`, sig)
 				return nil
 			case <-restartChan:
-				terminal.Logger.Debug().Msg("Received restart")
+				logger.Debug().Msg("Received restart")
 				timer.Stop()
 			case <-timer.C:
-				terminal.Logger.Debug().Msg("Received timer message")
+				logger.Debug().Msg("Received timer message")
 			}
 		}
 
-		terminal.Logger.Info().Str("cmd", r.pidFile.String()).Msg("Restarting command")
+		logger.Info().Msg("Restarting command")
 	}
 }
 
