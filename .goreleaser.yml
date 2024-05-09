@@ -93,7 +93,7 @@ brews:
     commit_author:
       name: Fabien Potencier
       email: fabien@symfony.com
-    folder: Formula
+    directory: Formula
     # Homebrew supports only a single GOARM variant and ARMv6 is upwards
     # compatible with ARMv7 so let's keep ARMv6 here (default value anyway)
     goarm: "6"
