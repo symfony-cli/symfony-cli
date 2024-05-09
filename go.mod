@@ -1,6 +1,6 @@
 module github.com/symfony-cli/symfony-cli
 
-go 1.22.2
+go 1.22.3
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1
