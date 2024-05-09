@@ -6,9 +6,9 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/blackfireio/osinfo v1.0.5
 	github.com/compose-spec/compose-go v1.20.2
-	github.com/docker/docker v26.1.1+incompatible
+	github.com/docker/docker v26.1.2+incompatible
 	github.com/elazarl/goproxy v0.0.0-20231117061959-7cc037d33fb5
-	github.com/fabpot/local-php-security-checker/v2 v2.1.2
+	github.com/fabpot/local-php-security-checker/v2 v2.1.3
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/golang-lru/arc/v2 v2.0.7
