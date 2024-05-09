@@ -325,6 +325,7 @@ var localServerStartCmd = &console.Command{
 					continue
 				}
 				pidFile.Watched = worker.Watch
+				pidFile.CustomName = name
 
 				// we run each worker in its own goroutine for several reasons:
 				// * to get things up and running faster
