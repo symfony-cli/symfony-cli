@@ -85,6 +85,7 @@ func ExecBinaryWithEnv(binary string, envs []string) bool {
 }
 
 func Background(homeDir string) error {
+	terminal.Logger.Debug().Str("source", "reexec").Msg("let's go to the background!")
 	if util.IsGoRun() {
 		return errors.New("Not applicable in a Go run context")
 	}
@@ -116,7 +117,6 @@ func Background(homeDir string) error {
 		os.Setenv("REEXEC_WATCH_PID", shellPID)
 	}
 
-	terminal.Logger.Debug().Msg("Let's go to the background!")
 	p, err := Respawn()
 	if err != nil {
 		return errors.Wrap(err, "Could not respawn")
@@ -157,14 +157,13 @@ func Background(homeDir string) error {
 			// end-up receiving a status in statusCh so no particular
 			// processing to do here.
 		case event := <-watcherChan:
-			terminal.Logger.Info().Msg("FS event received: " + event.Event().String())
+			terminal.Logger.Debug().Str("source", "reexec").Msg("FS event received: " + event.Event().String())
 			if event.Event() == notify.Remove {
 				return nil
 			}
 
 			if event.Event() == notify.Write {
 				ticker.Stop()
-				break
 			}
 		case status := <-statusCh:
 			return console.Exit("", status)
@@ -176,6 +175,7 @@ func Background(homeDir string) error {
 }
 
 func NotifyForeground(status string) error {
+	terminal.Logger.Debug().Str("source", "reexec").Msg("notify foreground")
 	if !IsChild() {
 		return nil
 	}
@@ -195,6 +195,7 @@ func NotifyForeground(status string) error {
 }
 
 func WatchParent(stopCh chan bool) error {
+	terminal.Logger.Debug().Str("source", "reexec").Msg("watch parent")
 	spid := os.Getenv("REEXEC_WATCH_PID")
 	if spid == "" {
 		return nil
@@ -223,6 +224,7 @@ func WatchParent(stopCh chan bool) error {
 }
 
 func Restart(postRespawn func()) error {
+	terminal.Logger.Debug().Str("source", "reexec").Msg("restart")
 	if err := os.Setenv("REEXEC_PPID", fmt.Sprint(os.Getpid())); nil != err {
 		return errors.WithStack(err)
 	}
@@ -280,6 +282,7 @@ func Restart(postRespawn func()) error {
 }
 
 func Respawn() (*os.Process, error) {
+	terminal.Logger.Debug().Str("source", "reexec").Msg("respawn")
 	argv0, err := console.CurrentBinaryPath()
 	if err != nil {
 		return nil, err

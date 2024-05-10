@@ -32,6 +32,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/inotify"
 	"github.com/symfony-cli/symfony-cli/local/pid"
@@ -80,7 +81,12 @@ func NewRunner(pidFile *pid.PidFile, mode runnerMode) (*Runner, error) {
 }
 
 func (r *Runner) Run() error {
-	logger := terminal.Logger.With().Str("cmd", r.pidFile.String()).Logger()
+	lw, err := r.pidFile.LogWriter()
+	if err != nil {
+		return err
+	}
+	logger := zerolog.New(lw).With().Str("source", "runner").Str("cmd", r.pidFile.String()).Timestamp().Logger()
+
 	if r.mode == RunnerModeLoopDetached {
 		if !reexec.IsChild() {
 			varDir := filepath.Join(util.GetHomeDir(), "var")
@@ -179,7 +185,6 @@ func (r *Runner) Run() error {
 			if r.mode == RunnerModeLoopDetached {
 				reexec.NotifyForeground("started")
 			}
-
 			logger.Debug().Msg("Waiting for channels (first boot)")
 			select {
 			case err := <-cmdExitChan:
