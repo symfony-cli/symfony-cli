@@ -253,7 +253,7 @@ func tailFile(filename string, follow bool, nblines int64) (*tail.Tail, error) {
 	return tail.TailFile(filename, tail.Config{
 		Location: &tail.SeekInfo{
 			Offset: pos,
-			Whence: os.SEEK_SET,
+			Whence: io.SeekStart,
 		},
 		ReOpen: follow,
 		Follow: follow,
