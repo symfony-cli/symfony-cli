@@ -236,8 +236,6 @@ func (r *Runner) Run() error {
 		// Command exited
 		case err := <-cmdExitChan:
 			logger.Debug().Msg("Received exit")
-			err = errors.Wrapf(err, `command "%s" failed`, r.pidFile)
-
 			if err == nil && r.SuccessHook != nil {
 				logger.Debug().Msg("Running success hook")
 				r.SuccessHook(r, cmd)
