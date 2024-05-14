@@ -458,9 +458,9 @@ var Commands = []*console.Command{
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "branch-from",},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"},},
+			&console.BoolFlag{Name: "no-code",},
 			&console.BoolFlag{Name: "no-wait", Aliases: []string{"W"},},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
-			&console.BoolFlag{Name: "restore-code",},
 			&console.StringFlag{Name: "target",},
 			&console.BoolFlag{Name: "wait",},
 		},
@@ -1348,6 +1348,7 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "format", DefaultValue: "table",},
 			&console.BoolFlag{Name: "no-header",},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+			&console.StringFlag{Name: "type", Aliases: []string{"t"},},
 		},
 	},
 	{
