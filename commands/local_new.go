@@ -66,7 +66,7 @@ var localNewCmd = &console.Command{
 		&console.BoolFlag{Name: "webapp", Usage: "Add the webapp pack to get a fully configured web project"},
 		&console.BoolFlag{Name: "api", Usage: "Add the api pack to get a fully configured api project"},
 		&console.BoolFlag{Name: "book", Usage: "Clone the Symfony: The Fast Track book project"},
-		&console.BoolFlag{Name: "docker", Usage: "Enable Docker support"},
+		&console.BoolFlag{Name: "docker", Usage: "Use the Symfony Docker Skeleton (includes FrankenPHP)"},
 		&console.BoolFlag{Name: "no-git", Usage: "Do not initialize Git"},
 		&console.BoolFlag{Name: "upsun", Usage: "Initialize Upsun configuration"},
 		&console.BoolFlag{Name: "cloud", Usage: "Initialize Platform.sh configuration"},
@@ -110,6 +110,7 @@ var localNewCmd = &console.Command{
 		}
 
 		symfonyVersion := c.String("version")
+		symfonyDocker := c.Bool("docker")
 
 		if c.Bool("book") {
 			if symfonyVersion == "" {
@@ -134,8 +135,13 @@ var localNewCmd = &console.Command{
 			return book.Clone(symfonyVersion)
 		}
 
-		if symfonyVersion != "" && c.Bool("demo") {
+		demo := c.Bool("demo")
+
+		if symfonyVersion != "" && demo {
 			return console.Exit("The --version flag is not supported for the Symfony Demo", 1)
+		}
+		if symfonyDocker && demo {
+			return console.Exit("The --docker flag isn not supported for the Symfony Demo", 1)
 		}
 		if c.Bool("webapp") && c.Bool("no-git") {
 			return console.Exit("The --webapp flag cannot be used with --no-git", 1)
@@ -157,7 +163,11 @@ var localNewCmd = &console.Command{
 			return err
 		}
 
-		if err := createProjectWithComposer(c, dir, symfonyVersion); err != nil {
+		if symfonyDocker {
+			if err := createProjectWithSymfonyDocker(dir, symfonyVersion); err != nil {
+				return err
+			}
+		} else if err := createProjectWithComposer(c, dir, symfonyVersion); err != nil {
 			return err
 		}
 
@@ -391,6 +401,48 @@ func createProjectWithComposer(c *console.Context, dir, version string) error {
 	}
 
 	return runComposer(c, "", []string{"create-project", repo, dir, version}, c.Bool("debug"))
+}
+
+func createProjectWithSymfonyDocker(dir string, version string) error {
+	terminal.Println("* Creating a new Symfony project with Symfony Docker")
+
+	resp, err := http.Get("https://github.com/dunglas/symfony-docker/archive/refs/heads/main.tar.gz")
+	if err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+	if err := util.Untar(resp.Body, dir, "symfony-docker-main"); err != nil {
+		return err
+	}
+
+	cmd := exec.Command("docker", "compose", "build", "--no-cache")
+	cmd.Dir = dir
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	// Runs the installer
+	cmd = exec.Command("docker", "compose", "run", "php", "bin/console", "--version")
+	cmd.Dir = dir
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if version != "" {
+		cmd.Env = append(cmd.Environ(), "SYMFONY_VERSION="+version)
+	}
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	terminal.Printf("Run `docker compose up -d --wait` in \"%s\" to start your project\n", dir)
+
+	return nil
 }
 
 func runComposer(c *console.Context, dir string, args []string, debug bool) error {
