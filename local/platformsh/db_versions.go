@@ -11,18 +11,19 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func ReadDBVersionFromPlatformServiceYAML(projectDir string) (string, string, error) {
-	servicesYAML, err := os.ReadFile(filepath.Join(projectDir, ".platform", "services.yaml"))
+func ReadDBVersionFromPlatformServiceYAML(projectDir string) (string, string, string, error) {
+	configFile := filepath.Join(projectDir, ".platform", "services.yaml")
+	servicesYAML, err := os.ReadFile(configFile)
 	if err != nil {
 		// no services.yaml or unreadable
-		return "", "", err
+		return "", "", "", err
 	}
 	var services map[string]struct {
 		Type string `yaml:"type"`
 	}
 	if err := yaml.Unmarshal(servicesYAML, &services); err != nil {
 		// services.yaml format is wrong
-		return "", "", err
+		return "", "", "", err
 	}
 
 	dbName := ""
@@ -31,7 +32,7 @@ func ReadDBVersionFromPlatformServiceYAML(projectDir string) (string, string, er
 		if strings.HasPrefix(service.Type, "mysql") || strings.HasPrefix(service.Type, "mariadb") || strings.HasPrefix(service.Type, "postgresql") {
 			if dbName != "" {
 				// give up as there are multiple DBs
-				return "", "", nil
+				return "", "", "", nil
 			}
 
 			parts := strings.Split(service.Type, ":")
@@ -39,7 +40,7 @@ func ReadDBVersionFromPlatformServiceYAML(projectDir string) (string, string, er
 			dbVersion = parts[1]
 		}
 	}
-	return dbName, dbVersion, nil
+	return configFile, dbName, dbVersion, nil
 }
 
 func ReadDBVersionFromDotEnv(projectDir string) (string, error) {

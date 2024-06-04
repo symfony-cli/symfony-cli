@@ -32,7 +32,7 @@ func checkDoctrineServerVersionSetting(projectDir string) error {
 		return nil
 	}
 
-	dbName, dbVersion, err := platformsh.ReadDBVersionFromPlatformServiceYAML(projectDir)
+	configFile, dbName, dbVersion, err := platformsh.ReadDBVersionFromPlatformServiceYAML(projectDir)
 	if err != nil {
 		return nil
 	}
@@ -42,12 +42,12 @@ func checkDoctrineServerVersionSetting(projectDir string) error {
 	}
 
 	errorTpl := fmt.Sprintf(`
- The ".platform/services.yaml" file defines
+ The "%s" file defines
  a "%s" version %s database service
  but %%s.
  
  Before deploying, fix the version mismatch.
- `, dbName, dbVersion)
+ `, configFile, dbName, dbVersion)
 
 	dotEnvVersion, err := platformsh.ReadDBVersionFromDotEnv(projectDir)
 	if err != nil {
@@ -67,7 +67,7 @@ func checkDoctrineServerVersionSetting(projectDir string) error {
 
 	if dotEnvVersion == "" && doctrineConfigVersion == "" {
 		return fmt.Errorf(`
- The ".platform/services.yaml" file defines a "%s" database service.
+ The "%s" file defines a "%s" database service.
  
  When deploying, Doctrine needs to know the database version to determine the supported SQL syntax.
  
@@ -75,7 +75,7 @@ func checkDoctrineServerVersionSetting(projectDir string) error {
  you need to explicitly set the database version in the ".env" or "config/packages/doctrine.yaml" file.
  
  Set the "server_version" parameter to "%s" in "config/packages/doctrine.yaml".
- `, dbName, dbVersion)
+ `, configFile, dbName, dbVersion)
 	}
 
 	return nil
