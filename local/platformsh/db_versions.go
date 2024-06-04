@@ -11,28 +11,52 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func ReadDBVersionFromPlatformServiceYAML(projectDir string) (string, string, string, error) {
+type serviceConfigs map[string]struct {
+	Type string `yaml:"type"`
+}
+
+func ReadDBVersionFromPlatformServiceYAML(projectDir string) (string, string, string) {
+	// Platform.sh
 	configFile := filepath.Join(projectDir, ".platform", "services.yaml")
-	servicesYAML, err := os.ReadFile(configFile)
-	if err != nil {
-		// no services.yaml or unreadable
-		return "", "", "", err
-	}
-	var services map[string]struct {
-		Type string `yaml:"type"`
-	}
-	if err := yaml.Unmarshal(servicesYAML, &services); err != nil {
-		// services.yaml format is wrong
-		return "", "", "", err
+	if servicesYAML, err := os.ReadFile(configFile); err == nil {
+		var services serviceConfigs
+		if err := yaml.Unmarshal(servicesYAML, &services); err == nil {
+			if dbName, dbVersion, err := extractCloudDatabaseType(services); err == nil {
+				return configFile, dbName, dbVersion
+			}
+		}
 	}
 
+	// Upsun
+	upsunDir := filepath.Join(projectDir, ".upsun")
+	if _, err := os.Stat(upsunDir); err == nil {
+		if files, err := os.ReadDir(upsunDir); err == nil {
+			for _, file := range files {
+				configFile := filepath.Join(upsunDir, file.Name())
+				if servicesYAML, err := os.ReadFile(configFile); err == nil {
+					var config struct {
+						Services serviceConfigs `yaml:"services"`
+					}
+					if err := yaml.Unmarshal(servicesYAML, &config); err == nil {
+						if dbName, dbVersion, err := extractCloudDatabaseType(config.Services); err == nil {
+							return configFile, dbName, dbVersion
+						}
+					}
+				}
+			}
+		}
+	}
+	return "", "", ""
+}
+
+func extractCloudDatabaseType(services serviceConfigs) (string, string, error) {
 	dbName := ""
 	dbVersion := ""
 	for _, service := range services {
 		if strings.HasPrefix(service.Type, "mysql") || strings.HasPrefix(service.Type, "mariadb") || strings.HasPrefix(service.Type, "postgresql") {
 			if dbName != "" {
 				// give up as there are multiple DBs
-				return "", "", "", nil
+				return "", "", nil
 			}
 
 			parts := strings.Split(service.Type, ":")
@@ -40,7 +64,7 @@ func ReadDBVersionFromPlatformServiceYAML(projectDir string) (string, string, st
 			dbVersion = parts[1]
 		}
 	}
-	return configFile, dbName, dbVersion, nil
+	return dbName, dbVersion, nil
 }
 
 func ReadDBVersionFromDotEnv(projectDir string) (string, error) {

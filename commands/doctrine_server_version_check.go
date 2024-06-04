@@ -32,10 +32,7 @@ func checkDoctrineServerVersionSetting(projectDir string) error {
 		return nil
 	}
 
-	configFile, dbName, dbVersion, err := platformsh.ReadDBVersionFromPlatformServiceYAML(projectDir)
-	if err != nil {
-		return nil
-	}
+	configFile, dbName, dbVersion := platformsh.ReadDBVersionFromPlatformServiceYAML(projectDir)
 	if dbName == "" {
 		// no DB
 		return nil
@@ -77,6 +74,8 @@ func checkDoctrineServerVersionSetting(projectDir string) error {
  Set the "server_version" parameter to "%s" in "config/packages/doctrine.yaml".
  `, configFile, dbName, dbVersion)
 	}
+
+	fmt.Println("✅ Doctrine server version is set properly.")
 
 	return nil
 }
