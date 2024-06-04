@@ -20,13 +20,14 @@
 package php
 
 import (
-	"github.com/mitchellh/go-homedir"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/mitchellh/go-homedir"
 )
 
-func findComposerSystemSpecific(extraBin string) string {
+func findComposerSystemSpecific() string {
 	// Special Support for Scoop
 	scoopPaths := []string{}
 

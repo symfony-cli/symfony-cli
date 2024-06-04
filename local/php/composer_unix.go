@@ -28,7 +28,7 @@ import (
 	"strings"
 )
 
-func findComposerSystemSpecific(extraBin string) string {
+func findComposerSystemSpecific() string {
 	// Special Support for NixOS
 	for _, path := range strings.Split(os.Getenv("buildInputs"), " ") {
 		nixPharPath := filepath.Join(path, "libexec/composer/composer.phar")

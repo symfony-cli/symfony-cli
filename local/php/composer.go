@@ -71,7 +71,7 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, 
 	}
 	composerBin := "composer1"
 	if composerVersion() == 2 {
-		composerBin = "composer2"
+		composerBin = "composer"
 	}
 	path, err := e.findComposer(composerBin)
 	if err != nil || !isPHPScript(path) {
@@ -139,7 +139,7 @@ func findComposer(extraBin string) (string, error) {
 	// Special support for OS specific things. They need to run before the
 	// PATH detection because most of them adds shell wrappers that we
 	// can't run via PHP.
-	if pharPath := findComposerSystemSpecific(extraBin); pharPath != "" {
+	if pharPath := findComposerSystemSpecific(); pharPath != "" {
 		return pharPath, nil
 	}
 	for _, file := range []string{extraBin, "composer", "composer.phar"} {
