@@ -20,8 +20,6 @@
 package commands
 
 import (
-	"fmt"
-
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/envs"
 	"github.com/symfony-cli/symfony-cli/local/platformsh"
@@ -35,59 +33,7 @@ var platformshBeforeHooks = map[string]console.BeforeFunc{
 		if err != nil {
 			return err
 		}
-
-		if len(platformsh.FindLocalApplications(projectDir)) > 1 {
-			// not implemented yet as more complex
-			return nil
-		}
-
-		dbName, dbVersion, err := platformsh.ReadDBVersionFromPlatformServiceYAML(projectDir)
-		if err != nil {
-			return nil
-		}
-		if dbName == "" {
-			// no DB
-			return nil
-		}
-
-		errorTpl := fmt.Sprintf(`
-The ".platform/services.yaml" file defines
-a "%s" version %s database service
-but %%s.
-
-Before deploying, fix the version mismatch.
-`, dbName, dbVersion)
-
-		dotEnvVersion, err := platformsh.ReadDBVersionFromDotEnv(projectDir)
-		if err != nil {
-			return nil
-		}
-		if platformsh.DatabaseVersiondUnsynced(dotEnvVersion, dbVersion) {
-			return fmt.Errorf(errorTpl, fmt.Sprintf("the \".env\" file requires version %s", dotEnvVersion))
-		}
-
-		doctrineConfigVersion, err := platformsh.ReadDBVersionFromDoctrineConfigYAML(projectDir)
-		if err != nil {
-			return nil
-		}
-		if platformsh.DatabaseVersiondUnsynced(doctrineConfigVersion, dbVersion) {
-			return fmt.Errorf(errorTpl, fmt.Sprintf("the \"config/packages/doctrine.yaml\" file requires version %s", doctrineConfigVersion))
-		}
-
-		if dotEnvVersion == "" && doctrineConfigVersion == "" {
-			return fmt.Errorf(`
-The ".platform/services.yaml" file defines a "%s" database service.
-
-When deploying, Doctrine needs to know the database version to determine the supported SQL syntax.
-
-As the database is not available when Doctrine is warming up its cache on Platform.sh,
-you need to explicitly set the database version in the ".env" or "config/packages/doctrine.yaml" file.
-
-Set the "server_version" parameter to "%s" in "config/packages/doctrine.yaml".
-`, dbName, dbVersion)
-		}
-
-		return nil
+		return checkDoctrineServerVersionSetting(projectDir)
 	},
 	"tunnel:close": func(c *console.Context) error {
 		terminal.Eprintln("Stop exposing tunnel service environment variables")
