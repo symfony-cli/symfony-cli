@@ -71,7 +71,7 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, 
 	}
 	composerBin := "composer1"
 	if composerVersion() == 2 {
-		composerBin = "composer2"
+		composerBin = "composer"
 	}
 	path, err := e.findComposer(composerBin)
 	if err != nil || !isPHPScript(path) {
