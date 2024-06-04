@@ -33,7 +33,7 @@ var platformshBeforeHooks = map[string]console.BeforeFunc{
 		if err != nil {
 			return err
 		}
-		return checkDoctrineServerVersionSetting(projectDir)
+		return checkDoctrineServerVersionSetting(projectDir, nil)
 	},
 	"tunnel:close": func(c *console.Context) error {
 		terminal.Eprintln("Stop exposing tunnel service environment variables")

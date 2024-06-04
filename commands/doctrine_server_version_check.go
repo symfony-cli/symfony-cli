@@ -22,17 +22,20 @@ package commands
 import (
 	"fmt"
 
+	"github.com/rs/zerolog"
 	"github.com/symfony-cli/symfony-cli/local/platformsh"
 )
 
 // checkDoctrineServerVersionSetting checks that project has a DB and that server version is set properly
-func checkDoctrineServerVersionSetting(projectDir string) error {
+func checkDoctrineServerVersionSetting(projectDir string, logger *zerolog.Logger) error {
 	if len(platformsh.FindLocalApplications(projectDir)) > 1 {
-		// not implemented yet as more complex
+		if logger != nil {
+			logger.Debug().Msg("Doctrine server version check disabled on a multiple applications project")
+		}
 		return nil
 	}
 
-	configFile, dbName, dbVersion := platformsh.ReadDBVersionFromPlatformServiceYAML(projectDir)
+	configFile, dbName, dbVersion := platformsh.ReadDBVersionFromPlatformServiceYAML(projectDir, logger)
 	if dbName == "" {
 		// no DB
 		return nil

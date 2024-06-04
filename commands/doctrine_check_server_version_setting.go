@@ -3,7 +3,9 @@ package commands
 import (
 	"fmt"
 
+	"github.com/rs/zerolog"
 	"github.com/symfony-cli/console"
+	"github.com/symfony-cli/terminal"
 )
 
 var doctrineCheckServerVersionSettingCmd = &console.Command{
@@ -19,7 +21,8 @@ var doctrineCheckServerVersionSettingCmd = &console.Command{
 			return err
 		}
 
-		if err := checkDoctrineServerVersionSetting(projectDir); err != nil {
+		logger := terminal.Logger.Output(zerolog.ConsoleWriter{Out: terminal.Stderr}).With().Timestamp().Logger()
+		if err := checkDoctrineServerVersionSetting(projectDir, &logger); err != nil {
 			return err
 		}
 

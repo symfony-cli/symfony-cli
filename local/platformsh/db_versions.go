@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
+	"github.com/rs/zerolog"
 	"gopkg.in/yaml.v2"
 )
 
@@ -15,16 +16,25 @@ type serviceConfigs map[string]struct {
 	Type string `yaml:"type"`
 }
 
-func ReadDBVersionFromPlatformServiceYAML(projectDir string) (string, string, string) {
+func ReadDBVersionFromPlatformServiceYAML(projectDir string, logger *zerolog.Logger) (string, string, string) {
 	// Platform.sh
 	configFile := filepath.Join(".platform", "services.yaml")
 	if servicesYAML, err := os.ReadFile(filepath.Join(projectDir, configFile)); err == nil {
 		var services serviceConfigs
 		if err := yaml.Unmarshal(servicesYAML, &services); err == nil {
 			if dbName, dbVersion, err := extractCloudDatabaseType(services); err == nil {
+				if logger != nil {
+					logger.Debug().Msg("DB configured in .platform/services.yaml")
+				}
 				return configFile, dbName, dbVersion
+			} else if logger != nil {
+				logger.Debug().Msg("No DB configured in .platform/services.yaml")
 			}
+		} else if logger != nil {
+			logger.Debug().Msg("Unable to parse .platform/services.yaml file")
 		}
+	} else if logger != nil {
+		logger.Debug().Msg("No .platform/services.yaml file found or not readable")
 	}
 
 	// Upsun
@@ -39,12 +49,28 @@ func ReadDBVersionFromPlatformServiceYAML(projectDir string) (string, string, st
 					}
 					if err := yaml.Unmarshal(servicesYAML, &config); err == nil {
 						if dbName, dbVersion, err := extractCloudDatabaseType(config.Services); err == nil {
+							if logger != nil {
+								logger.Debug().Msgf("DB configured in %s", configFile)
+							}
 							return configFile, dbName, dbVersion
+						} else if logger != nil {
+							logger.Debug().Msgf("No DB configured in %s", configFile)
 						}
+					} else {
+						logger.Debug().Msgf("Unable to parse the %s file", configFile)
 					}
+				} else if logger != nil {
+					logger.Debug().Msgf("Unable to read the %s file", configFile)
 				}
 			}
+		} else if logger != nil {
+			logger.Debug().Msg("Unable to list files under the .upsun directory")
 		}
+	} else if logger != nil {
+		logger.Debug().Msg("No .upsun directory found")
+	}
+	if logger != nil {
+		logger.Debug().Msg("No DB configured")
 	}
 	return "", "", ""
 }
