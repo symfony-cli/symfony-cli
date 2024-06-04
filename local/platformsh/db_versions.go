@@ -17,8 +17,8 @@ type serviceConfigs map[string]struct {
 
 func ReadDBVersionFromPlatformServiceYAML(projectDir string) (string, string, string) {
 	// Platform.sh
-	configFile := filepath.Join(projectDir, ".platform", "services.yaml")
-	if servicesYAML, err := os.ReadFile(configFile); err == nil {
+	configFile := filepath.Join(".platform", "services.yaml")
+	if servicesYAML, err := os.ReadFile(filepath.Join(projectDir, configFile)); err == nil {
 		var services serviceConfigs
 		if err := yaml.Unmarshal(servicesYAML, &services); err == nil {
 			if dbName, dbVersion, err := extractCloudDatabaseType(services); err == nil {
@@ -32,8 +32,8 @@ func ReadDBVersionFromPlatformServiceYAML(projectDir string) (string, string, st
 	if _, err := os.Stat(upsunDir); err == nil {
 		if files, err := os.ReadDir(upsunDir); err == nil {
 			for _, file := range files {
-				configFile := filepath.Join(upsunDir, file.Name())
-				if servicesYAML, err := os.ReadFile(configFile); err == nil {
+				configFile := filepath.Join(".upsun", file.Name())
+				if servicesYAML, err := os.ReadFile(filepath.Join(projectDir, configFile)); err == nil {
 					var config struct {
 						Services serviceConfigs `yaml:"services"`
 					}

@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/symfony-cli/console"
 )
 
@@ -17,6 +19,11 @@ var doctrineCheckServerVersionSettingCmd = &console.Command{
 			return err
 		}
 
-		return checkDoctrineServerVersionSetting(projectDir)
+		if err := checkDoctrineServerVersionSetting(projectDir); err != nil {
+			return err
+		}
+
+		fmt.Println("✅ Doctrine server version is set properly.")
+		return nil
 	},
 }

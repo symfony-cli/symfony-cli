@@ -39,11 +39,11 @@ func checkDoctrineServerVersionSetting(projectDir string) error {
 	}
 
 	errorTpl := fmt.Sprintf(`
- The "%s" file defines
- a "%s" version %s database service
- but %%s.
- 
- Before deploying, fix the version mismatch.
+The "%s" file defines
+a "%s" version %s database service
+but %%s.
+
+Before deploying, fix the version mismatch.
  `, configFile, dbName, dbVersion)
 
 	dotEnvVersion, err := platformsh.ReadDBVersionFromDotEnv(projectDir)
@@ -64,18 +64,16 @@ func checkDoctrineServerVersionSetting(projectDir string) error {
 
 	if dotEnvVersion == "" && doctrineConfigVersion == "" {
 		return fmt.Errorf(`
- The "%s" file defines a "%s" database service.
- 
- When deploying, Doctrine needs to know the database version to determine the supported SQL syntax.
- 
- As the database is not available when Doctrine is warming up its cache on Platform.sh,
- you need to explicitly set the database version in the ".env" or "config/packages/doctrine.yaml" file.
- 
- Set the "server_version" parameter to "%s" in "config/packages/doctrine.yaml".
+The "%s" file defines a "%s" database service.
+
+When deploying, Doctrine needs to know the database version to determine the supported SQL syntax.
+
+As the database is not available when Doctrine is warming up its cache on Platform.sh,
+you need to explicitly set the database version in the ".env" or "config/packages/doctrine.yaml" file.
+
+Set the "server_version" parameter to "%s" in "config/packages/doctrine.yaml".
  `, configFile, dbName, dbVersion)
 	}
-
-	fmt.Println("✅ Doctrine server version is set properly.")
 
 	return nil
 }
