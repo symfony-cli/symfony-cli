@@ -11,20 +11,45 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func ReadDBVersionFromPlatformServiceYAML(projectDir string) (string, string, error) {
-	servicesYAML, err := os.ReadFile(filepath.Join(projectDir, ".platform", "services.yaml"))
-	if err != nil {
-		// no services.yaml or unreadable
-		return "", "", err
-	}
-	var services map[string]struct {
-		Type string `yaml:"type"`
-	}
-	if err := yaml.Unmarshal(servicesYAML, &services); err != nil {
-		// services.yaml format is wrong
-		return "", "", err
+type serviceConfigs map[string]struct {
+	Type string `yaml:"type"`
+}
+
+func ReadDBVersionFromPlatformServiceYAML(projectDir string) (string, string, string) {
+	// Platform.sh
+	configFile := filepath.Join(".platform", "services.yaml")
+	if servicesYAML, err := os.ReadFile(filepath.Join(projectDir, configFile)); err == nil {
+		var services serviceConfigs
+		if err := yaml.Unmarshal(servicesYAML, &services); err == nil {
+			if dbName, dbVersion, err := extractCloudDatabaseType(services); err == nil {
+				return configFile, dbName, dbVersion
+			}
+		}
 	}
 
+	// Upsun
+	upsunDir := filepath.Join(projectDir, ".upsun")
+	if _, err := os.Stat(upsunDir); err == nil {
+		if files, err := os.ReadDir(upsunDir); err == nil {
+			for _, file := range files {
+				configFile := filepath.Join(".upsun", file.Name())
+				if servicesYAML, err := os.ReadFile(filepath.Join(projectDir, configFile)); err == nil {
+					var config struct {
+						Services serviceConfigs `yaml:"services"`
+					}
+					if err := yaml.Unmarshal(servicesYAML, &config); err == nil {
+						if dbName, dbVersion, err := extractCloudDatabaseType(config.Services); err == nil {
+							return configFile, dbName, dbVersion
+						}
+					}
+				}
+			}
+		}
+	}
+	return "", "", ""
+}
+
+func extractCloudDatabaseType(services serviceConfigs) (string, string, error) {
 	dbName := ""
 	dbVersion := ""
 	for _, service := range services {
