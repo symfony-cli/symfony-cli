@@ -22,7 +22,7 @@ var doctrineCheckServerVersionSettingCmd = &console.Command{
 		}
 
 		logger := terminal.Logger.Output(zerolog.ConsoleWriter{Out: terminal.Stderr}).With().Timestamp().Logger()
-		if err := checkDoctrineServerVersionSetting(projectDir, &logger); err != nil {
+		if err := checkDoctrineServerVersionSetting(projectDir, logger); err != nil {
 			return err
 		}
 

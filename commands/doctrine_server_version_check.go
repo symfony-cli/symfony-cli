@@ -27,11 +27,9 @@ import (
 )
 
 // checkDoctrineServerVersionSetting checks that project has a DB and that server version is set properly
-func checkDoctrineServerVersionSetting(projectDir string, logger *zerolog.Logger) error {
+func checkDoctrineServerVersionSetting(projectDir string, logger zerolog.Logger) error {
 	if len(platformsh.FindLocalApplications(projectDir)) > 1 {
-		if logger != nil {
-			logger.Debug().Msg("Doctrine server version check disabled on a multiple applications project")
-		}
+		logger.Debug().Msg("Doctrine server version check disabled on a multiple applications project")
 		return nil
 	}
 

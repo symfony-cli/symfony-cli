@@ -20,6 +20,7 @@
 package commands
 
 import (
+	"github.com/rs/zerolog"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/envs"
 	"github.com/symfony-cli/symfony-cli/local/platformsh"
@@ -33,7 +34,7 @@ var platformshBeforeHooks = map[string]console.BeforeFunc{
 		if err != nil {
 			return err
 		}
-		return checkDoctrineServerVersionSetting(projectDir, nil)
+		return checkDoctrineServerVersionSetting(projectDir, zerolog.Nop())
 	},
 	"tunnel:close": func(c *console.Context) error {
 		terminal.Eprintln("Stop exposing tunnel service environment variables")
