@@ -84,10 +84,10 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, 
 				error: errors.Wrap(err, "unable to find composer, get it at https://getcomposer.org/download/"),
 			}
 		}
+		fmt.Fprintf(logger, "  (running %s %s)\n\n", path, strings.TrimSpace(strings.Join(args, " ")))
 	}
 
 	e.Args = append([]string{"php", path}, args...)
-	fmt.Fprintf(logger, "  (running %s %s)\n\n", path, strings.TrimSpace(strings.Join(args, " ")))
 	ret := e.Execute(false)
 	if ret != 0 {
 		return ComposerResult{
@@ -135,7 +135,7 @@ func composerVersion() int {
 	return DefaultComposerVersion
 }
 
-func findComposer(extraBin string) (string, error) {
+func findComposer(extraBin string, logger zerolog.Logger) (string, error) {
 	// Special support for OS specific things. They need to run before the
 	// PATH detection because most of them adds shell wrappers that we
 	// can't run via PHP.
@@ -143,11 +143,13 @@ func findComposer(extraBin string) (string, error) {
 		return pharPath, nil
 	}
 	for _, file := range []string{extraBin, "composer", "composer.phar"} {
+		logger.Debug().Str("source", "Composer").Msgf(`Looking for Composer in the PATH as "%s"`, file)
 		if pharPath, _ := LookPath(file); pharPath != "" {
 			// On Windows, we don't want the .bat, but the real composer phar/PHP file
 			if strings.HasSuffix(pharPath, ".bat") {
 				pharPath = pharPath[:len(pharPath)-4] + ".phar"
 			}
+			logger.Debug().Str("source", "Composer").Msgf(`Found Composer as "%s"`, pharPath)
 			return pharPath, nil
 		}
 	}

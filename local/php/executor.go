@@ -289,19 +289,21 @@ func (e *Executor) findComposer(extraBin string) (string, error) {
 	if scriptDir, err := e.DetectScriptDir(); err == nil {
 		for _, file := range []string{extraBin, "composer.phar", "composer"} {
 			path := filepath.Join(scriptDir, file)
+			e.Logger.Debug().Str("source", "Composer").Msgf(`Looking for Composer under "%s"`, path)
 			d, err := os.Stat(path)
 			if err != nil {
 				continue
 			}
 			if m := d.Mode(); !m.IsDir() {
 				// Yep!
+				e.Logger.Debug().Str("source", "Composer").Msgf(`Found Composer as "%s"`, path)
 				return path, nil
 			}
 		}
 	}
 
 	// fallback to default composer detection
-	return findComposer(extraBin)
+	return findComposer(extraBin, e.Logger)
 }
 
 // Execute executes the right version of PHP depending on the configuration
