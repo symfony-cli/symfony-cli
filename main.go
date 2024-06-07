@@ -23,11 +23,9 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"time"
 
-	"github.com/rs/zerolog"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/commands"
 	"github.com/symfony-cli/symfony-cli/local/php"
@@ -52,6 +50,10 @@ func getCliExtraEnv() []string {
 }
 
 func main() {
+	if os.Getenv("SC_DEBUG") == "1" {
+		terminal.SetLogLevel(5)
+	}
+
 	args := os.Args
 	name := console.CurrentBinaryName()
 	// called via "php"?
@@ -84,7 +86,7 @@ func main() {
 	}
 	// called via "symfony composer"?
 	if len(args) >= 2 && args[1] == "composer" {
-		res := php.Composer("", args[2:], getCliExtraEnv(), os.Stdout, os.Stderr, io.Discard, zerolog.Nop())
+		res := php.Composer("", args[2:], getCliExtraEnv(), os.Stdout, os.Stderr, os.Stderr, terminal.Logger)
 		terminal.Eprintln(res.Error())
 		os.Exit(res.ExitCode())
 	}
