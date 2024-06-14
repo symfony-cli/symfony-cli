@@ -27,17 +27,21 @@ import (
 
 var (
 	composerWrapper = &console.Command{
-		Name:   "composer",
 		Usage:  "Runs Composer without memory limit",
 		Hidden: console.Hide,
+		// we use an alias to avoid the command being shown in the help but
+		// still be available for completion
+		Aliases: []*console.Alias{{Name: "composer"}},
 		Action: func(c *console.Context) error {
 			return console.IncorrectUsageError{ParentError: errors.New(`This command can only be run as "symfony composer"`)}
 		},
 	}
 	binConsoleWrapper = &console.Command{
-		Name:   "console",
 		Usage:  "Runs the Symfony Console (bin/console) for current project",
 		Hidden: console.Hide,
+		// we use an alias to avoid the command being shown in the help but
+		// still be available for completion
+		Aliases: []*console.Alias{{Name: "console"}},
 		Action: func(c *console.Context) error {
 			return console.IncorrectUsageError{ParentError: errors.New(`This command can only be run as "symfony console"`)}
 		},
@@ -45,6 +49,8 @@ var (
 	phpWrapper = &console.Command{
 		Usage:  "Runs the named binary using the configured PHP version",
 		Hidden: console.Hide,
+		// we use aliases to avoid the command being shown in the help but
+		// still be available for completion
 		Aliases: func() []*console.Alias {
 			binNames := php.GetBinaryNames()
 			aliases := make([]*console.Alias, 0, len(binNames))
