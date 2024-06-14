@@ -25,7 +25,7 @@ require (
 	github.com/soheilhy/cmux v0.1.5
 	github.com/stoicperlman/fls v0.0.0-20171222144224-f073b7a01081
 	github.com/symfony-cli/cert v1.0.6
-	github.com/symfony-cli/console v1.1.2
+	github.com/symfony-cli/console v1.1.3
 	github.com/symfony-cli/phpstore v1.0.12
 	github.com/symfony-cli/terminal v1.0.7
 	golang.org/x/sync v0.7.0
