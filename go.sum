@@ -54,10 +54,12 @@ github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 h1:+ngKgrYPPJr
 github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 h1:bkypFPDjIYGfCYD5mRBvpqxfYX1YCS1PXdKYWi8FsN0=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0/go.mod h1:P+Lt/0by1T8bfcF3z737NnSbmxQAppXMRziHUxPOC8k=
-github.com/hashicorp/errwrap v1.0.0 h1:hLrqtEDnRye3+sgx6z4qVLNuviH3MR5aQ0ykNJa/UYA=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
-github.com/hashicorp/go-multierror v1.0.0 h1:iVjPR7a6H0tWELX5NxNe7bYopibicUzc7uPribsnS6o=
+github.com/hashicorp/errwrap v1.1.0 h1:OxrOeh75EUXMY8TBjag2fzXGZ40LB6IKw45YeGUDY2I=
+github.com/hashicorp/errwrap v1.1.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
 github.com/hashicorp/go-multierror v1.0.0/go.mod h1:dHtQlpGsu+cZNNAkkCN/P3hoUDHhCYQXV3UM06sGGrk=
+github.com/hashicorp/go-multierror v1.1.1 h1:H5DkEtf6CXdFp0N0Em5UCwQpXMWke8IA0+lD48awMYo=
+github.com/hashicorp/go-multierror v1.1.1/go.mod h1:iw975J/qwKPdAO1clOe2L8331t/9/fmwbPZ6JB6eMoM=
 github.com/hashicorp/go-version v1.7.0 h1:5tqGy27NaOTB8yJKUZELlFAS/LTKJkrmONwQKeRZfjY=
 github.com/hashicorp/go-version v1.7.0/go.mod h1:fltr4n8CU8Ke44wwGCBoEymUuxUHl09ZGVZPK5anwXA=
 github.com/hashicorp/golang-lru/arc/v2 v2.0.7 h1:QxkVTxwColcduO+LP7eJO56r2hFiG8zEbfAAzRv52KQ=
@@ -150,8 +152,8 @@ github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsT
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/symfony-cli/cert v1.0.6 h1:FKdNRhKSxc+IcOkSRYvcOjr4jyZxGHiNS0xCN0uXZQI=
 github.com/symfony-cli/cert v1.0.6/go.mod h1:7Lt0uwi9z6DYTwLQeKsdPrsTqvTZRTqdlVSDJJqKUVo=
-github.com/symfony-cli/console v1.1.1 h1:BkUlpSY4SBKU0Yco51sHJZfyV9FEqxFRGzMe6TL+5RE=
-github.com/symfony-cli/console v1.1.1/go.mod h1:AB4ZxA593cyS/1NhwnDEUChIPaGuddFqooipam1vyS8=
+github.com/symfony-cli/console v1.1.2 h1:YVQbl4i03cE0r3QJ/RJs7LWaC3pEy2JI4qhFfL6vpLU=
+github.com/symfony-cli/console v1.1.2/go.mod h1:AB4ZxA593cyS/1NhwnDEUChIPaGuddFqooipam1vyS8=
 github.com/symfony-cli/phpstore v1.0.12 h1:2mKJrDielSCW+7B+63w6HebmSBcB4qV7uuvNrIjLkoA=
 github.com/symfony-cli/phpstore v1.0.12/go.mod h1:U29bdJBPs9p28PzLIRKfKfKkaiH0kacdyufl3eSB1d4=
 github.com/symfony-cli/terminal v1.0.7 h1:57L9PUTE2cHfQtP8Ti8dyiiPEYlQ1NBIDpMJ3RPEGPc=
