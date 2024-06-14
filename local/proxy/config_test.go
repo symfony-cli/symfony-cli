@@ -43,3 +43,16 @@ func (s *ProxySuite) TestGetDir(c *C) {
 	c.Assert(p.GetDir("foo.symfony.com"), Equals, "any_symfony_com")
 	c.Assert(p.GetDir("foo.live.symfony.com"), Equals, "any_live_symfony_com")
 }
+
+func (s *ProxySuite) TestGetReachableDomains(c *C) {
+	p := &Config{
+		TLD: "wip",
+		domains: map[string]string{
+			"*.symfony":        "symfony_com",
+			"symfony":          "symfony_com",
+			"custom.*.symfony": "symfony_com",
+			"*.live.symfony":   "symfony_com",
+		},
+	}
+	c.Assert(p.GetReachableDomains("symfony_com"), DeepEquals, []string{"symfony.wip"})
+}

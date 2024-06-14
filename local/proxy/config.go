@@ -158,6 +158,23 @@ func (c *Config) GetDomains(dir string) []string {
 	return domains
 }
 
+func (c *Config) GetReachableDomains(dir string) []string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	domains := []string{}
+	for domain, d := range c.domains {
+		// domain is defined using a wildcard: we don't know the exact domain,
+		// so we can't use it directly as-is to reach the project
+		if strings.Contains(domain, "*") {
+			continue
+		}
+		if d == dir {
+			domains = append(domains, domain+"."+c.TLD)
+		}
+	}
+	return domains
+}
+
 func (c *Config) SetDomains(domains map[string]string) {
 	c.mu.Lock()
 	c.domains = domains

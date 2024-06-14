@@ -54,7 +54,7 @@ var projectLocalOpenCmd = &console.Command{
 		}
 		host := fmt.Sprintf("127.0.0.1:%d", pidFile.Port)
 		if proxyConf, err := proxy.Load(util.GetHomeDir()); err == nil {
-			domains := proxyConf.GetDomains(projectDir)
+			domains := proxyConf.GetReachableDomains(projectDir)
 			if len(domains) > 0 {
 				host = domains[0]
 			}
