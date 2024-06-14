@@ -6,7 +6,7 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/blackfireio/osinfo v1.0.5
 	github.com/compose-spec/compose-go v1.20.2
-	github.com/docker/docker v26.1.4+incompatible
+	github.com/docker/docker v27.0.0+incompatible
 	github.com/elazarl/goproxy v0.0.0-20231117061959-7cc037d33fb5
 	github.com/fabpot/local-php-security-checker/v2 v2.1.3
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
@@ -25,7 +25,7 @@ require (
 	github.com/soheilhy/cmux v0.1.5
 	github.com/stoicperlman/fls v0.0.0-20171222144224-f073b7a01081
 	github.com/symfony-cli/cert v1.0.6
-	github.com/symfony-cli/console v1.1.0
+	github.com/symfony-cli/console v1.1.1
 	github.com/symfony-cli/phpstore v1.0.12
 	github.com/symfony-cli/terminal v1.0.7
 	golang.org/x/sync v0.7.0
@@ -47,6 +47,8 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/btree v1.1.2 // indirect
+	github.com/hashicorp/errwrap v1.0.0 // indirect
+	github.com/hashicorp/go-multierror v1.0.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
@@ -63,8 +65,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
-	github.com/posener/complete/v2 v2.1.0 // indirect
-	github.com/posener/script v1.2.0 // indirect
+	github.com/posener/complete v1.2.3 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
@@ -78,7 +79,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.27.0 // indirect
 	go.opentelemetry.io/otel/trace v1.27.0 // indirect
 	golang.org/x/crypto v0.24.0 // indirect
-	golang.org/x/exp v0.0.0-20240604190554-fc45aab8b7f8 // indirect
+	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/term v0.21.0 // indirect
