@@ -23,14 +23,6 @@
 #   - https://github.com/scop/bash-completion/blob/master/completions/sudo
 #
 
-# this wrapper function allows us to let Symfony knows how to call the
-# `bin/console` using the Symfony CLI binary (to ensure the right env and PHP
-# versions are used)
-_{{ .App.HelpName }}_console() {
-  # shellcheck disable=SC2068
-  {{ .CurrentBinaryInvocation }} console $@
-}
-
 _complete_{{ .App.HelpName }}() {
 
     # Use the default completion for shell redirect operators.
@@ -45,11 +37,7 @@ _complete_{{ .App.HelpName }}() {
     for (( i=1; i <= COMP_CWORD; i++ )); do
         if [[ "${COMP_WORDS[i]}" != -* ]]; then
             case "${COMP_WORDS[i]}" in
-                console)
-                    _SF_CMD="_{{ .App.HelpName }}_console" _command_offset $i
-                    return
-                    ;;
-                composer{{range $name := (.App.Command "php").Names }}|{{$name}}{{end}}{{range $name := (.App.Command "run").Names }}|{{$name}}{{end}})
+                {{range $i, $name := (.App.Command "php").Names }}{{if $i}}|{{end}}{{$name}}{{end}}{{range $name := (.App.Command "run").Names }}|{{$name}}{{end}})
                     _command_offset $i
                     return
                     ;;
@@ -57,7 +45,48 @@ _complete_{{ .App.HelpName }}() {
         fi
     done
 
-    IFS=$'\n' COMPREPLY=( $(COMP_LINE="${COMP_LINE}" COMP_POINT="${COMP_POINT}" COMP_DEBUG="$COMP_DEBUG" {{ .CurrentBinaryPath }} self:autocomplete) )
+    # Use newline as only separator to allow space in completion values
+    IFS=$'\n'
+
+    local cur prev words cword
+    _get_comp_words_by_ref -n := cur prev words cword
+
+    local sfcomplete
+    if sfcomplete=$(COMP_LINE="${COMP_LINE}" COMP_POINT="${COMP_POINT}" COMP_DEBUG="$COMP_DEBUG" CURRENT="$cword" {{ .CurrentBinaryPath }} self:autocomplete 2>&1); then
+        local quote suggestions
+        quote=${cur:0:1}
+
+        # Use single quotes by default if suggestions contains backslash (FQCN)
+        if [ "$quote" == '' ] && [[ "$sfcomplete" =~ \\ ]]; then
+            quote=\'
+        fi
+
+        if [ "$quote" == \' ]; then
+            # single quotes: no additional escaping (does not accept ' in values)
+            suggestions=$(for s in $sfcomplete; do printf $'%q%q%q\n' "$quote" "$s" "$quote"; done)
+        elif [ "$quote" == \" ]; then
+            # double quotes: double escaping for \ $ ` "
+            suggestions=$(for s in $sfcomplete; do
+                s=${s//\\/\\\\}
+                s=${s//\$/\\\$}
+                s=${s//\`/\\\`}
+                s=${s//\"/\\\"}
+                printf $'%q%q%q\n' "$quote" "$s" "$quote";
+            done)
+        else
+            # no quotes: double escaping
+            suggestions=$(for s in $sfcomplete; do printf $'%q\n' $(printf '%q' "$s"); done)
+        fi
+        COMPREPLY=($(IFS=$'\n' compgen -W "$suggestions" -- $(printf -- "%q" "$cur")))
+        __ltrim_colon_completions "$cur"
+    else
+        if [[ "$sfcomplete" != *"Command \"_complete\" is not defined."* ]]; then
+            >&2 echo
+            >&2 echo $sfcomplete
+        fi
+
+        return 1
+    fi
 }
 
 complete -F _complete_{{ .App.HelpName }} {{ .App.HelpName }}
