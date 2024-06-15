@@ -99,6 +99,11 @@ brews:
     goarm: "6"
     homepage: https://symfony.com
     description: Symfony CLI helps Symfony developers manage projects, from local code to remote infrastructure
+    caveats: |-
+      To install shell completions, add this to your profile:
+        if command -v symfony &>/dev/null; then
+          eval "$(symfony completion)"
+        fi
     license: AGPL-3.0
     test: |
       system "#{bin}/symfony version"
