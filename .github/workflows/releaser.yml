@@ -66,11 +66,11 @@ jobs:
                 uses: sigstore/cosign-installer@v3
             -
                 name: Run GoReleaser for snapshot
-                uses: goreleaser/goreleaser-action@v5
+                uses: goreleaser/goreleaser-action@v6
                 # only for PRs and push on branches
                 if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
                 with:
-                    version: latest
+                    version: '~> v2'
                     args: release --clean --snapshot --skip-publish --skip-sign
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
