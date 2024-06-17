@@ -71,7 +71,7 @@ jobs:
                 if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
                 with:
                     version: '~> v2'
-                    args: release --clean --snapshot --skip-publish --skip-sign
+                    args: release --clean --snapshot --skip=publish,sign
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             -
