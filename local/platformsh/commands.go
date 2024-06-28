@@ -1214,9 +1214,9 @@ var Commands = []*console.Command{
 		Aliases:  []*console.Alias{
 			{Name: "integration:activity:list", Hidden: true},
 			{Name: "upsun:integration:activity:list", Hidden: true},
-			{Name: "cloud:int:act"},
-			{Name: "upsun:int:act", Hidden: true},
-			{Name: "int:act", Hidden: true},
+			{Name: "cloud:integration:activities"},
+			{Name: "upsun:integration:activities", Hidden: true},
+			{Name: "integration:activities", Hidden: true},
 		},
 		Usage:    "Get a list of activities for an integration",
 		Flags:    []console.Flag{
