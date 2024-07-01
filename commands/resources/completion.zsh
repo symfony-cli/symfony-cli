@@ -26,14 +26,6 @@
 #   - https://stackoverflow.com/a/13547531
 #
 
-# this wrapper function allows us to let Symfony knows how to call the
-# `bin/console` using the Symfony CLI binary (to ensure the right env and PHP
-# versions are used)
-_{{ .App.HelpName }}_console() {
-  # shellcheck disable=SC2068
-  {{ .CurrentBinaryInvocation }} console $@
-}
-
 _complete_{{ .App.HelpName }}() {
     local lastParam flagPrefix requestComp out comp
     local -a completions
@@ -56,13 +48,10 @@ _complete_{{ .App.HelpName }}() {
     for ((i = 1; i <= $#words; i++)); do
         if [[ "${words[i]}" != -* ]]; then
               case "${words[i]}" in
-              console)
-                shift words
+              console|composer)
                 (( CURRENT-- ))
-                _SF_CMD="_{{ .App.HelpName }}_console" _normal
-                return
                 ;;
-              composer{{range $name := (.App.Command "php").Names }}|{{$name}}{{end}})
+              {{range $i, $name := (.App.Command "php").Names }}{{if $i}}|{{end}}{{$name}}{{end}})
                 shift words
                 (( CURRENT-- ))
                 _normal
@@ -82,11 +71,16 @@ _complete_{{ .App.HelpName }}() {
 
     while IFS='\n' read -r comp; do
         if [ -n "$comp" ]; then
+            # If requested, completions are returned with a description.
+            # The description is preceded by a TAB character.
+            # For zsh's _describe, we need to use a : instead of a TAB.
             # We first need to escape any : as part of the completion itself.
             comp=${comp//:/\\:}
+            local tab=$(printf '\t')
+            comp=${comp//$tab/:}
             completions+=${comp}
         fi
-    done < <(COMP_LINE="$words" ${words[0]} ${_SF_CMD:-${words[1]}} self:autocomplete)
+    done < <(COMP_LINE="$words" CURRENT="$CURRENT" ${words[0]} ${_SF_CMD:-${words[1]}} self:autocomplete)
 
     # Let inbuilt _describe handle completions
     eval _describe "completions" completions $flagPrefix

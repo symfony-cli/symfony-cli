@@ -27,19 +27,10 @@ function __complete_{{ .App.HelpName }}
     set -lx COMP_LINE (commandline -cp)
     test -z (commandline -ct)
     and set COMP_LINE "$COMP_LINE "
+    set -x CURRENT (count (commandline -oc))
     {{ .CurrentBinaryInvocation }} self:autocomplete
 end
 
-# this wrapper function allows us to call Symfony autocompletion letting it
-# knows how to call the `bin/console` using the Symfony CLI binary (to ensure
-# the right env and PHP versions are used)
-function __complete_{{ .App.HelpName }}_console
-    set -x _SF_CMD "{{ .CurrentBinaryInvocation }}" "console"
-    __fish_complete_subcommand
-end
-
-complete -f -c '{{ .App.HelpName }}' -n "__fish_seen_subcommand_from console" -a '(__complete_{{ .App.HelpName }}_console)' -f
-complete -f -c '{{ .App.HelpName }}' -n "__fish_seen_subcommand_from composer" -a '(__fish_complete_subcommand)'
 complete -f -c '{{ .App.HelpName }}' -n "__fish_seen_subcommand_from {{range $i, $name := (.App.Command "php").Names }}{{if $i}} {{end}}{{$name}}{{end}}" -a '(__fish_complete_subcommand)'
 complete -f -c '{{ .App.HelpName }}' -n "__fish_seen_subcommand_from {{range $i, $name := (.App.Command "run").Names }}{{if $i}} {{end}}{{$name}}{{end}}" -a '(__fish_complete_subcommand --fcs-skip=2)'
-complete -f -c '{{ .App.HelpName }}' -n "not __fish_seen_subcommand_from console composer {{range $i, $name := (.App.Command "php").Names }}{{if $i}} {{end}}{{$name}}{{end}} {{range $i, $name := (.App.Command "run").Names }}{{if $i}} {{end}}{{$name}}{{end}}" -a '(__complete_{{ .App.HelpName }})'
+complete -f -c '{{ .App.HelpName }}' -n "not __fish_seen_subcommand_from {{range $i, $name := (.App.Command "php").Names }}{{if $i}} {{end}}{{$name}}{{end}} {{range $i, $name := (.App.Command "run").Names }}{{if $i}} {{end}}{{$name}}{{end}}" -a '(__complete_{{ .App.HelpName }})'

@@ -156,6 +156,8 @@ github.com/symfony-cli/console v1.1.2 h1:YVQbl4i03cE0r3QJ/RJs7LWaC3pEy2JI4qhFfL6
 github.com/symfony-cli/console v1.1.2/go.mod h1:AB4ZxA593cyS/1NhwnDEUChIPaGuddFqooipam1vyS8=
 github.com/symfony-cli/console v1.1.3 h1:ejzr9LdNe7d7FLIpeTyZm89nSgnlPhaqK7IPeyglV9o=
 github.com/symfony-cli/console v1.1.3/go.mod h1:AB4ZxA593cyS/1NhwnDEUChIPaGuddFqooipam1vyS8=
+github.com/symfony-cli/console v1.1.4 h1:A/rzNY8HiZd4r6ip2H2HCtnxwYFdC87eYnPL9H/RucM=
+github.com/symfony-cli/console v1.1.4/go.mod h1:AB4ZxA593cyS/1NhwnDEUChIPaGuddFqooipam1vyS8=
 github.com/symfony-cli/phpstore v1.0.12 h1:2mKJrDielSCW+7B+63w6HebmSBcB4qV7uuvNrIjLkoA=
 github.com/symfony-cli/phpstore v1.0.12/go.mod h1:U29bdJBPs9p28PzLIRKfKfKkaiH0kacdyufl3eSB1d4=
 github.com/symfony-cli/terminal v1.0.7 h1:57L9PUTE2cHfQtP8Ti8dyiiPEYlQ1NBIDpMJ3RPEGPc=
