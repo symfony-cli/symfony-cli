@@ -39,15 +39,9 @@ func CreateListener(port, preferredPort int) (net.Listener, int, error) {
 		max = 1
 	}
 	for {
-		// we really want to test availability on 127.0.0.1
 		ln, err = net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(tryPort))
 		if err == nil {
-			ln.Close()
-			// but then, we want to listen to as many local IP's as possible
-			ln, err = net.Listen("tcp", ":"+strconv.Itoa(tryPort))
-			if err == nil {
-				break
-			}
+			break
 		}
 		if port > 0 {
 			return nil, 0, errors.Wrapf(err, "unable to listen on port %d", port)
