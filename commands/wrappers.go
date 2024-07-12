@@ -44,7 +44,7 @@ var (
 		// still be available for completion
 		Aliases: []*console.Alias{{Name: "console"}},
 		Action: func(c *console.Context) error {
-			return console.IncorrectUsageError{ParentError: errors.New(`This command can only be run as "symfony console"`)}
+			return errors.New(`No Symfony console detected to run "symfony console"`)
 		},
 		ShellComplete: autocompleteSymfonyConsoleWrapper,
 	}

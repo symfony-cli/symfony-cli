@@ -73,9 +73,10 @@ func main() {
 	}
 	// called via "symfony console"?
 	if len(args) >= 2 && args[1] == "console" {
-		e := php.SymonyConsoleExecutor(args[2:])
-		e.ExtraEnv = getCliExtraEnv()
-		os.Exit(e.Execute(false))
+		if executor, err := php.SymonyConsoleExecutor(args[2:]); err == nil {
+			executor.ExtraEnv = getCliExtraEnv()
+			os.Exit(executor.Execute(false))
+		}
 	}
 	// called via "symfony composer"?
 	if len(args) >= 2 && args[1] == "composer" {

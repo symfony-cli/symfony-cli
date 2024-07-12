@@ -31,9 +31,10 @@ func autocompleteSymfonyConsoleWrapper(context *console.Context, words complete.
 	// Composer does not support those options yet, so we only use them for Symfony Console
 	args = append(args, "-a1", fmt.Sprintf("-s%s", console.GuessShell()))
 
-	os.Exit(php.SymonyConsoleExecutor(args).Execute(false))
+	if executor, err := php.SymonyConsoleExecutor(args); err == nil {
+		os.Exit(executor.Execute(false))
+	}
 
-	// unreachable
 	return []string{}
 }
 
