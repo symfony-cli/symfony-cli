@@ -31,7 +31,8 @@ var (
 		Hidden: console.Hide,
 		// we use an alias to avoid the command being shown in the help but
 		// still be available for completion
-		Aliases: []*console.Alias{{Name: "composer"}},
+		Aliases:       []*console.Alias{{Name: "composer"}},
+		ShellComplete: autocompleteComposerWrapper,
 		Action: func(c *console.Context) error {
 			return console.IncorrectUsageError{ParentError: errors.New(`This command can only be run as "symfony composer"`)}
 		},
@@ -43,8 +44,9 @@ var (
 		// still be available for completion
 		Aliases: []*console.Alias{{Name: "console"}},
 		Action: func(c *console.Context) error {
-			return console.IncorrectUsageError{ParentError: errors.New(`This command can only be run as "symfony console"`)}
+			return errors.New(`No Symfony console detected to run "symfony console"`)
 		},
+		ShellComplete: autocompleteSymfonyConsoleWrapper,
 	}
 	phpWrapper = &console.Command{
 		Usage:  "Runs the named binary using the configured PHP version",

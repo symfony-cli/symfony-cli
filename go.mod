@@ -17,6 +17,7 @@ require (
 	github.com/nxadm/tail v1.4.11
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pkg/errors v0.9.1
+	github.com/posener/complete v1.2.3
 	github.com/rjeczalik/notify v0.9.3
 	github.com/rs/xid v1.5.0
 	github.com/rs/zerolog v1.33.0
@@ -25,7 +26,7 @@ require (
 	github.com/soheilhy/cmux v0.1.5
 	github.com/stoicperlman/fls v0.0.0-20171222144224-f073b7a01081
 	github.com/symfony-cli/cert v1.0.6
-	github.com/symfony-cli/console v1.1.3
+	github.com/symfony-cli/console v1.1.4
 	github.com/symfony-cli/phpstore v1.0.12
 	github.com/symfony-cli/terminal v1.0.7
 	golang.org/x/sync v0.7.0
@@ -65,7 +66,6 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
-	github.com/posener/complete v1.2.3 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
