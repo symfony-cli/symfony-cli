@@ -137,15 +137,15 @@ var localNewCmd = &console.Command{
 		if symfonyVersion != "" && c.Bool("demo") {
 			return console.Exit("The --version flag is not supported for the Symfony Demo", 1)
 		}
-		if c.Bool("webapp") && c.Bool("no-git") {
-			return console.Exit("The --webapp flag cannot be used with --no-git", 1)
-		}
 		if c.Bool("webapp") && c.Bool("api") {
 			return console.Exit("The --api flag cannot be used with --webapp", 1)
 		}
 		withCloud := c.Bool("cloud") || c.Bool("upsun")
 		if len(c.StringSlice("service")) > 0 && !withCloud {
 			return console.Exit("The --service flag cannot be used without --cloud or --upsun", 1)
+		}
+		if withCloud && c.Bool("no-git") {
+			return console.Exit("The --no-git flag cannot be used with --cloud or --upsun", 1)
 		}
 
 		s := terminal.NewSpinner(terminal.Stderr)
@@ -178,11 +178,12 @@ var localNewCmd = &console.Command{
 		if c.Bool("webapp") {
 			if err := runComposer(c, dir, []string{"require", "webapp"}, c.Bool("debug")); err != nil {
 				return err
-			}
-			buf, err := git.AddAndCommit(dir, []string{"."}, "Add webapp packages", c.Bool("debug"))
-			if err != nil {
-				fmt.Print(buf.String())
-				return err
+			} else if !c.Bool("no-git") {
+				buf, err := git.AddAndCommit(dir, []string{"."}, "Add webapp packages", c.Bool("debug"))
+				if err != nil {
+					fmt.Print(buf.String())
+					return err
+				}
 			}
 		}
 
