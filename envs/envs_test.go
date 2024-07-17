@@ -193,6 +193,99 @@ func (s *ScenvSuite) TestCloudTunnelDatabaseURLs(c *C) {
 	c.Assert(rels["POSTGRESQL_URL"], Equals, "postgres://main:main@127.0.0.1:30000/main?sslmode=disable&charset=utf8&serverVersion=13")
 }
 
+func (s *ScenvSuite) TestCloudHADatabaseURLs(c *C) {
+	env := fakeEnv{
+		Rels: map[string][]map[string]interface{}{
+			"database-replica": {
+				{
+					"username":    "user",
+					"scheme":      "mysql",
+					"service":     "db",
+					"fragment":    interface{}(nil),
+					"ip":          "169.254.150.110",
+					"hostname":    "e3n2frcxjqipslsc6sq7rfmwzm.db.service.._.platform.sh",
+					"port":        3306,
+					"cluster":     "gqiujktuqrcxm-main-bvxea6i",
+					"host":        "database-replica.internal",
+					"rel":         "mysql-replica",
+					"path":        "main",
+					"query":       map[string]interface{}{"is_master": false},
+					"password":    "",
+					"type":        "mysql:10.6",
+					"public":      false,
+					"host_mapped": false,
+				},
+			},
+			"database": {
+				{
+					"username":    "user",
+					"scheme":      "mysql",
+					"service":     "db",
+					"fragment":    interface{}(nil),
+					"ip":          "169.254.193.18",
+					"hostname":    "jvlu7c7jx3nzt3cowwkcrslhcq.db.service.._.platform.sh",
+					"port":        3306,
+					"cluster":     "gqiujktuqrcxm-main-bvxea6i",
+					"host":        "database.internal",
+					"rel":         "mysql",
+					"path":        "main",
+					"query":       map[string]interface{}{"is_master": true},
+					"password":    "",
+					"type":        "mysql:10.6",
+					"public":      false,
+					"host_mapped": false,
+				},
+			},
+			"psql-replica": {
+				{
+					"username":    "user",
+					"scheme":      "pgsql",
+					"service":     "db",
+					"fragment":    interface{}(nil),
+					"ip":          "169.254.150.110",
+					"hostname":    "e3n2frcxjqipslsc6sq7rfmwzm.db.service.._.platform.sh",
+					"port":        5432,
+					"cluster":     "gqiujktuqrcxm-main-bvxea6i",
+					"host":        "psql-replica.internal",
+					"rel":         "pgsql-replica",
+					"path":        "main",
+					"query":       map[string]interface{}{"is_master": false},
+					"password":    "",
+					"type":        "postgresql:15",
+					"public":      false,
+					"host_mapped": false,
+				},
+			},
+			"psql": {
+				{
+					"username":    "user",
+					"scheme":      "pgsql",
+					"service":     "db",
+					"fragment":    interface{}(nil),
+					"ip":          "169.254.193.18",
+					"hostname":    "jvlu7c7jx3nzt3cowwkcrslhcq.db.service.._.platform.sh",
+					"port":        5432,
+					"cluster":     "gqiujktuqrcxm-main-bvxea6i",
+					"host":        "psql.internal",
+					"rel":         "pgsql",
+					"path":        "main",
+					"query":       map[string]interface{}{"is_master": true},
+					"password":    "",
+					"type":        "postgresql:15",
+					"public":      false,
+					"host_mapped": false,
+				},
+			},
+		},
+	}
+
+	rels := extractRelationshipsEnvs(env)
+	c.Assert(rels["DATABASE_URL"], Equals, "mysql://user@database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.6.0-MariaDB")
+	c.Assert(rels["DATABASE_REPLICA_URL"], Equals, "mysql://user@database-replica.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.6.0-MariaDB")
+	c.Assert(rels["PSQL_URL"], Equals, "postgres://user@psql.internal:5432/main?sslmode=disable&charset=utf8&serverVersion=15")
+	c.Assert(rels["PSQL_REPLICA_URL"], Equals, "postgres://user@psql-replica.internal:5432/main?sslmode=disable&charset=utf8&serverVersion=15")
+}
+
 func (s *ScenvSuite) TestDoctrineConfigTakesPrecedenceDatabaseURLs(c *C) {
 	env := fakeEnv{
 		Rels: map[string][]map[string]interface{}{
