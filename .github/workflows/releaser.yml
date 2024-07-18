@@ -76,11 +76,11 @@ jobs:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             -
                 name: Run GoReleaser
-                uses: goreleaser/goreleaser-action@v5
+                uses: goreleaser/goreleaser-action@v6
                 # only for tags
                 if: startsWith(github.ref, 'refs/tags/v')
                 with:
-                    version: latest
+                    version: '~> v2'
                     args: release --clean
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
