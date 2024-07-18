@@ -123,8 +123,11 @@ func extractRelationshipsEnvs(env Environment) Envs {
 			}
 			prefix = strings.Replace(prefix, "-", "_", -1)
 
-			if scheme == "pgsql" || scheme == "mysql" {
-				if scheme == "pgsql" {
+			// HA support via scheme-replica
+			isPostgreSQL := strings.HasPrefix(scheme.(string), "pgsql")
+			isMySQL := strings.HasPrefix(scheme.(string), "mysql")
+			if isPostgreSQL || isMySQL {
+				if isPostgreSQL {
 					// works for both Doctrine and Go
 					endpoint["scheme"] = "postgres"
 				}
@@ -152,7 +155,7 @@ func extractRelationshipsEnvs(env Environment) Envs {
 					charset := "utf8"
 					if envCharset := os.Getenv(fmt.Sprintf("%sCHARSET", prefix)); envCharset != "" {
 						charset = envCharset
-					} else if scheme == "mysql" {
+					} else if isMySQL {
 						charset = "utf8mb4"
 					}
 					values[fmt.Sprintf("%sURL", prefix)] = values[fmt.Sprintf("%sURL", prefix)] + "&charset=" + charset
@@ -172,7 +175,7 @@ func extractRelationshipsEnvs(env Environment) Envs {
 								version := strings.SplitN(v.(string), ":", 2)[1]
 
 								// we actually provide mariadb not mysql
-								if endpoint["scheme"].(string) == "mysql" {
+								if isMySQL {
 									minor := 0
 									if version == "10.2" {
 										minor = 7
@@ -205,13 +208,13 @@ func extractRelationshipsEnvs(env Environment) Envs {
 				values[fmt.Sprintf("%sDATABASE", prefix)] = path
 
 				if env.Local() {
-					if scheme == "pgsql" {
+					if isPostgreSQL {
 						values["PGHOST"] = endpoint["host"].(string)
 						values["PGPORT"] = formatInt(endpoint["port"])
 						values["PGDATABASE"] = path
 						values["PGUSER"] = endpoint["username"].(string)
 						values["PGPASSWORD"] = endpoint["password"].(string)
-					} else if scheme == "mysql" {
+					} else if isMySQL {
 						values["MYSQL_HOST"] = endpoint["host"].(string)
 						values["MYSQL_TCP_PORT"] = formatInt(endpoint["port"])
 					}
