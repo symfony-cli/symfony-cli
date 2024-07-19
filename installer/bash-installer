@@ -22,7 +22,8 @@ CLI_CONFIG_DIR=".symfony5"
 CLI_EXECUTABLE="symfony"
 CLI_TMP_NAME="$CLI_EXECUTABLE-"$(date +"%s")
 CLI_NAME="Symfony CLI"
-CLI_DOWNLOAD_URL_PATTERN="https://github.com/symfony-cli/symfony-cli/releases/latest/download/symfony-cli_~platform~.tar.gz"
+CLI_VERSION="${CLI_VERSION:-latest}"
+CLI_DOWNLOAD_URL_PATTERN="https://github.com/symfony-cli/symfony-cli/releases/${CLI_VERSION}/download/symfony-cli_~platform~.tar.gz"
 CLI_TMPDIR="${TMPDIR:-/tmp}"
 
 function output {
@@ -53,7 +54,6 @@ function output {
 }
 
 output "${CLI_NAME} installer" "heading"
-
 binary_dest="${HOME}/${CLI_CONFIG_DIR}/bin"
 custom_dir="false"
 
@@ -78,6 +78,15 @@ case $1 in
         ;;
 esac
 done
+
+output "\nSanity check" "heading"
+
+# Check that the version is valid
+if [[ $CLI_VERSION =~ '^[0-9]+(\.[0-9]+)*$' || $CLI_VERSION == 'latest' ]]; then
+    output "  [*] Version has valid format" "success"
+else
+    output "  [ ] ERROR: Version has invalid format." "error"
+fi
 
 # Run environment checks.
 output "\nEnvironment check" "heading"
@@ -163,14 +172,14 @@ platform="${kernel}_${machine}"
 # The necessary checks have passed. Start downloading the right version.
 output "\nDownload" "heading"
 
-latest_url=${CLI_DOWNLOAD_URL_PATTERN/~platform~/${platform}}
-output "  Downloading ${latest_url}...";
+version_url=${CLI_DOWNLOAD_URL_PATTERN/~platform~/${platform}}
+output "  Downloading ${version_url}...";
 case $downloader in
     "curl")
-        curl --fail --location "${latest_url}" > "${CLI_TMPDIR}/${CLI_TMP_NAME}.tar.gz"
+        curl --fail --location "${version_url}" > "${CLI_TMPDIR}/${CLI_TMP_NAME}.tar.gz"
         ;;
     "wget")
-        wget -q --show-progress "${latest_url}" -O "${CLI_TMPDIR}/${CLI_TMP_NAME}.tar.gz"
+        wget -q --show-progress "${version_url}" -O "${CLI_TMPDIR}/${CLI_TMP_NAME}.tar.gz"
         ;;
 esac
 
