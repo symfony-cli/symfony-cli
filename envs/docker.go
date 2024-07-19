@@ -461,7 +461,7 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 		} else if p.PrivatePort == 443 || p.PrivatePort == 8443 {
 			rels[""]["scheme"] = "https"
 		} else {
-			return nil
+			rels[""]["scheme"] = "undefined"
 		}
 		return rels
 	}
