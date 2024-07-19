@@ -70,6 +70,27 @@ func (f fakeEnv) Local() bool {
 	return true
 }
 
+func (s *ScenvSuite) TestGenericContainerExposesHostAndPort(c *C) {
+	env := fakeEnv{
+		Rels: map[string][]map[string]interface{}{
+			"container": {
+				map[string]interface{}{
+					"host":   "localhost",
+					"ip":     "127.0.0.1",
+					"port":   9200,
+					"rel":    "simple",
+					"scheme": "undefined",
+				},
+			},
+		},
+	}
+
+	rels := extractRelationshipsEnvs(env)
+	c.Assert(rels["CONTAINER_HOST"], Equals, "localhost")
+	c.Assert(rels["CONTAINER_PORT"], Equals, "9200")
+	c.Assert(rels["CONTAINER_IP"], Equals, "127.0.0.1")
+}
+
 func (s *ScenvSuite) TestElasticsearchURLEndsWithTrailingSlash(c *C) {
 	env := fakeEnv{
 		Rels: map[string][]map[string]interface{}{
