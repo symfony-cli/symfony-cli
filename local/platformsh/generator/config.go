@@ -195,25 +195,6 @@ func parsePHPExtensions() (string, error) {
 	return extsAsString, nil
 }
 
-func parseLine(line string) (string, []string) {
-	next := strings.Index(line[1:], "|") + 1
-	name := strings.TrimSpace(line[1:next])
-	var versions []string
-	for {
-		current := next + 1
-		nextIndex := strings.Index(line[current:], "|")
-		if nextIndex == -1 {
-			break
-		}
-		next = nextIndex + current
-		versions = append(versions, strings.TrimSpace(line[current:next]))
-		if next >= len(line) {
-			break
-		}
-	}
-	return name, versions
-}
-
 func sortVersions(versions []string) ([]string, error) {
 	parsedVersions := make([]*version.Version, len(versions))
 	for i, raw := range versions {
