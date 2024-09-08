@@ -46,7 +46,7 @@ _complete_{{ .App.HelpName }}() {
     done
 
     # Use newline as only separator to allow space in completion values
-    IFS=$'\n'
+    local IFS=$'\n'
 
     local cur prev words cword
     _get_comp_words_by_ref -n := cur prev words cword
