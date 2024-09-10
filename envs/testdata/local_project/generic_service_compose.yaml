@@ -1,0 +1,7 @@
+services: 
+  generic:
+    image: "traefik:v3.1"
+    ports:
+      - 3000/tcp
+    labels:
+      com.symfony.server.service-prefix: CUSTOM

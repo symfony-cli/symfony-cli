@@ -59,6 +59,10 @@ jobs:
             -
                 name: Test
                 run: go test -v ./...
+                env:
+                    TESTCONTAINERS_RYUK_CONNECTION_TIMEOUT: 5m
+                    TESTCONTAINERS_RYUK_RECONNECTION_TIMEOUT: 30s
+
             -   name: Validate build
                 run: go run .
             -
