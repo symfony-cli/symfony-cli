@@ -1,0 +1,8 @@
+services:
+  database:
+    image: postgres:16.3-alpine
+    ports:
+      - 5432/tcp
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: password
