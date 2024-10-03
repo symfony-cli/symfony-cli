@@ -2580,6 +2580,7 @@ var Commands = []*console.Command{
 		},
 		Usage:    "List teams",
 		Flags:    []console.Flag{
+			&console.BoolFlag{Name: "all", Aliases: []string{"A"},},
 			&console.StringFlag{Name: "columns",},
 			&console.StringFlag{Name: "count", Aliases: []string{"c"},},
 			&console.StringFlag{Name: "date-fmt", DefaultValue: "c",},
