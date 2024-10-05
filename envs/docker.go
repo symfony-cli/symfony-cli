@@ -94,7 +94,8 @@ func (l *Local) RelationshipsFromDocker() Relationships {
 	if err != nil {
 		if docker.IsErrConnectionFailed(err) {
 			terminal.Logger.Warn().Msg(err.Error())
-		} else if l.Debug {
+		}
+		if l.Debug {
 			fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 		}
 		return nil
