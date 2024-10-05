@@ -23,7 +23,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"net"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -69,17 +68,7 @@ func (l *Local) RelationshipsFromDocker() Relationships {
 		return nil
 	}
 
-	opts := [](docker.Opt){docker.FromEnv}
-	if host := os.Getenv(docker.EnvOverrideHost); host != "" && !strings.HasPrefix(host, "unix://") {
-		// Setting a dialer on top of a unix socket breaks the connection
-		// as the client then tries to connect to http:///path/to/socket and
-		// thus tries to resolve the /path/to/socket host
-		dialer := &net.Dialer{
-			Timeout: 2 * time.Second,
-		}
-		opts = append(opts, docker.WithDialContext(dialer.DialContext))
-	}
-	client, err := docker.NewClientWithOpts(opts...)
+	client, err := docker.NewClientWithOpts(docker.WithTimeout(2*time.Second), docker.FromEnv)
 	if err != nil {
 		if l.Debug {
 			fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
