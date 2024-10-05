@@ -68,7 +68,7 @@ func (l *Local) RelationshipsFromDocker() Relationships {
 		return nil
 	}
 
-	client, err := docker.NewClientWithOpts(docker.WithTimeout(2*time.Second), docker.FromEnv)
+	client, err := docker.NewClientWithOpts(docker.WithTimeout(2*time.Second), docker.FromEnv, dockerUseDesktopSocketIfAvailable)
 	if err != nil {
 		if l.Debug {
 			fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
@@ -460,6 +460,24 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container typ
 
 func formatDockerPort(port uint16) string {
 	return strconv.FormatInt(int64(port), 10)
+}
+
+func dockerUseDesktopSocketIfAvailable(c *docker.Client) error {
+	if c.DaemonHost() != docker.DefaultDockerHost {
+		return nil
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	socketPath := filepath.Join(homeDir, ".docker/run/docker.sock")
+	if _, err := os.Stat(socketPath); err != nil {
+		return nil
+	}
+
+	return docker.WithHost(`unix://` + socketPath)(c)
 }
 
 func getEnvValue(env string, key string) string {
