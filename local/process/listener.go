@@ -20,8 +20,8 @@
 package process
 
 import (
+	"fmt"
 	"net"
-	"strconv"
 
 	"github.com/pkg/errors"
 )
@@ -29,7 +29,7 @@ import (
 // CreateListener creates a listener on a port
 // Pass a preferred port (will increment by 1 if port is not available)
 // or pass 0 to auto-find any available port
-func CreateListener(port, preferredPort int) (net.Listener, int, error) {
+func CreateListener(listenIp string, port, preferredPort int) (net.Listener, int, error) {
 	var ln net.Listener
 	var err error
 	tryPort := preferredPort
@@ -39,9 +39,15 @@ func CreateListener(port, preferredPort int) (net.Listener, int, error) {
 		max = 1
 	}
 	for {
-		ln, err = net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(tryPort))
+		// we really want to test availability on 127.0.0.1
+		ln, err = net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", tryPort))
 		if err == nil {
-			break
+			ln.Close()
+			// but then, we want to listen to as many local IP's as possible
+			ln, err = net.Listen("tcp", fmt.Sprintf("%s:%d", listenIp, tryPort))
+			if err == nil {
+				break
+			}
 		}
 		if port > 0 {
 			return nil, 0, errors.Wrapf(err, "unable to listen on port %d", port)

@@ -35,6 +35,7 @@ const DockerComposeWorkerKey = "docker_compose"
 type Config struct {
 	HomeDir       string
 	ProjectDir    string
+	ListenIp      string
 	DocumentRoot  string `yaml:"document_root"`
 	Passthru      string `yaml:"passthru"`
 	Port          int    `yaml:"port"`
@@ -83,6 +84,11 @@ func NewConfigFromContext(c *console.Context, projectDir string) (*Config, *File
 	}
 	config.AppVersion = c.App.Version
 	config.ProjectDir = projectDir
+	if c.IsSet("allow-all-ip") {
+		config.ListenIp = ""
+	} else {
+		config.ListenIp = c.String("listen-ip")
+	}
 	if c.IsSet("document-root") {
 		config.DocumentRoot = c.String("document-root")
 	}

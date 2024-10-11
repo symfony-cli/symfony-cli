@@ -56,6 +56,7 @@ func New(c *Config) (*Project, error) {
 			DocumentRoot:  documentRoot,
 			Port:          c.Port,
 			PreferredPort: c.PreferredPort,
+			ListenIp:      c.ListenIp,
 			Logger:        c.Logger,
 			PKCS12:        c.PKCS12,
 			AllowHTTP:     c.AllowHTTP,
