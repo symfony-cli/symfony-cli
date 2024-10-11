@@ -32,10 +32,13 @@ import (
 	"strings"
 	"time"
 
+	compose "github.com/compose-spec/compose-go/cli"
+	composeConsts "github.com/compose-spec/compose-go/consts"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	docker "github.com/docker/docker/client"
 	"github.com/symfony-cli/terminal"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -491,7 +494,7 @@ func getEnvValue(env string, key string) string {
 
 func (l *Local) getComposeProjectName() string {
 	// https://docs.docker.com/compose/reference/envvars/#compose_project_name
-	if project := os.Getenv("COMPOSE_PROJECT_NAME"); project != "" {
+	if project := os.Getenv(composeConsts.ComposeProjectName); project != "" {
 		return project
 	}
 
@@ -507,9 +510,32 @@ func (l *Local) getComposeProjectName() string {
 	if _, err := os.Stat(filepath.Join(composeDir, ".env")); err == nil {
 		if contents, err := os.ReadFile(filepath.Join(composeDir, ".env")); err == nil {
 			for _, line := range bytes.Split(contents, []byte("\n")) {
-				if bytes.HasPrefix(line, []byte("COMPOSE_PROJECT_NAME=")) {
-					return string(line[len("COMPOSE_PROJECT_NAME="):])
+				if bytes.HasPrefix(line, []byte(composeConsts.ComposeProjectName+"=")) {
+					return string(line[len(composeConsts.ComposeProjectName)+1:])
 				}
+			}
+		}
+	}
+
+	// Compose project name can be set in every Docker Compose file
+	for index, filename := range compose.DefaultFileNames {
+		if _, err := os.Stat(filepath.Join(composeDir, filename)); err != nil {
+			continue
+		}
+
+		for _, filename := range []string{compose.DefaultOverrideFileNames[index], filename} {
+			buf, err := os.ReadFile(filepath.Join(composeDir, filename))
+			if err != nil {
+				continue
+			}
+
+			config := struct {
+				ProjectName string `yaml:"name"`
+			}{}
+
+			// unmarshall the content of the file to get the project name
+			if err := yaml.Unmarshal(buf, &config); err == nil && config.ProjectName != "" {
+				return config.ProjectName
 			}
 		}
 	}
@@ -526,7 +552,7 @@ func (l *Local) getComposeDir() string {
 	// look for the first dir up with a docker-composer.ya?ml file (in case of a multi-project)
 	dir := l.Dir
 	for {
-		for _, filename := range []string{"compose.yaml", "compose.yml", "docker-compose.yaml", "docker-compose.yml"} {
+		for _, filename := range compose.DefaultFileNames {
 			if _, err := os.Stat(filepath.Join(dir, filename)); err == nil {
 				return dir
 			}
