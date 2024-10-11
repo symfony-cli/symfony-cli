@@ -49,6 +49,7 @@ type Server struct {
 	Callback      ServerCallback
 	Port          int
 	PreferredPort int
+	ListenIp      string
 	PKCS12        string
 	AllowHTTP     bool
 	Logger        zerolog.Logger
@@ -79,7 +80,7 @@ var gzipContentTypes = []string{
 
 // Start starts the server
 func (s *Server) Start(errChan chan error) (int, error) {
-	ln, port, err := process.CreateListener(s.Port, s.PreferredPort)
+	ln, port, err := process.CreateListener(s.ListenIp, s.Port, s.PreferredPort)
 	if err != nil {
 		return port, errors.WithStack(err)
 	}
