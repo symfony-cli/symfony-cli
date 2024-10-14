@@ -304,6 +304,10 @@ var localServerStartCmd = &console.Command{
 
 			reexec.NotifyForeground("listening")
 			ui.Warning(localWebServerProdWarningMsg)
+			if config.ListenIp == "127.0.0.1" {
+				ui.Warning(`Please note that the Symfony CLI only listens on 127.0.0.1 by default since version 5.10.3.
+          You can use the --allow-all-ip or --listen-ip flags to change this behavior.`)
+			}
 			ui.Success(msg)
 		}
 
