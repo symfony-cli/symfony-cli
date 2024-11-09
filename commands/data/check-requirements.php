@@ -372,6 +372,8 @@ class ProjectRequirements extends RequirementCollection
     const REQUIRED_PHP_VERSION_3x = '5.5.9';
     const REQUIRED_PHP_VERSION_4x = '7.1.3';
     const REQUIRED_PHP_VERSION_5x = '7.2.9';
+    const REQUIRED_PHP_VERSION_6x = '8.1.0';
+    const REQUIRED_PHP_VERSION_7x = '8.2.0';
 
     public function __construct($rootDir)
     {
@@ -386,12 +388,16 @@ class ProjectRequirements extends RequirementCollection
         $rootDir = $this->getComposerRootDir($rootDir);
         $options = $this->readComposer($rootDir);
 
-        $phpVersion = self::REQUIRED_PHP_VERSION_3x;
+        $phpVersion = self::REQUIRED_PHP_VERSION_7x;
         if (null !== $symfonyVersion) {
-            if (version_compare($symfonyVersion, '5.0.0', '>=')) {
+            if (version_compare($symfonyVersion, '6.0.0', '>=')) {
+                $phpVersion = self::REQUIRED_PHP_VERSION_6x;
+            } elseif (version_compare($symfonyVersion, '5.0.0', '>=')) {
                 $phpVersion = self::REQUIRED_PHP_VERSION_5x;
             } elseif (version_compare($symfonyVersion, '4.0.0', '>=')) {
                 $phpVersion = self::REQUIRED_PHP_VERSION_4x;
+            } elseif (version_compare($symfonyVersion, '3.0.0', '>=')) {
+                $phpVersion = self::REQUIRED_PHP_VERSION_3x;
             }
         }
 
