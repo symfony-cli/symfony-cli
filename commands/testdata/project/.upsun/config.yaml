@@ -61,7 +61,7 @@ applications:
 
                 curl -fs https://get.symfony.com/cloud/configurator | bash
                 
-                NODE_VERSION=18 symfony-build
+                NODE_VERSION=22 symfony-build
 
             deploy: |
                 set -x -e
