@@ -1772,6 +1772,7 @@ var Commands = []*console.Command{
 			&console.BoolFlag{Name: "no-header",},
 			&console.StringFlag{Name: "org", Aliases: []string{"o"},},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"},},
+			&console.BoolFlag{Name: "refresh",},
 		},
 	},
 	{
@@ -1941,6 +1942,7 @@ var Commands = []*console.Command{
 		Flags:    []console.Flag{
 			&console.StringFlag{Name: "default-branch", DefaultValue: "main",},
 			&console.StringFlag{Name: "environments",},
+			&console.StringFlag{Name: "init-repo",},
 			&console.BoolFlag{Name: "no-set-remote",},
 			&console.StringFlag{Name: "org", Aliases: []string{"o"},},
 			&console.StringFlag{Name: "plan",},
