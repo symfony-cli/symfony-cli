@@ -40,7 +40,7 @@ Security Issues
 
 If you discover a security vulnerability, please follow our [disclosure procedure][11].
 
-Sponsorship [<img src="https://cloudposse.com/wp-content/uploads/2020/10/cloudsmith.svg" width="250" align="right" />](https://cloudsmith.io/)
+Sponsorship [<img src="https://assets.cloudsmith.media/images/cloudsmith-logo-light.svg" width="250" align="right" />](https://cloudsmith.io/)
 -----------
 
 Package repository hosting is graciously provided by
