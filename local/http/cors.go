@@ -21,14 +21,26 @@ package http
 
 import (
 	"net/http"
+
+	"github.com/rs/zerolog"
 )
 
-func corsWrapper(h http.Handler) http.Handler {
+func corsWrapper(h http.Handler, logger zerolog.Logger) http.Handler {
+	var corsHeaders = []string{"Access-Control-Allow-Origin", "Access-Control-Allow-Methods", "Access-Control-Allow-Headers"}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "*")
+		for _, corsHeader := range corsHeaders {
+			w.Header().Set(corsHeader, "*")
+		}
 
 		h.ServeHTTP(w, r)
+
+		for _, corsHeader := range corsHeaders {
+			if headers, exists := w.Header()[corsHeader]; !exists || len(headers) < 2 {
+				continue
+			}
+
+			logger.Warn().Msgf(`Multiple entries detected for header "%s". Only one should be set: you should enable CORS handling in the CLI only if the application does not handle them.`, corsHeader)
+		}
 	})
 }

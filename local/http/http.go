@@ -100,7 +100,7 @@ func (s *Server) Start(errChan chan error) (int, error) {
 	}
 
 	if s.AllowCORS {
-		proxyHandler = corsWrapper(proxyHandler)
+		proxyHandler = corsWrapper(proxyHandler, s.Logger)
 	}
 
 	s.httpserver = &http.Server{
