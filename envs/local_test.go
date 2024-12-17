@@ -98,3 +98,40 @@ func (s *LocalSuite) TestRelationships(c *C) {
 		"PGHOST":                 "127.0.0.1",
 	})
 }
+
+func (s *LocalSuite) TestProjectDirGuessingMissingGitAndConfig(c *C) {
+	l, err := NewLocal("testdata/project", false)
+	expectedLocalDir, err := filepath.Abs(".")
+	expectedLocalDir = filepath.Dir(expectedLocalDir)
+	c.Assert(err, IsNil)
+	c.Assert(l.Dir, Equals, expectedLocalDir)
+}
+
+func (s *LocalSuite) TestGitProjectDirGuessing(c *C) {
+	os.Rename("testdata/project/git", "testdata/project/.git")
+	defer os.Rename("testdata/project/.git", "testdata/project/git")
+	homedir.Reset()
+	os.Setenv("HOME", "testdata/project")
+	defer homedir.Reset()
+
+	l, err := NewLocal("testdata/project", false)
+
+	expectedLocalDir, err := filepath.Abs("testdata/project")
+	c.Assert(err, IsNil)
+	c.Assert(l.Dir, Equals, expectedLocalDir)
+}
+
+func (s *LocalSuite) TestConfigProjectDirGuessing(c *C) {
+	configFilePath := "testdata/project/.symfony.local.yaml"
+	os.WriteFile(configFilePath, make([]byte, 0), 0644)
+	defer os.Remove(configFilePath)
+	homedir.Reset()
+	os.Setenv("HOME", "testdata/project")
+	defer homedir.Reset()
+
+	l, err := NewLocal("testdata/project", false)
+
+	expectedLocalDir, err := filepath.Abs("testdata/project")
+	c.Assert(err, IsNil)
+	c.Assert(l.Dir, Equals, expectedLocalDir)
+}

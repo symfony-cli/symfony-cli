@@ -286,8 +286,9 @@ func (l *Local) webServer() Envs {
 
 func guessProjectDir(dir string) string {
 	for {
-		f, err := os.Stat(filepath.Join(dir, ".git"))
-		if err == nil && f.IsDir() {
+		gitDir, gitDirErr := os.Stat(filepath.Join(dir, ".git"))
+		cliConfigFile, cliConfigFileErr := os.Stat(filepath.Join(dir, ".symfony.local.yaml"))
+		if (gitDirErr == nil && gitDir.IsDir()) || (cliConfigFileErr == nil && !cliConfigFile.IsDir()) {
 			return dir
 		}
 
