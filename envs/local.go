@@ -288,7 +288,8 @@ func guessProjectDir(dir string) string {
 	for {
 		gitDir, gitDirErr := os.Stat(filepath.Join(dir, ".git"))
 		cliConfigFile, cliConfigFileErr := os.Stat(filepath.Join(dir, ".symfony.local.yaml"))
-		if (gitDirErr == nil && gitDir.IsDir()) || (cliConfigFileErr == nil && !cliConfigFile.IsDir()) {
+		symfonyLockFile, symfonyLockFileErr := os.Stat(filepath.Join(dir, "symfony.lock"))
+		if (gitDirErr == nil && gitDir.IsDir()) || (cliConfigFileErr == nil && !cliConfigFile.IsDir()) || (symfonyLockFileErr == nil && !symfonyLockFile.IsDir()) {
 			return dir
 		}
 

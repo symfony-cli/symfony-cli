@@ -135,3 +135,18 @@ func (s *LocalSuite) TestConfigProjectDirGuessing(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(l.Dir, Equals, expectedLocalDir)
 }
+
+func (s *LocalSuite) TestSymfonyLockProjectDirGuessing(c *C) {
+	configFilePath := "testdata/project/symfony.lock"
+	os.WriteFile(configFilePath, make([]byte, 0), 0644)
+	defer os.Remove(configFilePath)
+	homedir.Reset()
+	os.Setenv("HOME", "testdata/project")
+	defer homedir.Reset()
+
+	l, err := NewLocal("testdata/project", false)
+
+	expectedLocalDir, err := filepath.Abs("testdata/project")
+	c.Assert(err, IsNil)
+	c.Assert(l.Dir, Equals, expectedLocalDir)
+}
