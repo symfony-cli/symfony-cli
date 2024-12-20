@@ -20,6 +20,7 @@
 package commands
 
 import (
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -184,5 +185,23 @@ func getProjectDir(dir string) (string, error) {
 		return "", err
 	}
 
-	return filepath.EvalSymlinks(dir)
+	dir, err = filepath.EvalSymlinks(dir)
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		f, err := os.Stat(filepath.Join(dir, ".git"))
+		if err == nil && f.IsDir() {
+			return dir, nil
+		}
+
+		upDir := filepath.Dir(dir)
+		if upDir == dir || upDir == "." {
+			break
+		}
+		dir = upDir
+	}
+
+	return "", errors.New("No project found")
 }
