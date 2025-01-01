@@ -63,7 +63,7 @@ source:
   enabled: true
 
 snapshot:
-  name_template: "next"
+  version_template: "next"
 
 universal_binaries:
   - replace: true
