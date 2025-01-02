@@ -48,7 +48,7 @@ func NewLocal(path string, debug bool) (*Local, error) {
 		return nil, errors.WithStack(err)
 	}
 	return &Local{
-		Dir:   guessProjectDir(path),
+		Dir:   path,
 		Debug: debug,
 	}, nil
 }
@@ -282,21 +282,4 @@ func (l *Local) webServer() Envs {
 	}
 
 	return env
-}
-
-func guessProjectDir(dir string) string {
-	for {
-		f, err := os.Stat(filepath.Join(dir, ".git"))
-		if err == nil && f.IsDir() {
-			return dir
-		}
-
-		upDir := filepath.Dir(dir)
-		if upDir == dir || upDir == "." {
-			break
-		}
-		dir = upDir
-	}
-
-	return ""
 }
