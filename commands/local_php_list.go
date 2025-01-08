@@ -88,7 +88,7 @@ var localPhpListCmd = &console.Command{
 		}
 
 		terminal.Println("")
-		terminal.Println("To control the version used in a directory, create a <comment>.php-version</> file that contains the version number (e.g. 8.2 or 8.2.16),")
+		terminal.Println("To control the version used in a directory, create a <comment>.php-version</> file that contains the version number (e.g. 8.4 or 8.4.2),")
 		terminal.Println("or define <href=https://getcomposer.org/doc/06-config.md#platform>config.platform.php</> inside <comment>composer.json</>.")
 		terminal.Println("If you're using Platform.sh or Upsun, the version can also be specified in their configuration files.")
 
