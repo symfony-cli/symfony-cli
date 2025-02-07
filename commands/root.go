@@ -25,6 +25,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
+	"github.com/symfony-cli/symfony-cli/envs"
 	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	"github.com/symfony-cli/symfony-cli/reexec"
 	"github.com/symfony-cli/symfony-cli/updater"
@@ -99,6 +100,8 @@ func init() {
 }
 
 func InitAppFunc(c *console.Context) error {
+	envs.ComputeDockerUserAgent(c.App.Name, c.App.Version)
+
 	psh, err := platformsh.Get()
 	if err != nil {
 		return err
