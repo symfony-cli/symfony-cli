@@ -34,7 +34,7 @@ web:
             passthru: "/index.php"
 
 mounts:
-    "/var": { source: local, source_path: var }
+    "/var/cache": { source: local, source_path: var/cache }
     
 
 relationships:
@@ -60,5 +60,8 @@ crons:
         # Check that no security issues have been found for PHP packages deployed in production
         spec: '50 23 * * *'
         cmd: if [ "$PLATFORM_ENVIRONMENT_TYPE" = "production" ]; then croncape COMPOSER_ROOT_VERSION=1.0.0 COMPOSER_AUDIT_ABANDONED=ignore composer audit --no-cache; fi
+    clean-expired-sessions:
+        spec: '17,47 * * * *'
+        cmd: croncape php-session-clean
 
 
