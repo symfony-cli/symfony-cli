@@ -19,6 +19,8 @@
 
 package envs
 
+//go:generate sh generate_docker_version
+
 import (
 	"bytes"
 	"context"
@@ -44,7 +46,12 @@ import (
 var (
 	dockerComposeNormalizeRegexp       = regexp.MustCompile("[^-_a-z0-9]")
 	dockerComposeNormalizeRegexpLegacy = regexp.MustCompile("[^a-z0-9]")
+	dockerUserAgent                    = "Docker-Client/unknown version"
 )
+
+func ComputeDockerUserAgent(appName, appVersion string) {
+	dockerUserAgent = fmt.Sprintf("Docker-Client/%s %s/%s", dockerClientVersion, appName, appVersion)
+}
 
 type sortedPorts []types.Port
 
@@ -71,7 +78,17 @@ func (l *Local) RelationshipsFromDocker() Relationships {
 		return nil
 	}
 
-	client, err := docker.NewClientWithOpts(docker.WithTimeout(2*time.Second), docker.FromEnv, dockerUseDesktopSocketIfAvailable)
+	client, err := docker.NewClientWithOpts(
+		docker.FromEnv,
+		dockerUseDesktopSocketIfAvailable,
+		docker.WithAPIVersionNegotiation(),
+		// we use a short timeout here because we don't want to impact
+		// negatively performance when Docker is not reachable
+		docker.WithTimeout(2*time.Second),
+		// defining a User Agent to avoid having the Docker API being slow
+		// see https://github.com/docker/for-mac/issues/7575
+		docker.WithUserAgent(dockerUserAgent),
+	)
 	if err != nil {
 		if l.Debug {
 			fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
@@ -79,8 +96,6 @@ func (l *Local) RelationshipsFromDocker() Relationships {
 		return nil
 	}
 	defer client.Close()
-
-	client.NegotiateAPIVersion(context.Background())
 
 	containers, err := client.ContainerList(context.Background(), container.ListOptions{})
 	if err != nil {
