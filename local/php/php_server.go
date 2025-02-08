@@ -48,6 +48,7 @@ import (
 type Server struct {
 	Version      *phpstore.Version
 	logger       zerolog.Logger
+	StoppedChan  chan bool
 	appVersion   string
 	homeDir      string
 	projectDir   string
@@ -79,6 +80,7 @@ func NewServer(homeDir, projectDir, documentRoot, passthru, appVersion string, l
 		projectDir:   projectDir,
 		documentRoot: documentRoot,
 		passthru:     passthru,
+		StoppedChan:  make(chan bool, 1),
 	}, nil
 }
 
@@ -195,6 +197,8 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 			for _, path := range pathsToRemove {
 				os.RemoveAll(path)
 			}
+			e.CleanupTemporaryDirectories()
+			p.StoppedChan <- true
 		}()
 
 		return errors.Wrap(errors.WithStack(runner.Run()), "PHP server exited unexpectedly")

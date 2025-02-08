@@ -163,7 +163,11 @@ func (e *Executor) DetectScriptDir() (string, error) {
 	return e.scriptDir, nil
 }
 
-// Config determines the right version of PHP depending on the configuration (+ its configuration)
+// Config determines the right version of PHP depending on the configuration
+// (+ its configuration). It also creates some symlinks to ease the integration
+// with underlying tools that could try to run PHP. This is the responsability
+// of the caller to clean those temporary files. One can call
+// CleanupTemporaryDirectories to do so.
 func (e *Executor) Config(loadDotEnv bool) error {
 	// reset environment
 	e.environ = make([]string, 0)
@@ -220,8 +224,10 @@ func (e *Executor) Config(loadDotEnv bool) error {
 	// prepending the PHP directory in the PATH does not work well if the PHP binary is not named "php" (like php7.3 for instance)
 	// in that case, we create a temp directory with a symlink
 	// we also link php-config for pecl to pick up the right one (it is always looks for something called php-config)
-	phpDir := filepath.Join(cliDir, "tmp", xid.New().String(), "bin")
-	e.tempDir = phpDir
+	if e.tempDir == "" {
+		e.tempDir = filepath.Join(cliDir, "tmp", xid.New().String())
+	}
+	phpDir := filepath.Join(e.tempDir, "bin")
 	if err := os.MkdirAll(phpDir, 0755); err != nil {
 		return err
 	}
@@ -284,6 +290,15 @@ func (e *Executor) Config(loadDotEnv bool) error {
 	return err
 }
 
+func (e *Executor) CleanupTemporaryDirectories() {
+	if e.iniDir != "" {
+		os.RemoveAll(e.iniDir)
+	}
+	if e.tempDir != "" {
+		os.RemoveAll(e.tempDir)
+	}
+}
+
 // Find composer depending on the configuration
 func (e *Executor) findComposer(extraBin string) (string, error) {
 	if scriptDir, err := e.DetectScriptDir(); err == nil {
@@ -312,14 +327,7 @@ func (e *Executor) Execute(loadDotEnv bool) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	defer func() {
-		if e.iniDir != "" {
-			os.RemoveAll(e.iniDir)
-		}
-		if e.tempDir != "" {
-			os.RemoveAll(e.tempDir)
-		}
-	}()
+	defer e.CleanupTemporaryDirectories()
 	cmd := execCommand(e.Args[0], e.Args[1:]...)
 	environ := append(os.Environ(), e.environ...)
 	gpathname := "PATH"
