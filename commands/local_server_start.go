@@ -421,6 +421,7 @@ var localServerStartCmd = &console.Command{
 			if p.PHPServer != nil {
 				<-p.PHPServer.StoppedChan
 			}
+			pidFile.CleanupDirectories()
 			ui.Success("Stopped all processes successfully")
 		}
 		return nil

@@ -21,7 +21,6 @@ package php
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 )
 
@@ -61,9 +60,5 @@ require $script;
 `)
 
 func (p *Server) phpRouterFile() string {
-	path := filepath.Join(p.homeDir, fmt.Sprintf("php/%s-router.php", name(p.projectDir)))
-	if _, err := os.Stat(filepath.Dir(path)); os.IsNotExist(err) {
-		_ = os.MkdirAll(filepath.Dir(path), 0755)
-	}
-	return path
+	return filepath.Join(p.tempDir, fmt.Sprintf("%s-router.php", p.Version.Version))
 }

@@ -232,6 +232,19 @@ func (p *PidFile) WorkerPidDir() string {
 	return filepath.Join(util.GetHomeDir(), "var", name(p.Dir))
 }
 
+func (p *PidFile) TempDirectory() string {
+	return filepath.Join(util.GetHomeDir(), "php", name(p.Dir))
+}
+
+func (p *PidFile) CleanupDirectories() {
+	os.RemoveAll(p.TempDirectory())
+	// We don't want to force removal of log and pid files, we only want to
+	// clean up empty directories. To do so we use `os.Remove` instead of
+	// `os.RemoveAll`
+	os.Remove(p.WorkerLogDir())
+	os.Remove(p.WorkerPidDir())
+}
+
 func (p *PidFile) LogReader() (io.ReadCloser, error) {
 	logFile := p.LogFile()
 	if err := os.MkdirAll(filepath.Dir(logFile), 0755); err != nil {
