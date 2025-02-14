@@ -417,6 +417,11 @@ var localServerStartCmd = &console.Command{
 				return err
 			}
 			terminal.Eprintln("")
+			// wait for the PHP Server to be done cleaning up
+			if p.PHPServer != nil {
+				<-p.PHPServer.StoppedChan
+			}
+			pidFile.CleanupDirectories()
 			ui.Success("Stopped all processes successfully")
 		}
 		return nil

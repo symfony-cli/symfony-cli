@@ -34,11 +34,9 @@ import (
 
 // Project represents a PHP project
 type Project struct {
-	HTTP       *lhttp.Server
-	PHPServer  *php.Server
-	Logger     zerolog.Logger
-	homeDir    string
-	projectDir string
+	HTTP      *lhttp.Server
+	PHPServer *php.Server
+	Logger    zerolog.Logger
 }
 
 // New creates a new PHP project
@@ -49,9 +47,7 @@ func New(c *Config) (*Project, error) {
 	}
 	passthru, err := realPassthru(documentRoot, c.Passthru)
 	p := &Project{
-		Logger:     c.Logger.With().Str("source", "HTTP").Logger(),
-		homeDir:    c.HomeDir,
-		projectDir: c.ProjectDir,
+		Logger: c.Logger.With().Str("source", "HTTP").Logger(),
 		HTTP: &lhttp.Server{
 			DocumentRoot:  documentRoot,
 			Port:          c.Port,

@@ -48,8 +48,9 @@ import (
 type Server struct {
 	Version      *phpstore.Version
 	logger       zerolog.Logger
+	StoppedChan  chan bool
 	appVersion   string
-	homeDir      string
+	tempDir      string
 	projectDir   string
 	documentRoot string
 	passthru     string
@@ -75,16 +76,22 @@ func NewServer(homeDir, projectDir, documentRoot, passthru, appVersion string, l
 		Version:      version,
 		logger:       logger.With().Str("source", "PHP").Str("php", version.Version).Str("path", version.ServerPath()).Logger(),
 		appVersion:   appVersion,
-		homeDir:      homeDir,
 		projectDir:   projectDir,
 		documentRoot: documentRoot,
 		passthru:     passthru,
+		StoppedChan:  make(chan bool, 1),
 	}, nil
 }
 
 // Start starts a PHP server
 func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile, func() error, error) {
-	var pathsToRemove []string
+	p.tempDir = pidFile.TempDirectory()
+	if _, err := os.Stat(p.tempDir); os.IsNotExist(err) {
+		if err = os.MkdirAll(p.tempDir, 0755); err != nil {
+			return nil, nil, err
+		}
+	}
+
 	port, err := process.FindAvailablePort()
 	if err != nil {
 		p.logger.Debug().Err(err).Msg("unable to find an available port")
@@ -123,7 +130,6 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 			return nil, nil, errors.WithStack(err)
 		}
 		p.proxy.Transport = &cgiTransport{}
-		pathsToRemove = append(pathsToRemove, fpmConfigFile)
 		binName = "php-fpm"
 		workerName = "PHP-FPM"
 		args = []string{p.Version.ServerPath(), "--nodaemonize", "--fpm-config", fpmConfigFile}
@@ -149,7 +155,6 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 		if err := os.WriteFile(routerPath, phprouter, 0644); err != nil {
 			return nil, nil, errors.WithStack(err)
 		}
-		pathsToRemove = append(pathsToRemove, routerPath)
 		binName = "php"
 		workerName = "PHP"
 		args = []string{p.Version.ServerPath(), "-S", "127.0.0.1:" + strconv.Itoa(port), "-d", "variables_order=EGPCS", routerPath}
@@ -161,6 +166,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 		BinName:   binName,
 		Args:      args,
 		scriptDir: p.projectDir,
+		Logger:    p.logger,
 	}
 	p.logger.Info().Int("port", port).Msg("listening")
 
@@ -192,9 +198,8 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 
 	return phpPidFile, func() error {
 		defer func() {
-			for _, path := range pathsToRemove {
-				os.RemoveAll(path)
-			}
+			e.CleanupTemporaryDirectories()
+			p.StoppedChan <- true
 		}()
 
 		return errors.Wrap(errors.WithStack(runner.Run()), "PHP server exited unexpectedly")
