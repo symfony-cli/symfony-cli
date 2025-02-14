@@ -292,12 +292,21 @@ func (e *Executor) Config(loadDotEnv bool) error {
 }
 
 func (e *Executor) CleanupTemporaryDirectories() {
-	go cleanupStaleTemporaryDirectories(e.Logger)
+	backgroundCleanup := make(chan bool, 1)
+	go cleanupStaleTemporaryDirectories(e.Logger, backgroundCleanup)
+
 	if e.iniDir != "" {
 		os.RemoveAll(e.iniDir)
 	}
 	if e.tempDir != "" {
 		os.RemoveAll(e.tempDir)
+	}
+
+	// give some room to the background clean up job to do its work
+	select {
+	case <-backgroundCleanup:
+	case <-time.After(100 * time.Millisecond):
+		e.Logger.Debug().Msg("Allocated time for temporary directories to be cleaned up is over, it will resume later on")
 	}
 }
 
@@ -307,7 +316,10 @@ func (e *Executor) CleanupTemporaryDirectories() {
 // in-use by running servers we can't simply delete the parent directory. This
 // is why we make our best to find the oldest directories and remove then,
 // cleaning the directory little by little.
-func cleanupStaleTemporaryDirectories(mainLogger zerolog.Logger) {
+func cleanupStaleTemporaryDirectories(mainLogger zerolog.Logger, doneCh chan<- bool) {
+	defer func() {
+		doneCh <- true
+	}()
 	parentDirectory := filepath.Join(util.GetHomeDir(), "tmp")
 	mainLogger = mainLogger.With().Str("dir", parentDirectory).Logger()
 
