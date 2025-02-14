@@ -165,7 +165,7 @@ func (e *Executor) DetectScriptDir() (string, error) {
 
 // Config determines the right version of PHP depending on the configuration
 // (+ its configuration). It also creates some symlinks to ease the integration
-// with underlying tools that could try to run PHP. This is the responsability
+// with underlying tools that could try to run PHP. This is the responsibility
 // of the caller to clean those temporary files. One can call
 // CleanupTemporaryDirectories to do so.
 func (e *Executor) Config(loadDotEnv bool) error {
