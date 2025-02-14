@@ -29,6 +29,7 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/xid"
@@ -291,11 +292,88 @@ func (e *Executor) Config(loadDotEnv bool) error {
 }
 
 func (e *Executor) CleanupTemporaryDirectories() {
+	go cleanupStaleTemporaryDirectories(e.Logger)
 	if e.iniDir != "" {
 		os.RemoveAll(e.iniDir)
 	}
 	if e.tempDir != "" {
 		os.RemoveAll(e.tempDir)
+	}
+}
+
+// The Symfony CLI used to leak temporary directories until v5.10.8. The bug is
+// fixed but because directories names are random they are not going to be
+// reused and thus are not going to be cleaned up. And because they might be
+// in-use by running servers we can't simply delete the parent directory. This
+// is why we make our best to find the oldest directories and remove then,
+// cleaning the directory little by little.
+func cleanupStaleTemporaryDirectories(mainLogger zerolog.Logger) {
+	parentDirectory := filepath.Join(util.GetHomeDir(), "tmp")
+	mainLogger = mainLogger.With().Str("dir", parentDirectory).Logger()
+
+	if len(parentDirectory) < 6 {
+		mainLogger.Warn().Msg("temporary dir path looks too short")
+		return
+	}
+
+	mainLogger.Debug().Msg("Starting temporary directory cleanup...")
+	dir, err := os.Open(parentDirectory)
+	if err != nil {
+		mainLogger.Warn().Err(err).Msg("Failed to open temporary directory")
+		return
+	}
+	defer dir.Close()
+
+	// the duration after which we consider temporary directories as
+	// stale and can be removed
+	cutoff := time.Now().Add(-7 * 24 * time.Hour)
+
+	for {
+		// we might have a lof of entries so we need to work in batches
+		entries, err := dir.Readdirnames(30)
+		if err == io.EOF {
+			mainLogger.Debug().Msg("Cleaning is done...")
+			return
+		}
+		if err != nil {
+			mainLogger.Warn().Err(err).Msg("Failed to read entries")
+			return
+		}
+
+		for _, entry := range entries {
+			logger := mainLogger.With().Str("entry", entry).Logger()
+
+			// we generate temporary directory names with
+			// `xid.New().String()` which is always 20 char long
+			if len(entry) != 20 {
+				logger.Debug().Msg("found an entry that is not from us")
+				continue
+			} else if _, err := xid.FromString(entry); err != nil {
+				logger.Debug().Err(err).Msg("found an entry that is not from us")
+				continue
+			}
+
+			entryPath := filepath.Join(parentDirectory, entry)
+			file, err := os.Open(entryPath)
+			if err != nil {
+				logger.Warn().Err(err).Msg("failed to read entry")
+				continue
+			} else if fi, err := file.Stat(); err != nil {
+				logger.Warn().Err(err).Msg("failed to read entry")
+				continue
+			} else if !fi.IsDir() {
+				logger.Warn().Err(err).Msg("entry is not a directory")
+				continue
+			} else if fi.ModTime().After(cutoff) {
+				logger.Debug().Any("cutoff", cutoff).Msg("entry is more recent than cutoff, keeping it for now")
+				continue
+			}
+
+			logger.Debug().Str("entry", entry).Msg("entry matches the criterias, removing it")
+			if err := os.RemoveAll(entryPath); err != nil {
+				logger.Warn().Err(err).Msg("failed to remove entry")
+			}
+		}
 	}
 }
 

@@ -166,6 +166,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 		BinName:   binName,
 		Args:      args,
 		scriptDir: p.projectDir,
+		Logger:    p.logger,
 	}
 	p.logger.Info().Int("port", port).Msg("listening")
 

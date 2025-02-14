@@ -78,7 +78,7 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, 
 		fmt.Fprintln(logger, "  WARNING: Unable to find Composer, downloading one. It is recommended to install Composer yourself at https://getcomposer.org/download/")
 		// we don't store it under bin/ to avoid it being found by findComposer as we want to only use it as a fallback
 		binDir := filepath.Join(util.GetHomeDir(), "composer")
-		if path, err = downloadComposer(binDir); err != nil {
+		if path, err = downloadComposer(binDir, debugLogger); err != nil {
 			return ComposerResult{
 				code:  1,
 				error: errors.Wrap(err, "unable to find composer, get it at https://getcomposer.org/download/"),
@@ -157,7 +157,7 @@ func findComposer(extraBin string, logger zerolog.Logger) (string, error) {
 	return "", os.ErrNotExist
 }
 
-func downloadComposer(dir string) (string, error) {
+func downloadComposer(dir string, debugLogger zerolog.Logger) (string, error) {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return "", err
 	}
@@ -193,6 +193,7 @@ func downloadComposer(dir string) (string, error) {
 		SkipNbArgs: 1,
 		Stdout:     &stdout,
 		Stderr:     &stdout,
+		Logger:     debugLogger,
 	}
 	ret := e.Execute(false)
 	if ret == 1 {
