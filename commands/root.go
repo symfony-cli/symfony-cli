@@ -57,6 +57,7 @@ func CommonCommands() []*console.Command {
 		bookCheckoutCmd,
 		cloudEnvDebugCmd,
 		doctrineCheckServerVersionSettingCmd,
+		localMcpServerStartCmd,
 		localNewCmd,
 		localPhpListCmd,
 		localPhpRefreshCmd,

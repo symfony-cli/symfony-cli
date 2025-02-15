@@ -10,15 +10,10 @@ import (
 
 // SymfonyConsoleExecutor returns an Executor prepared to run Symfony Console.
 // It returns an error if no console binary is found.
-func SymfonyConsoleExecutor(args []string) (*Executor, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
+func SymfonyConsoleExecutor(projectDir string, args []string) (*Executor, error) {
 	for {
 		for _, consolePath := range []string{"bin/console", "app/console"} {
-			consolePath = filepath.Join(dir, consolePath)
+			consolePath = filepath.Join(projectDir, consolePath)
 			if _, err := os.Stat(consolePath); err == nil {
 				return &Executor{
 					BinName: "php",
@@ -27,11 +22,11 @@ func SymfonyConsoleExecutor(args []string) (*Executor, error) {
 			}
 		}
 
-		upDir := filepath.Dir(dir)
-		if upDir == dir || upDir == "." {
+		upDir := filepath.Dir(projectDir)
+		if upDir == projectDir || upDir == "." {
 			break
 		}
-		dir = upDir
+		projectDir = upDir
 	}
 
 	return nil, errors.New("No console binary found")
