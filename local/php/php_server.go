@@ -21,9 +21,7 @@ package php
 
 import (
 	"context"
-	"crypto/sha1"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -237,10 +235,4 @@ func (p *Server) Serve(w http.ResponseWriter, r *http.Request, env map[string]st
 
 	p.proxy.ServeHTTP(w, r)
 	return nil
-}
-
-func name(dir string) string {
-	h := sha1.New()
-	io.WriteString(h, dir)
-	return fmt.Sprintf("%x", h.Sum(nil))
 }
