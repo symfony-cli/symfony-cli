@@ -457,7 +457,7 @@ func (e *Executor) Execute(loadDotEnv bool) int {
 		close(waitCh)
 	}()
 
-	sigChan := make(chan os.Signal)
+	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan)
 	defer signal.Stop(sigChan)
 
