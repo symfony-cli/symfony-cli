@@ -9,7 +9,7 @@ require (
 	github.com/blackfireio/osinfo v1.0.5
 	github.com/compose-spec/compose-go v1.20.2
 	github.com/docker/docker v27.5.1+incompatible
-	github.com/elazarl/goproxy v0.0.0-20240909085733-6741dbfc16a1
+	github.com/elazarl/goproxy v1.7.0
 	github.com/fabpot/local-php-security-checker/v2 v2.1.3
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/hashicorp/go-version v1.7.0
