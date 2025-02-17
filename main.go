@@ -74,7 +74,7 @@ func main() {
 	}
 	// called via "symfony console"?
 	if len(args) >= 2 && args[1] == "console" {
-		if executor, err := php.SymonyConsoleExecutor(args[2:]); err == nil {
+		if executor, err := php.SymfonyConsoleExecutor(args[2:]); err == nil {
 			executor.Logger = terminal.Logger
 			executor.ExtraEnv = getCliExtraEnv()
 			os.Exit(executor.Execute(false))
