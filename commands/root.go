@@ -100,6 +100,8 @@ func init() {
 }
 
 func InitAppFunc(c *console.Context) error {
+	checkWSL()
+
 	envs.ComputeDockerUserAgent(c.App.Name, c.App.Version)
 
 	psh, err := platformsh.Get()
