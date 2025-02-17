@@ -413,15 +413,16 @@ var localServerStartCmd = &console.Command{
 		case <-shutdownCh:
 			terminal.Eprintln("")
 			terminal.Eprintln("Shutting down! Waiting for all workers to be done.")
-			if err := waitForWorkers(projectDir, pidFile); err != nil {
-				return err
-			}
-			terminal.Eprintln("")
+			err := waitForWorkers(projectDir, pidFile)
 			// wait for the PHP Server to be done cleaning up
 			if p.PHPServer != nil {
 				<-p.PHPServer.StoppedChan
 			}
 			pidFile.CleanupDirectories()
+			if err != nil {
+				return err
+			}
+			terminal.Eprintln("")
 			ui.Success("Stopped all processes successfully")
 		}
 		return nil
