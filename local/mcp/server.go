@@ -33,7 +33,8 @@ import (
 
 type MCP struct {
 	server     *server.MCPServer
-	app        *Application
+	apps       map[string]*Application
+	appArgs    map[string][]string
 	projectDir string
 }
 
@@ -61,6 +62,7 @@ var excludedOptions = map[string]bool{
 func NewServer(projectDir string) (*MCP, error) {
 	mcp := &MCP{
 		projectDir: projectDir,
+		apps:       map[string]*Application{},
 	}
 
 	mcp.server = server.NewMCPServer(
@@ -70,20 +72,35 @@ func NewServer(projectDir string) (*MCP, error) {
 		server.WithResourceCapabilities(true, true),
 	)
 
-	var err error
-	mcp.app, err = NewApp(projectDir)
-	if err != nil {
-		return nil, err
+	mcp.appArgs = map[string][]string{
+		"symfony": {"php", "bin/console"},
+		//		"cloud":    {"run", "upsun"},
 	}
-	for _, command := range mcp.app.Commands {
-		if _, ok := excludedCommands[command.Name]; ok {
-			continue
-		}
-		if command.Hidden {
-			continue
-		}
-		if err := mcp.addTool(command); err != nil {
+
+	e := &php.Executor{
+		Dir:     projectDir,
+		BinName: "php",
+	}
+	if composerPath, err := e.FindComposer(""); err == nil {
+		mcp.appArgs["composer"] = []string{"php", composerPath}
+	}
+
+	for name, args := range mcp.appArgs {
+		var err error
+		mcp.apps[name], err = NewApp(projectDir, args)
+		if err != nil {
 			return nil, err
+		}
+		for _, command := range mcp.apps[name].Commands {
+			if _, ok := excludedCommands[command.Name]; ok {
+				continue
+			}
+			if command.Hidden {
+				continue
+			}
+			if err := mcp.addTool(name, command); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -94,7 +111,7 @@ func (p *MCP) Start() error {
 	return server.ServeStdio(p.server)
 }
 
-func (p *MCP) addTool(cmd command) error {
+func (p *MCP) addTool(appName string, cmd command) error {
 	toolOptions := []mcp.ToolOption{}
 	toolOptions = append(toolOptions, mcp.WithDescription(cmd.Description+"\n\n"+cmd.Help))
 	for name, arg := range cmd.Definition.Arguments {
@@ -120,7 +137,7 @@ func (p *MCP) addTool(cmd command) error {
 		}
 	}
 
-	toolName := strings.ReplaceAll(cmd.Name, ":", "-")
+	toolName := appName + "--" + strings.ReplaceAll(cmd.Name, ":", "-")
 	regexp := regexp.MustCompile(`^[a-zA-Z0-9_-]{1,64}$`)
 	if !regexp.MatchString(toolName) {
 		return fmt.Errorf("invalid command name: %s", cmd.Name)
@@ -159,14 +176,14 @@ func (p *MCP) addTool(cmd command) error {
 		}
 		executorArgs = append(executorArgs, "--no-ansi")
 		executorArgs = append(executorArgs, "--no-interaction")
-		e, err := php.SymfonyConsoleExecutor(p.projectDir, executorArgs)
-		if err != nil {
-			return nil, err
-		}
-		e.Dir = p.projectDir
 		var buf bytes.Buffer
-		e.Stdout = &buf
-		e.Stderr = &buf
+		e := &php.Executor{
+			BinName: "php",
+			Dir:     p.projectDir,
+			Args:    append(p.appArgs[appName], executorArgs...),
+			Stdout:  &buf,
+			Stderr:  &buf,
+		}
 		if ret := e.Execute(false); ret != 0 {
 			return mcp.NewToolResultError(fmt.Sprintf("Error running %s (exit code: %d)\n%s", strings.Join(executorArgs, " "), ret, buf.String())), nil
 		}

@@ -22,6 +22,7 @@ package mcp
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/symfony-cli/local/php"
@@ -59,27 +60,18 @@ type option struct {
 	Default         interface{} `json:"default"`
 }
 
-func NewApp(projectDir string) (*Application, error) {
-	app, err := parseApplication(projectDir)
-	if err != nil {
-		return nil, err
-	}
-
-	return app, nil
-}
-
-func parseApplication(projectDir string) (*Application, error) {
+func NewApp(projectDir string, args []string) (*Application, error) {
+	args = append(args, "list", "--format=json")
 	var buf bytes.Buffer
-	var bufErr bytes.Buffer
 	e := &php.Executor{
 		BinName: "php",
 		Dir:     projectDir,
-		Args:    []string{"php", "bin/console", "list", "--format=json"},
+		Args:    args,
 		Stdout:  &buf,
-		Stderr:  &bufErr,
+		Stderr:  &buf,
 	}
 	if ret := e.Execute(false); ret != 0 {
-		return nil, errors.Errorf("unable to list commands: %s\n%s", bufErr.String(), buf.String())
+		return nil, errors.Errorf("unable to list commands (%s):\n%s", strings.Join(args, " "), buf.String())
 	}
 
 	// Fix PHP types

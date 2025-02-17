@@ -390,7 +390,7 @@ func cleanupStaleTemporaryDirectories(mainLogger zerolog.Logger, doneCh chan<- b
 }
 
 // Find composer depending on the configuration
-func (e *Executor) findComposer(extraBin string) (string, error) {
+func (e *Executor) FindComposer(extraBin string) (string, error) {
 	if scriptDir, err := e.DetectScriptDir(); err == nil {
 		for _, file := range []string{extraBin, "composer.phar", "composer"} {
 			path := filepath.Join(scriptDir, file)

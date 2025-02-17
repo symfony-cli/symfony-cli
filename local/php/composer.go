@@ -73,7 +73,7 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, 
 	if composerVersion() == 2 {
 		composerBin = "composer2"
 	}
-	path, err := e.findComposer(composerBin)
+	path, err := e.FindComposer(composerBin)
 	if err != nil || !isPHPScript(path) {
 		fmt.Fprintln(logger, "  WARNING: Unable to find Composer, downloading one. It is recommended to install Composer yourself at https://getcomposer.org/download/")
 		// we don't store it under bin/ to avoid it being found by findComposer as we want to only use it as a fallback
