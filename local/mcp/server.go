@@ -113,7 +113,8 @@ func (p *MCP) Start() error {
 
 func (p *MCP) addTool(appName string, cmd command) error {
 	toolOptions := []mcp.ToolOption{}
-	toolOptions = append(toolOptions, mcp.WithDescription(cmd.Description+"\n\n"+cmd.Help))
+	// We don't add cmd.Help because the LLM can get confused about the name to use for args/options (forgetting to prefix with "arg_" or "opt_")
+	toolOptions = append(toolOptions, mcp.WithDescription(cmd.Description))
 	for name, arg := range cmd.Definition.Arguments {
 		argOptions := []mcp.PropertyOption{
 			mcp.Description(arg.Description),
@@ -158,13 +159,13 @@ func (p *MCP) addTool(appName string, cmd command) error {
 				if cmd.Definition.Options[strings.TrimPrefix(name, "opt_")].AcceptValue {
 					arg, ok := value.(string)
 					if !ok {
-						return mcp.NewToolResultError(fmt.Sprintf("argument value for \"%s\" must be a string", name)), nil
+						return mcp.NewToolResultError(fmt.Sprintf("option value for \"%s\" must be a string", name)), nil
 					}
 					executorArgs = append(executorArgs, fmt.Sprintf("--%s=%s", strings.TrimPrefix(name, "opt_"), arg))
 				} else {
 					arg, ok := value.(bool)
 					if !ok {
-						return mcp.NewToolResultError(fmt.Sprintf("argument value for \"%s\" must be a string", name)), nil
+						return mcp.NewToolResultError(fmt.Sprintf("option value for \"%s\" must be a boolean", name)), nil
 					}
 					if arg {
 						executorArgs = append(executorArgs, fmt.Sprintf("--%s", strings.TrimPrefix(name, "opt_")))
@@ -185,9 +186,9 @@ func (p *MCP) addTool(appName string, cmd command) error {
 			Stderr:  &buf,
 		}
 		if ret := e.Execute(false); ret != 0 {
-			return mcp.NewToolResultError(fmt.Sprintf("Error running %s (exit code: %d)\n%s", strings.Join(executorArgs, " "), ret, buf.String())), nil
+			return mcp.NewToolResultError(fmt.Sprintf("Error running %s (exit code: %d)\n%s", strings.Join(executorArgs, " "), ret, redactHighEntropy(buf.String()))), nil
 		}
-		return mcp.NewToolResultText(buf.String()), nil
+		return mcp.NewToolResultText(redactHighEntropy(buf.String())), nil
 	}
 
 	p.server.AddTool(tool, handler)
