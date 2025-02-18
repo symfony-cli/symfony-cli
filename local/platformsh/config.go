@@ -184,7 +184,7 @@ var availableServices = []*service{
 		Type: "mongodb",
 		Versions: serviceVersions{
 			Deprecated: []string{"3.0", "3.2", "3.4", "3.6", "4.0.3"},
-			Supported: []string{},
+			Supported:  []string{},
 		},
 	},
 	{

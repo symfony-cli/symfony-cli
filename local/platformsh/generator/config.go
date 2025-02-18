@@ -23,6 +23,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go/format"
 	"io"
 	"net/http"
 	"os"
@@ -101,7 +102,11 @@ func generateConfig() {
 	if err != nil {
 		panic(err)
 	}
-	f.Write(buf.Bytes())
+	source, err := format.Source(buf.Bytes())
+	if err != nil {
+		panic(err)
+	}
+	f.Write(source)
 }
 
 func parseServices() (string, error) {
@@ -145,7 +150,7 @@ func parseServices() (string, error) {
 				servicesAsString += "\t\t\tDeprecated: []string{},\n"
 			}
 			if len(supportedVersions) > 0 {
-				servicesAsString += fmt.Sprintf("\t\t\tSupported:  []string{\"%s\"},\n", strings.Join(supportedVersions, "\", \""))
+				servicesAsString += fmt.Sprintf("\t\t\tSupported: []string{\"%s\"},\n", strings.Join(supportedVersions, "\", \""))
 			} else {
 				servicesAsString += "\t\t\tSupported: []string{},\n"
 			}
