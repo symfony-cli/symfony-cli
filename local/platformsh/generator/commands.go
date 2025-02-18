@@ -23,6 +23,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go/format"
 	"os"
 	"os/exec"
 	"sort"
@@ -93,7 +94,11 @@ func generateCommands() {
 	if err != nil {
 		panic(err)
 	}
-	f.Write(buf.Bytes())
+	source, err := format.Source(buf.Bytes())
+	if err != nil {
+		panic(err)
+	}
+	f.Write(source)
 
 }
 
@@ -175,7 +180,7 @@ func parseCommands(cloudPath string) (string, error) {
 		}
 		aliasesAsString := ""
 		if len(aliases) > 0 {
-			aliasesAsString += "\n\t\tAliases:  []*console.Alias{\n"
+			aliasesAsString += "\n\t\tAliases: []*console.Alias{\n"
 			for _, alias := range aliases {
 				aliasesAsString += "\t\t\t" + alias + ",\n"
 			}
@@ -183,7 +188,7 @@ func parseCommands(cloudPath string) (string, error) {
 		}
 		hide := ""
 		if command.Hidden {
-			hide = "\n\t\tHidden:   console.Hide,"
+			hide = "\n\t\tHidden: console.Hide,"
 		}
 
 		optionNames := make([]string, 0, len(command.Definition.Options))
@@ -229,7 +234,7 @@ func parseCommands(cloudPath string) (string, error) {
 		}
 		flagsAsString := ""
 		if len(flags) > 0 {
-			flagsAsString += "\n\t\tFlags:    []console.Flag{\n"
+			flagsAsString += "\n\t\tFlags: []console.Flag{\n"
 			for _, flag := range flags {
 				flagsAsString += "\t\t\t" + flag + ",\n"
 			}
@@ -239,8 +244,8 @@ func parseCommands(cloudPath string) (string, error) {
 		command.Description = strings.ReplaceAll(command.Description, "Platform.sh", "Platform.sh/Upsun")
 		definitionAsString += fmt.Sprintf(`	{
 		Category: "%s",
-		Name:     "%s",%s
-		Usage:    %#v,%s%s
+		Name: "%s",%s
+		Usage: %#v,%s%s
 	},
 `, namespace, name, aliasesAsString, command.Description, hide, flagsAsString)
 	}
