@@ -8,7 +8,7 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/blackfireio/osinfo v1.0.5
 	github.com/compose-spec/compose-go v1.20.2
-	github.com/docker/docker v27.5.1+incompatible
+	github.com/docker/docker v28.0.0+incompatible
 	github.com/elazarl/goproxy v1.7.0
 	github.com/fabpot/local-php-security-checker/v2 v2.1.3
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
@@ -28,7 +28,7 @@ require (
 	github.com/soheilhy/cmux v0.1.5
 	github.com/stoicperlman/fls v0.0.0-20171222144224-f073b7a01081
 	github.com/symfony-cli/cert v1.0.6
-	github.com/symfony-cli/console v1.2.0
+	github.com/symfony-cli/console v1.2.1
 	github.com/symfony-cli/phpstore v1.0.12
 	github.com/symfony-cli/terminal v1.0.7
 	golang.org/x/sync v0.11.0
@@ -82,7 +82,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.34.0 // indirect
 	go.opentelemetry.io/otel/trace v1.34.0 // indirect
 	golang.org/x/crypto v0.33.0 // indirect
-	golang.org/x/exp v0.0.0-20250215185904-eff6e970281f // indirect
+	golang.org/x/exp v0.0.0-20250218142911-aa4b98e5adaa // indirect
 	golang.org/x/net v0.35.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/term v0.29.0 // indirect
