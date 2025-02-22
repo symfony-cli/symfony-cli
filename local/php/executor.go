@@ -401,7 +401,7 @@ func (e *Executor) findComposer(extraBin string) (string, error) {
 			}
 			if m := d.Mode(); !m.IsDir() {
 				// Yep!
-				e.Logger.Debug().Str("source", "Composer").Msgf(`Found Composer as "%s"`, path)
+				e.Logger.Debug().Str("source", "Composer").Msgf(`Found potential Composer as "%s"`, path)
 				return path, nil
 			}
 		}

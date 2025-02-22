@@ -33,6 +33,7 @@ func (s *ComposerSuite) TestIsComposerPHPScript(c *C) {
 	dir, err := filepath.Abs("testdata/php_scripts")
 	c.Assert(err, IsNil)
 
+	c.Assert(isPHPScript(""), Equals, false)
 	c.Assert(isPHPScript(filepath.Join(dir, "unknown")), Equals, false)
 	c.Assert(isPHPScript(filepath.Join(dir, "invalid")), Equals, false)
 
