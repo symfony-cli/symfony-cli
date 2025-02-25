@@ -112,6 +112,14 @@ func (s *ExecutorSuite) TestNotEnoughArgs(c *C) {
 	c.Assert((&Executor{BinName: "php"}).Execute(true), Equals, 1)
 }
 
+func (s *ExecutorSuite) TestCommandLineFormatting(c *C) {
+	c.Assert((&Executor{}).CommandLine(), Equals, "")
+
+	c.Assert((&Executor{Args: []string{"php"}}).CommandLine(), Equals, "php")
+
+	c.Assert((&Executor{Args: []string{"php", "-dmemory_limit=-1", "/path/to/composer.phar"}}).CommandLine(), Equals, "php -dmemory_limit=-1 /path/to/composer.phar")
+}
+
 func (s *ExecutorSuite) TestForwardExitCode(c *C) {
 	defer restoreExecCommand()
 	fakeExecCommand("exit-code", "5")

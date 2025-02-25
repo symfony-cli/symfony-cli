@@ -74,6 +74,10 @@ func GetBinaryNames() []string {
 	return []string{"php", "pecl", "pear", "php-fpm", "php-cgi", "php-config", "phpdbg", "phpize"}
 }
 
+func (e Executor) CommandLine() string {
+	return strings.TrimSpace(strings.Join(e.Args, " "))
+}
+
 func (e *Executor) lookupPHP(cliDir string, forceReload bool) (*phpstore.Version, string, bool, error) {
 	phpStore := phpstore.New(cliDir, forceReload, nil)
 	v, source, warning, err := phpStore.BestVersionForDir(e.scriptDir)

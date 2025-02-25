@@ -89,15 +89,17 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, 
 				error: errors.Wrap(err, "unable to find composer, get it at https://getcomposer.org/download/"),
 			}
 		}
-		fmt.Fprintf(logger, "  (running %s %s)\n\n", path, strings.TrimSpace(strings.Join(args, " ")))
+		e.Args = append([]string{"php", path}, args...)
+		fmt.Fprintf(logger, "  (running %s)\n\n", e.CommandLine())
+	} else {
+		e.Args = append([]string{"php", path}, args...)
 	}
 
-	e.Args = append([]string{"php", path}, args...)
 	ret := e.Execute(false)
 	if ret != 0 {
 		return ComposerResult{
 			code:  ret,
-			error: errors.Errorf("unable to run %s %s", path, strings.Join(args, " ")),
+			error: errors.Errorf("unable to run %s", e.CommandLine()),
 		}
 	}
 	return ComposerResult{}
