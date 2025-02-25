@@ -288,9 +288,11 @@ func (e *Executor) Config(loadDotEnv bool) error {
 		}
 	}
 
-	// args[0] MUST be the same as path
-	// but as we change the path, we should update args[0] accordingly
-	e.Args[0] = path
+	if IsBinaryName(e.Args[0]) {
+		// args[0] MUST be the same as path
+		// but as we change the path, we should update args[0] accordingly
+		e.Args[0] = path
+	}
 
 	return err
 }
