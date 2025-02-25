@@ -73,10 +73,15 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, 
 	if composerVersion() == 2 {
 		composerBin = "composer2"
 	}
-	path, err := e.findComposer(composerBin)
-	if pathIsPhpScript := isPHPScript(path); err != nil || !pathIsPhpScript {
+
+	if composerPath := os.Getenv("SYMFONY_COMPOSER_PATH"); composerPath != "" {
+		debugLogger.Debug().Str("SYMFONY_COMPOSER_PATH", composerPath).Msg("SYMFONY_COMPOSER_PATH has been defined. User is taking control over Composer detection and execution.")
+		e.Args = append([]string{composerPath}, args...)
+	} else if path, err := e.findComposer(composerBin); err == nil && isPHPScript(path) {
+		e.Args = append([]string{"php", path}, args...)
+	} else {
 		reason := "No Composer installation found."
-		if path != "" && !pathIsPhpScript {
+		if path != "" {
 			reason = fmt.Sprintf("Detected Composer file (%s) is not a valid PHAR or PHP script.", path)
 		}
 		fmt.Fprintln(logger, "  WARNING:", reason)
@@ -91,8 +96,6 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, 
 		}
 		e.Args = append([]string{"php", path}, args...)
 		fmt.Fprintf(logger, "  (running %s)\n\n", e.CommandLine())
-	} else {
-		e.Args = append([]string{"php", path}, args...)
 	}
 
 	ret := e.Execute(false)
@@ -119,6 +122,10 @@ func isPHPScript(path string) bool {
 	byteSlice, _, err := reader.ReadLine()
 	if err != nil {
 		return false
+	}
+
+	if bytes.Equal(byteSlice, []byte("<?php")) {
+		return true
 	}
 
 	return bytes.HasPrefix(byteSlice, []byte("#!/")) && bytes.HasSuffix(byteSlice, []byte("php"))

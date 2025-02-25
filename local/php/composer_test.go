@@ -41,6 +41,7 @@ func (s *ComposerSuite) TestIsComposerPHPScript(c *C) {
 		"usual-one",
 		"debian-style",
 		"custom-one",
+		"plain-one.php",
 	} {
 		c.Assert(isPHPScript(filepath.Join(dir, validScripts)), Equals, true)
 	}
