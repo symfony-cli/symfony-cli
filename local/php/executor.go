@@ -74,6 +74,10 @@ func GetBinaryNames() []string {
 	return []string{"php", "pecl", "pear", "php-fpm", "php-cgi", "php-config", "phpdbg", "phpize"}
 }
 
+func (e Executor) CommandLine() string {
+	return strings.TrimSpace(strings.Join(e.Args, " "))
+}
+
 func (e *Executor) lookupPHP(cliDir string, forceReload bool) (*phpstore.Version, string, bool, error) {
 	phpStore := phpstore.New(cliDir, forceReload, nil)
 	v, source, warning, err := phpStore.BestVersionForDir(e.scriptDir)
@@ -284,9 +288,11 @@ func (e *Executor) Config(loadDotEnv bool) error {
 		}
 	}
 
-	// args[0] MUST be the same as path
-	// but as we change the path, we should update args[0] accordingly
-	e.Args[0] = path
+	if IsBinaryName(e.Args[0]) {
+		// args[0] MUST be the same as path
+		// but as we change the path, we should update args[0] accordingly
+		e.Args[0] = path
+	}
 
 	return err
 }
@@ -401,7 +407,7 @@ func (e *Executor) findComposer(extraBin string) (string, error) {
 			}
 			if m := d.Mode(); !m.IsDir() {
 				// Yep!
-				e.Logger.Debug().Str("source", "Composer").Msgf(`Found Composer as "%s"`, path)
+				e.Logger.Debug().Str("source", "Composer").Msgf(`Found potential Composer as "%s"`, path)
 				return path, nil
 			}
 		}

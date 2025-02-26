@@ -99,17 +99,26 @@ func TestHelperProcess(t *testing.T) {
 		for _, v := range os.Environ() {
 			fmt.Println(v)
 		}
+		os.Exit(0)
 	case "exit-code":
 		code, _ := strconv.Atoi(os.Args[4])
 		os.Exit(code)
 	}
-	os.Exit(0)
+	os.Exit(1)
 }
 
 func (s *ExecutorSuite) TestNotEnoughArgs(c *C) {
 	defer cleanupExecutorTempFiles()
 
 	c.Assert((&Executor{BinName: "php"}).Execute(true), Equals, 1)
+}
+
+func (s *ExecutorSuite) TestCommandLineFormatting(c *C) {
+	c.Assert((&Executor{}).CommandLine(), Equals, "")
+
+	c.Assert((&Executor{Args: []string{"php"}}).CommandLine(), Equals, "php")
+
+	c.Assert((&Executor{Args: []string{"php", "-dmemory_limit=-1", "/path/to/composer.phar"}}).CommandLine(), Equals, "php -dmemory_limit=-1 /path/to/composer.phar")
 }
 
 func (s *ExecutorSuite) TestForwardExitCode(c *C) {
@@ -129,6 +138,63 @@ func (s *ExecutorSuite) TestForwardExitCode(c *C) {
 	defer cleanupExecutorTempFiles()
 
 	c.Assert((&Executor{BinName: "php", Args: []string{"php"}}).Execute(true), Equals, 5)
+}
+
+func (s *ExecutorSuite) TestExecutorRunsPHP(c *C) {
+	defer restoreExecCommand()
+	execCommand = func(name string, arg ...string) *exec.Cmd {
+		c.Assert(name, Equals, "../bin/php")
+
+		cmd := exec.Command(os.Args[0], "-test.run=TestHelperProcess", "--", "exit-code", "0")
+		cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
+		// Set the working directory right now so that it can be changed by
+		// calling test case
+		cmd.Dir, _ = os.Getwd()
+		return cmd
+	}
+
+	home, err := filepath.Abs("testdata/executor")
+	c.Assert(err, IsNil)
+
+	homedir.Reset()
+	os.Setenv("HOME", home)
+	defer homedir.Reset()
+
+	oldwd, _ := os.Getwd()
+	defer os.Chdir(oldwd)
+	os.Chdir(filepath.Join(home, "project"))
+	defer cleanupExecutorTempFiles()
+
+	c.Assert((&Executor{BinName: "php", Args: []string{"php"}}).Execute(true), Equals, 0)
+
+}
+
+func (s *ExecutorSuite) TestBinaryOtherThanPhp(c *C) {
+	defer restoreExecCommand()
+	execCommand = func(name string, arg ...string) *exec.Cmd {
+		c.Assert(name, Equals, "not-php")
+
+		cmd := exec.Command(os.Args[0], "-test.run=TestHelperProcess", "--", "exit-code", "0")
+		cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
+		// Set the working directory right now so that it can be changed by
+		// calling test case
+		cmd.Dir, _ = os.Getwd()
+		return cmd
+	}
+
+	home, err := filepath.Abs("testdata/executor")
+	c.Assert(err, IsNil)
+
+	homedir.Reset()
+	os.Setenv("HOME", home)
+	defer homedir.Reset()
+
+	oldwd, _ := os.Getwd()
+	defer os.Chdir(oldwd)
+	os.Chdir(filepath.Join(home, "project"))
+	defer cleanupExecutorTempFiles()
+
+	c.Assert((&Executor{BinName: "php", Args: []string{"not-php"}}).Execute(true), Equals, 0)
 }
 
 func (s *ExecutorSuite) TestEnvInjection(c *C) {

@@ -73,9 +73,19 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, 
 	if composerVersion() == 2 {
 		composerBin = "composer2"
 	}
-	path, err := e.findComposer(composerBin)
-	if err != nil || !isPHPScript(path) {
-		fmt.Fprintln(logger, "  WARNING: Unable to find Composer, downloading one. It is recommended to install Composer yourself at https://getcomposer.org/download/")
+
+	if composerPath := os.Getenv("SYMFONY_COMPOSER_PATH"); composerPath != "" {
+		debugLogger.Debug().Str("SYMFONY_COMPOSER_PATH", composerPath).Msg("SYMFONY_COMPOSER_PATH has been defined. User is taking control over Composer detection and execution.")
+		e.Args = append([]string{composerPath}, args...)
+	} else if path, err := e.findComposer(composerBin); err == nil && isPHPScript(path) {
+		e.Args = append([]string{"php", path}, args...)
+	} else {
+		reason := "No Composer installation found."
+		if path != "" {
+			reason = fmt.Sprintf("Detected Composer file (%s) is not a valid PHAR or PHP script.", path)
+		}
+		fmt.Fprintln(logger, "  WARNING:", reason)
+		fmt.Fprintln(logger, "  Downloading Composer for you, but it is recommended to install Composer yourself, instructions available at https://getcomposer.org/download/")
 		// we don't store it under bin/ to avoid it being found by findComposer as we want to only use it as a fallback
 		binDir := filepath.Join(util.GetHomeDir(), "composer")
 		if path, err = downloadComposer(binDir, debugLogger); err != nil {
@@ -84,15 +94,15 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, 
 				error: errors.Wrap(err, "unable to find composer, get it at https://getcomposer.org/download/"),
 			}
 		}
-		fmt.Fprintf(logger, "  (running %s %s)\n\n", path, strings.TrimSpace(strings.Join(args, " ")))
+		e.Args = append([]string{"php", path}, args...)
+		fmt.Fprintf(logger, "  (running %s)\n\n", e.CommandLine())
 	}
 
-	e.Args = append([]string{"php", path}, args...)
 	ret := e.Execute(false)
 	if ret != 0 {
 		return ComposerResult{
 			code:  ret,
-			error: errors.Errorf("unable to run %s %s", path, strings.Join(args, " ")),
+			error: errors.Errorf("unable to run %s", e.CommandLine()),
 		}
 	}
 	return ComposerResult{}
@@ -100,6 +110,9 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, 
 
 // isPHPScript checks that the composer file is indeed a phar/PHP script (not a .bat file)
 func isPHPScript(path string) bool {
+	if path == "" {
+		return false
+	}
 	file, err := os.Open(path)
 	if err != nil {
 		return false
@@ -109,6 +122,10 @@ func isPHPScript(path string) bool {
 	byteSlice, _, err := reader.ReadLine()
 	if err != nil {
 		return false
+	}
+
+	if bytes.Equal(byteSlice, []byte("<?php")) {
+		return true
 	}
 
 	return bytes.HasPrefix(byteSlice, []byte("#!/")) && bytes.HasSuffix(byteSlice, []byte("php"))
@@ -149,7 +166,7 @@ func findComposer(extraBin string, logger zerolog.Logger) (string, error) {
 			if strings.HasSuffix(pharPath, ".bat") {
 				pharPath = pharPath[:len(pharPath)-4] + ".phar"
 			}
-			logger.Debug().Str("source", "Composer").Msgf(`Found Composer as "%s"`, pharPath)
+			logger.Debug().Str("source", "Composer").Msgf(`Found potential Composer as "%s"`, pharPath)
 			return pharPath, nil
 		}
 	}
