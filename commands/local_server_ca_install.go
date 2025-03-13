@@ -39,7 +39,7 @@ var localServerCAInstallCmd = &console.Command{
 	Flags: []console.Flag{
 		&console.BoolFlag{Name: "renew", Usage: "Force generating a new CA"},
 		&console.BoolFlag{Name: "force", Aliases: []string{"f"}, Usage: "Force reinstalling current CA"},
-		&console.StringFlag{Name: "ips", Usage: "Comma-separated list of IPs for the certificate", Value: "localhost,127.0.0.1,::1"},
+		&console.StringFlag{Name: "ips", Usage: "Comma-separated list of IPs for the certificate", DefaultText: "localhost,127.0.0.1,::1"},
 	},
 	Action: func(c *console.Context) error {
 		ui := terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin)
