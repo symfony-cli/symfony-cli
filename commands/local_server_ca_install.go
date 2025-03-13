@@ -78,7 +78,7 @@ var localServerCAInstallCmd = &console.Command{
 			ips := strings.Split(c.String("ips"), ",")
 			err := ca.MakeCert(p12, ips)
 			if err != nil {
-				return errors.Wrap(err, "failed to generate a certificate")
+				return errors.Wrap(err, "failed to generate a default certificate")
 			}
 		}
 
