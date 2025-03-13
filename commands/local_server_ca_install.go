@@ -75,7 +75,7 @@ var localServerCAInstallCmd = &console.Command{
 		p12 := filepath.Join(homeDir, "certs", "default.p12")
 		if _, err := os.Stat(p12); os.IsNotExist(err) {
 			terminal.Println("Generating a default certificate for HTTPS support")
-			if c.String("ips") {
+			if c.String("ips") != "" {
 				err := ca.MakeCert(p12, strings.Split(c.String("ips"), ","))
 			} else {
 				err := ca.MakeCert(p12, []string{"localhost", "127.0.0.1", "::1"})
