@@ -66,12 +66,12 @@ var localServerCAInstallCmd = &console.Command{
 			ca.Uninstall()
 			os.RemoveAll(certsDir)
 			renew = false
+
 			goto retry
 		}
 		if err = ca.Install(c.Bool("force")); err != nil {
 			return errors.Wrap(err, "failed to install the local Certificate Authority")
 		}
-
 		p12 := filepath.Join(homeDir, "certs", "default.p12")
 		if _, err := os.Stat(p12); os.IsNotExist(err) {
 			terminal.Println("Generating a default certificate for HTTPS support")
