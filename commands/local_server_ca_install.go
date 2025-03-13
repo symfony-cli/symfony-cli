@@ -22,6 +22,7 @@ package commands
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/cert"
@@ -38,6 +39,7 @@ var localServerCAInstallCmd = &console.Command{
 	Flags: []console.Flag{
 		&console.BoolFlag{Name: "renew", Usage: "Force generating a new CA"},
 		&console.BoolFlag{Name: "force", Aliases: []string{"f"}, Usage: "Force reinstalling current CA"},
+		&console.StringFlag{Name: "ips", Usage: "Comma-separated list of IPs for the certificate", Default: "localhost,127.0.0.1,::1"},
 	},
 	Action: func(c *console.Context) error {
 		ui := terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin)
@@ -64,18 +66,19 @@ var localServerCAInstallCmd = &console.Command{
 			ca.Uninstall()
 			os.RemoveAll(certsDir)
 			renew = false
-
 			goto retry
 		}
 		if err = ca.Install(c.Bool("force")); err != nil {
 			return errors.Wrap(err, "failed to install the local Certificate Authority")
 		}
+
 		p12 := filepath.Join(homeDir, "certs", "default.p12")
 		if _, err := os.Stat(p12); os.IsNotExist(err) {
 			terminal.Println("Generating a default certificate for HTTPS support")
-			err := ca.MakeCert(p12, []string{"localhost", "127.0.0.1", "::1"})
+			ips := strings.Split(c.String("ips"), ",")
+			err := ca.MakeCert(p12, ips)
 			if err != nil {
-				return errors.Wrap(err, "failed to generate a default certificate for localhost")
+				return errors.Wrap(err, "failed to generate a certificate")
 			}
 		}
 
