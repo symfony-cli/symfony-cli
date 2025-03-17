@@ -21,26 +21,34 @@ package php
 
 import (
 	"os"
-
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
+	"github.com/symfony-cli/symfony-cli/envs"
 )
 
 // SymfonyConsoleExecutor returns an Executor prepared to run Symfony Console.
 // It returns an error if no console binary is found.
-func SymfonyConsoleExecutor(args []string) (*Executor, error) {
+func SymfonyConsoleExecutor(logger zerolog.Logger, args []string) (*Executor, error) {
 	dir, err := os.Getwd()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	for {
-		for _, consolePath := range []string{"bin/console", "app/console"} {
+		consolePaths := []string{"bin/console", "app/console"}
+		if consolePath, isConsolePathSpecified := envs.LookupEnv(dir, "SYMFONY_CONSOLE_PATH"); isConsolePathSpecified {
+			consolePaths = []string{consolePath}
+		}
+
+		for _, consolePath := range consolePaths {
+			logger.Debug().Str("consolePath", consolePath).Str("directory", dir).Msgf("Looking for Symfony console")
 			consolePath = filepath.Join(dir, consolePath)
 			if _, err := os.Stat(consolePath); err == nil {
 				return &Executor{
 					BinName: "php",
+					Logger:  logger,
 					Args:    append([]string{"php", consolePath}, args...),
 				}, nil
 			}
