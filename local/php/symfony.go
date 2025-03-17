@@ -21,7 +21,6 @@ package php
 
 import (
 	"os"
-
 	"path/filepath"
 
 	"github.com/pkg/errors"
