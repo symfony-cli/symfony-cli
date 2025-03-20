@@ -417,6 +417,26 @@ func (e *Executor) findComposer(extraBin string) (string, error) {
 	return findComposer(extraBin, e.Logger)
 }
 
+// findPie locates the PIE binary depending on the configuration
+func (e *Executor) findPie() (string, error) {
+	if scriptDir, err := e.DetectScriptDir(); err == nil {
+		for _, file := range []string{"pie.phar", "pie"} {
+			path := filepath.Join(scriptDir, file)
+			e.Logger.Debug().Str("source", "PIE").Msgf(`Looking for PIE under "%s"`, path)
+			d, err := os.Stat(path)
+			if err != nil {
+				continue
+			}
+			if m := d.Mode(); !m.IsDir() {
+				e.Logger.Debug().Str("source", "PIE").Msgf(`Found potential PIE as "%s"`, path)
+				return path, nil
+			}
+		}
+	}
+
+	return findPie(e.Logger)
+}
+
 // Execute executes the right version of PHP depending on the configuration
 func (e *Executor) Execute(loadDotEnv bool) int {
 	if err := e.Config(loadDotEnv); err != nil {

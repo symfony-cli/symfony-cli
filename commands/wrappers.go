@@ -37,6 +37,16 @@ var (
 			return console.IncorrectUsageError{ParentError: errors.New(`This command can only be run as "symfony composer"`)}
 		},
 	}
+	pieWrapper = &console.Command{
+		Usage:  "Runs PIE",
+		Hidden: console.Hide,
+		// we use an alias to avoid the command being shown in the help but
+		// still be available for completion
+		Aliases: []*console.Alias{{Name: "pie"}},
+		Action: func(c *console.Context) error {
+			return console.IncorrectUsageError{ParentError: errors.New(`This command can only be run as "symfony pie"`)}
+		},
+	}
 	binConsoleWrapper = &console.Command{
 		Usage:  "Runs the Symfony Console (bin/console) for current project",
 		Hidden: console.Hide,
