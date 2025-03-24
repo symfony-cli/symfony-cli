@@ -287,11 +287,16 @@ var localServerStartCmd = &console.Command{
 			scheme = "http"
 		}
 
+		address := config.ListenIp
+		if c.Bool("allow-all-ip") {
+			address = "0.0.0.0"
+                }
+
 		msg := "Web server listening\n"
 		if p.PHPServer != nil {
 			msg += fmt.Sprintf("     The Web server is using %s %s\n", p.PHPServer.Version.ServerTypeName(), p.PHPServer.Version.Version)
 		}
-		msg += fmt.Sprintf("\n     <href=%s://127.0.0.1:%d>%s://127.0.0.1:%d</>", scheme, port, scheme, port)
+		msg += fmt.Sprintf("\n     <href=%s://%s:%d>%s://%s:%d</>", scheme, address, port, scheme, address, port)
 		if proxyConf, err := proxy.Load(homeDir); err == nil {
 			for _, domain := range proxyConf.GetDomains(projectDir) {
 				msg += fmt.Sprintf("\n     <href=%s://%s>%s://%s</>", scheme, domain, scheme, domain)
