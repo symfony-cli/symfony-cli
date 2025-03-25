@@ -290,7 +290,7 @@ var localServerStartCmd = &console.Command{
 		address := config.ListenIp
 		if c.Bool("allow-all-ip") {
 			address = "0.0.0.0"
-                }
+		}
 
 		msg := "Web server listening\n"
 		if p.PHPServer != nil {
