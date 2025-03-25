@@ -288,7 +288,7 @@ var localServerStartCmd = &console.Command{
 		}
 
 		address := config.ListenIp
-		if c.Bool("allow-all-ip") {
+		if address == "" {
 			address = "0.0.0.0"
 		}
 
