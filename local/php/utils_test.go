@@ -25,11 +25,11 @@ import (
 	. "gopkg.in/check.v1"
 )
 
-type ComposerSuite struct{}
+type UtilsSuite struct{}
 
-var _ = Suite(&ComposerSuite{})
+var _ = Suite(&UtilsSuite{})
 
-func (s *ComposerSuite) TestIsComposerPHPScript(c *C) {
+func (s *UtilsSuite) TestIsPHPScript(c *C) {
 	dir, err := filepath.Abs("testdata/php_scripts")
 	c.Assert(err, IsNil)
 

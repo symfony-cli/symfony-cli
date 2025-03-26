@@ -52,6 +52,7 @@ func CommonCommands() []*console.Command {
 	localCommands := []*console.Command{
 		binConsoleWrapper,
 		composerWrapper,
+		pieWrapper,
 		phpWrapper,
 		bookCheckReqsCmd,
 		bookCheckoutCmd,
@@ -179,6 +180,7 @@ Environment variables to use Platform.sh/Upsun relationships or Docker services 
 {{with .Command "composer"}}  <info>{{.PreferredName}}</>{{"\t"}}{{.Usage}}{{end}}
 {{with .Command "console"}}  <info>{{.PreferredName}}</>{{"\t"}}{{.Usage}}{{end}}
 {{with .Command "php"}}  <info>{{.PreferredName}}</>{{"\t"}}{{.Usage}}{{end}}
+{{with .Command "pie"}}  <info>{{.PreferredName}}</>{{"\t"}}{{.Usage}}{{end}}
 
 `
 }

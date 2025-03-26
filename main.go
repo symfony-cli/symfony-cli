@@ -79,11 +79,19 @@ func main() {
 			os.Exit(executor.Execute(false))
 		}
 	}
-	// called via "symfony composer"?
-	if len(args) >= 2 && args[1] == "composer" {
-		res := php.Composer("", args[2:], getCliExtraEnv(), os.Stdout, os.Stderr, os.Stderr, terminal.Logger)
-		terminal.Eprintln(res.Error())
-		os.Exit(res.ExitCode())
+	// called via "symfony composer" or "symfony pie"?
+	if len(args) >= 2 {
+		if args[1] == "composer" {
+			res := php.Composer("", args[2:], getCliExtraEnv(), os.Stdout, os.Stderr, os.Stderr, terminal.Logger)
+			terminal.Eprintln(res.Error())
+			os.Exit(res.ExitCode())
+		}
+
+		if args[1] == "pie" {
+			res := php.Pie("", args[2:], getCliExtraEnv(), os.Stdout, os.Stderr, os.Stderr, terminal.Logger)
+			terminal.Eprintln(res.Error())
+			os.Exit(res.ExitCode())
+		}
 	}
 
 	for _, env := range []string{"BRANCH", "ENV", "APPLICATION_NAME"} {
