@@ -45,20 +45,23 @@ func init() {
 	console.CompletionTemplates = completionTemplates
 }
 
-func autocompleteSymfonyConsoleWrapper(context *console.Context, words complete.Args) []string {
-	args := buildSymfonyAutocompleteArgs("console", words)
-	// Composer does not support those options yet, so we only use them for Symfony Console
-	args = append(args, "-a1", fmt.Sprintf("-s%s", console.GuessShell()))
-
-	if executor, err := php.SymfonyConsoleExecutor(terminal.Logger, args); err == nil {
-		os.Exit(executor.Execute(false))
-	}
-
-	return []string{}
+func autocompleteApplicationConsoleWrapper(context *console.Context, words complete.Args) []string {
+	return autocompleteSymfonyConsoleWrapper(words, "console", func(args []string) (*php.Executor, error) {
+		return php.SymfonyConsoleExecutor(terminal.Logger, args)
+	})
 }
 
+func autocompletePieWrapper(context *console.Context, words complete.Args) []string {
+	return autocompleteSymfonyConsoleWrapper(words, "pie", func(args []string) (*php.Executor, error) {
+		return php.PieExecutor("", args, []string{}, context.App.Writer, context.App.ErrWriter, io.Discard, terminal.Logger)
+	})
+}
+
+// autocompleteComposerWrapper is a bridge between Go autocompletion and
+// Composer one. It does not use the generic Symfony wrapper because Composer
+// can not support multiple shells yet
 func autocompleteComposerWrapper(context *console.Context, words complete.Args) []string {
-	args := buildSymfonyAutocompleteArgs("composer", words)
+	args := buildSymfonyConsoleAutocompleteArgs("composer", words)
 	// Composer does not support multiple shell yet, so we only use the default one
 	args = append(args, "-sbash")
 
@@ -69,7 +72,21 @@ func autocompleteComposerWrapper(context *console.Context, words complete.Args) 
 	return []string{}
 }
 
-func buildSymfonyAutocompleteArgs(wrappedCommand string, words complete.Args) []string {
+// autocompleteSymfonyConsoleWrapper bridges the symfony-cli/console (Go)
+// autocompletion with a symfony/console (PHP) one.
+func autocompleteSymfonyConsoleWrapper(words complete.Args, commandName string, executor func(args []string) (*php.Executor, error)) []string {
+	args := buildSymfonyConsoleAutocompleteArgs(commandName, words)
+	// Composer does not support those options yet, so we only use them for Symfony Console
+	args = append(args, "-a1", fmt.Sprintf("-s%s", console.GuessShell()))
+
+	if executor, err := executor(args); err == nil {
+		os.Exit(executor.Execute(false))
+	}
+
+	return []string{}
+}
+
+func buildSymfonyConsoleAutocompleteArgs(wrappedCommand string, words complete.Args) []string {
 	current, err := strconv.Atoi(os.Getenv("CURRENT"))
 	if err != nil {
 		current = 1

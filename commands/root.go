@@ -53,6 +53,7 @@ func CommonCommands() []*console.Command {
 		binConsoleWrapper,
 		composerWrapper,
 		phpWrapper,
+		pieWrapper,
 		bookCheckReqsCmd,
 		bookCheckoutCmd,
 		cloudEnvDebugCmd,

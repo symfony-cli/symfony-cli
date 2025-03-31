@@ -48,7 +48,7 @@ func (p PieResult) ExitCode() int {
 	return p.code
 }
 
-func Pie(dir string, args, env []string, stdout, stderr, logger io.Writer, debugLogger zerolog.Logger) PieResult {
+func PieExecutor(dir string, args, env []string, stdout, stderr, logger io.Writer, debugLogger zerolog.Logger) (*Executor, error) {
 	e := &Executor{
 		Dir:        dir,
 		BinName:    "php",
@@ -74,13 +74,22 @@ func Pie(dir string, args, env []string, stdout, stderr, logger io.Writer, debug
 		// we don't store it under bin/ to avoid it being found by findPie as we want to only use it as a fallback
 		binDir := filepath.Join(util.GetHomeDir(), "pie")
 		if path, err = downloadPie(binDir); err != nil {
-			return PieResult{
-				code:  1,
-				error: errors.Wrap(err, "unable to find pie, get it at https://github.com/php/pie"),
-			}
+			return nil, errors.Wrap(err, "unable to find pie, get it at https://github.com/php/pie")
 		}
 		e.Args = append([]string{"php", path}, args...)
 		fmt.Fprintf(logger, "  (running %s)\n\n", e.CommandLine())
+	}
+
+	return e, nil
+}
+
+func Pie(dir string, args, env []string, stdout, stderr, logger io.Writer, debugLogger zerolog.Logger) PieResult {
+	e, err := PieExecutor(dir, args, env, stdout, stderr, logger, debugLogger)
+	if err != nil {
+		return PieResult{
+			code:  1,
+			error: errors.WithStack(err),
+		}
 	}
 
 	ret := e.Execute(false)
