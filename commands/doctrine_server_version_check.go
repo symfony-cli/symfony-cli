@@ -69,11 +69,11 @@ The "%s" file defines a "%s" database service.
 
 When deploying, Doctrine needs to know the database version to determine the supported SQL syntax.
 
-As the database is not available when Doctrine is warming up its cache on Platform.sh,
+As the database is not available when Doctrine is warming up its cache on %s,
 you need to explicitly set the database version in the ".env" or "config/packages/doctrine.yaml" file.
 
 Set the "server_version" parameter to "%s" in "config/packages/doctrine.yaml".
- `, configFile, dbName, dbVersion)
+ `, configFile, dbName, platformsh.GuessCloudFromDirectory(projectDir).Name, dbVersion)
 	}
 
 	return nil
