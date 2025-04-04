@@ -22,4 +22,4 @@
 
 package envs
 
-const dockerClientVersion = ""
+const dockerClientVersion = "v28.0.0"
