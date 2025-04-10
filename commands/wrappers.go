@@ -38,7 +38,7 @@ var (
 		},
 	}
 	pieWrapper = &console.Command{
-		Usage:  "Runs PIE",
+		Usage:  "Runs PIE (PHP Installer for Extensions)",
 		Hidden: console.Hide,
 		// we use an alias to avoid the command being shown in the help but
 		// still be available for completion
