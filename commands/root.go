@@ -145,6 +145,7 @@ func WelcomeAction(c *console.Context) error {
 		localSecurityCheckCmd,
 		composerWrapper,
 		binConsoleWrapper,
+		pieWrapper,
 		phpWrapper,
 	})
 	terminal.Println("")
