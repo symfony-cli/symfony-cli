@@ -12,9 +12,14 @@ written in PHP.
 Go has been picked because it is well suited for system development and has
 close-to-zero runtime dependencies which make releasing quite easy. This is
 ideal for a tool that is used on a wide range of platforms and potentially on
-systems where the requirements to run Symfony are not met. Go is also usually
-quite easy to apprehend for PHP developers having some similarities in their
-approach.
+systems where the requirements to run Symfony are not met.
+
+Another reason is to make Symfony CLI independent of the PHP version because
+one goal of the CLI is to make it possible to use many different versions of
+PHP.
+
+Finally, Go is also usually quite easy to apprehend for PHP developers having
+some similarities in their approach.
 
 ## Setup Go
 
