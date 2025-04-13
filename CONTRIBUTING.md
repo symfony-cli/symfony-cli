@@ -26,7 +26,7 @@ dependencies as required.
 
 ## Local setup
 
-First fork this repository and clone it in some location of your liking. Next,
+First fork this repository and clone it to some location of your liking. Next,
 try to build and run the project:
 
 ```bash
@@ -123,10 +123,10 @@ producing a binary.
 Every other repository is mostly independent and it is highly unlikely that
 you would need to have a look at them. However, in the eventuality where you
 would have to, here is the description of each repository scope:
-- `symfony-cli/phpstore` is a independent library in charge of the PHP
+- `symfony-cli/phpstore` is an independent library in charge of the PHP
   installations discovery and the logic to match a specific version to a given
   version constraint.
-- `symfony-cli/console` is a independent library created to ease the process
+- `symfony-cli/console` is an independent library created to ease the process
   of Go command-line application. This library has been created with the goal
   of mimicking the look and feel of the Symfony Console for the end-user.
 - `symfony-cli/terminal` is a wrapper around the Input and Output in a command
