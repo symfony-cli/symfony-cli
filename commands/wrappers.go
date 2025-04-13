@@ -37,16 +37,6 @@ var (
 			return console.IncorrectUsageError{ParentError: errors.New(`This command can only be run as "symfony composer"`)}
 		},
 	}
-	pieWrapper = &console.Command{
-		Usage:  "Runs PIE (PHP Installer for Extensions)",
-		Hidden: console.Hide,
-		// we use an alias to avoid the command being shown in the help but
-		// still be available for completion
-		Aliases: []*console.Alias{{Name: "pie"}},
-		Action: func(c *console.Context) error {
-			return console.IncorrectUsageError{ParentError: errors.New(`This command can only be run as "symfony pie"`)}
-		},
-	}
 	binConsoleWrapper = &console.Command{
 		Usage:  "Runs the Symfony Console (bin/console) for current project",
 		Hidden: console.Hide,
@@ -65,11 +55,13 @@ var (
 		// still be available for completion
 		Aliases: func() []*console.Alias {
 			binNames := php.GetBinaryNames()
-			aliases := make([]*console.Alias, 0, len(binNames))
+			aliases := make([]*console.Alias, 0, len(binNames)+1)
 
 			for _, name := range php.GetBinaryNames() {
 				aliases = append(aliases, &console.Alias{Name: name})
 			}
+
+			aliases = append(aliases, &console.Alias{Name: "pie"})
 
 			return aliases
 		}(),
