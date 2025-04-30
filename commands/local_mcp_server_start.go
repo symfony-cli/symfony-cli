@@ -31,10 +31,10 @@ var localMcpServerStartCmd = &console.Command{
 	Usage:       "Run a local MCP server",
 	Description: localWebServerProdWarningMsg,
 	Args: console.ArgDefinition{
-		{Name: "bin", Optional: true, Description: "The path to the Symfony CLI binary"},
+		{Name: "projectDir", Optional: true, Description: "The path to the Symfony application"},
 	},
 	Action: func(c *console.Context) error {
-		server, err := mcp.NewServer(c.Args().Get("bin"))
+		server, err := mcp.NewServer(c.Args().Get("projectDir"))
 		if err != nil {
 			return err
 		}
