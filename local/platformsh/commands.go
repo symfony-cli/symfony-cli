@@ -67,6 +67,22 @@ var Commands = []*console.Command{
 	},
 	{
 		Category: "cloud",
+		Name:     "console",
+		Aliases: []*console.Alias{
+			{Name: "upsun:console", Hidden: true},
+			{Name: "cloud:web"},
+			{Name: "upsun:web", Hidden: true},
+		},
+		Usage: "Open the project in the Console",
+		Flags: []console.Flag{
+			&console.StringFlag{Name: "browser"},
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"}},
+			&console.BoolFlag{Name: "pipe"},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"}},
+		},
+	},
+	{
+		Category: "cloud",
 		Name:     "docs",
 		Aliases: []*console.Alias{
 			{Name: "upsun:docs", Hidden: true},
@@ -101,20 +117,6 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "projects", Aliases: []string{"p"}},
 			&console.BoolFlag{Name: "reverse"},
 			&console.StringFlag{Name: "sort", DefaultValue: "title"},
-		},
-	},
-	{
-		Category: "cloud",
-		Name:     "web",
-		Aliases: []*console.Alias{
-			{Name: "upsun:web", Hidden: true},
-		},
-		Usage: "Open the project in the Web Console",
-		Flags: []console.Flag{
-			&console.StringFlag{Name: "browser"},
-			&console.StringFlag{Name: "environment", Aliases: []string{"e"}},
-			&console.BoolFlag{Name: "pipe"},
-			&console.StringFlag{Name: "project", Aliases: []string{"p"}},
 		},
 	},
 	{
@@ -246,6 +248,7 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "header", Aliases: []string{"H"}},
 			&console.BoolFlag{Name: "include", Aliases: []string{"i"}},
 			&console.StringFlag{Name: "json"},
+			&console.BoolFlag{Name: "no-retry-401"},
 			&console.StringFlag{Name: "request", Aliases: []string{"X"}},
 		},
 	},
@@ -826,6 +829,7 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "header", Aliases: []string{"H"}},
 			&console.BoolFlag{Name: "include", Aliases: []string{"i"}},
 			&console.StringFlag{Name: "json"},
+			&console.BoolFlag{Name: "no-retry-401"},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"}},
 			&console.StringFlag{Name: "request", Aliases: []string{"X"}},
 		},
@@ -1502,6 +1506,7 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "header", Aliases: []string{"H"}},
 			&console.BoolFlag{Name: "include", Aliases: []string{"i"}},
 			&console.StringFlag{Name: "json"},
+			&console.BoolFlag{Name: "no-retry-401"},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"}},
 			&console.StringFlag{Name: "request", Aliases: []string{"X"}},
 		},
@@ -1739,6 +1744,7 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "header", Aliases: []string{"H"}},
 			&console.BoolFlag{Name: "include", Aliases: []string{"i"}},
 			&console.StringFlag{Name: "json"},
+			&console.BoolFlag{Name: "no-retry-401"},
 			&console.StringFlag{Name: "org", Aliases: []string{"o"}},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"}},
 			&console.StringFlag{Name: "request", Aliases: []string{"X"}},
@@ -1970,6 +1976,7 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "header", Aliases: []string{"H"}},
 			&console.BoolFlag{Name: "include", Aliases: []string{"i"}},
 			&console.StringFlag{Name: "json"},
+			&console.BoolFlag{Name: "no-retry-401"},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"}},
 			&console.StringFlag{Name: "request", Aliases: []string{"X"}},
 		},
@@ -2385,6 +2392,24 @@ var Commands = []*console.Command{
 			{Name: "redis", Hidden: true},
 		},
 		Usage: "Access the Redis CLI",
+		Flags: []console.Flag{
+			&console.StringFlag{Name: "app", Aliases: []string{"A"}},
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"}},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"}},
+			&console.StringFlag{Name: "relationship", Aliases: []string{"r"}},
+		},
+	},
+	{
+		Category: "cloud:service",
+		Name:     "valkey-cli",
+		Aliases: []*console.Alias{
+			{Name: "service:valkey-cli", Hidden: true},
+			{Name: "upsun:service:valkey-cli", Hidden: true},
+			{Name: "cloud:valkey"},
+			{Name: "upsun:valkey", Hidden: true},
+			{Name: "valkey", Hidden: true},
+		},
+		Usage: "Access the Valkey CLI",
 		Flags: []console.Flag{
 			&console.StringFlag{Name: "app", Aliases: []string{"A"}},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"}},
