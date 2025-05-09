@@ -1,0 +1,13 @@
+daemon: false
+
+proxy:
+  domains:
+    - foo
+
+http:
+  preferred_port: 8181
+
+workers:
+  hello_world: null
+  my_node_process:
+    watch: [".node_version",]
