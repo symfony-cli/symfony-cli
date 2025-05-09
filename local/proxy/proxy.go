@@ -54,12 +54,12 @@ func tlsToLocalWebServer(proxy *goproxy.ProxyHttpServer, tlsConfig *tls.Config, 
 			ctx.Warnf("Error closing client connection: %s", err)
 		}
 	}
-	connectDial := func(proxy *goproxy.ProxyHttpServer, network, addr string) (c net.Conn, err error) {
-		if proxy.ConnectDial != nil {
+	connectDial := func(ctx *goproxy.ProxyCtx, network, addr string) (c net.Conn, err error) {
+		if ctx.Proxy.ConnectDial != nil {
 			return proxy.ConnectDial(network, addr)
 		}
-		if proxy.Tr.Dial != nil {
-			return proxy.Tr.Dial(network, addr)
+		if ctx.Proxy.Tr.DialContext != nil {
+			return proxy.Tr.DialContext(ctx.Req.Context(), network, addr)
 		}
 		return net.Dial(network, addr)
 	}
@@ -91,7 +91,7 @@ func tlsToLocalWebServer(proxy *goproxy.ProxyHttpServer, tlsConfig *tls.Config, 
 			}
 
 			ctx.Logf("Assuming CONNECT is TLS, TLS proxying it")
-			targetSiteCon, err := connectDial(proxy, "tcp", fmt.Sprintf("127.0.0.1:%d", localPort))
+			targetSiteCon, err := connectDial(ctx, "tcp", fmt.Sprintf("127.0.0.1:%d", localPort))
 			if err != nil {
 				httpError(proxyClientTls, ctx, err)
 				if targetSiteCon != nil {
