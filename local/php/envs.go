@@ -80,7 +80,7 @@ func (p *Server) generateEnv(req *http.Request) map[string]string {
 
 	// iterate over request headers and append them to the environment variables in the valid format
 	for k, v := range req.Header {
-		key := strings.Replace(strings.ToUpper(k), "-", "_", -1)
+		key := strings.ReplaceAll(strings.ToUpper(k), "-", "_")
 		// ignore HTTP_HOST -- see https://httpoxy.org/
 		if key == "HOST" {
 			continue

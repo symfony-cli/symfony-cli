@@ -307,21 +307,22 @@ func parseDockerComposeServices(dir string) []*CloudService {
 	for _, service := range project.Services {
 		for _, port := range service.Ports {
 			var s *CloudService
-			if port.Target == 3306 {
+			switch port.Target {
+			case 3306:
 				s = &CloudService{Type: "mysql"}
-			} else if port.Target == 5432 {
+			case 5432:
 				s = &CloudService{Type: "postgresql"}
-			} else if port.Target == 6379 {
+			case 6379:
 				s = &CloudService{Type: "redis"}
-			} else if port.Target == 11211 {
+			case 11211:
 				s = &CloudService{Type: "memcached"}
-			} else if port.Target == 5672 {
+			case 5672:
 				s = &CloudService{Type: "rabbitmq"}
-			} else if port.Target == 9200 {
+			case 9200:
 				s = &CloudService{Type: "elasticsearch"}
-			} else if port.Target == 27017 {
+			case 27017:
 				s = &CloudService{Type: "mongodb"}
-			} else if port.Target == 9092 {
+			case 9092:
 				s = &CloudService{Type: "kafka"}
 			}
 			_, done := seen[service.Name]

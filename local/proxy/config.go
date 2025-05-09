@@ -282,7 +282,7 @@ func (c *Config) doNormalizeDomain(domain string) string {
 			continue
 		}
 		// glob matching
-		if strings.HasSuffix(domain, strings.Replace(d, "*.", ".", -1)) {
+		if strings.HasSuffix(domain, strings.ReplaceAll(d, "*.", ".")) {
 			m := d + "." + c.TLD
 			// always use the longest possible domain for matching
 			if len(m) > len(match) {

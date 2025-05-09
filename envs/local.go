@@ -68,7 +68,7 @@ func (l *Local) FindRelationshipPrefix(frel, fscheme string) string {
 				if i != 0 {
 					prefix = fmt.Sprintf("%s_%d_", key, i)
 				}
-				return strings.Replace(prefix, "-", "_", -1)
+				return strings.ReplaceAll(prefix, "-", "_")
 			}
 		}
 	}
@@ -105,7 +105,7 @@ func (l *Local) FindServiceUrl(serviceOrRelationship string) (string, bool) {
 				continue
 			}
 
-			prefix := fmt.Sprintf("%s_", strings.Replace(strings.ToUpper(serviceOrRelationship), "-", "_", -1))
+			prefix := fmt.Sprintf("%s_", strings.ReplaceAll(strings.ToUpper(serviceOrRelationship), "-", "_"))
 			if i != 0 {
 				prefix += fmt.Sprintf("%d_", i)
 			}
@@ -128,7 +128,7 @@ func (l *Local) FindServiceUrl(serviceOrRelationship string) (string, bool) {
 				continue
 			}
 
-			prefix := fmt.Sprintf("%s_", strings.Replace(strings.ToUpper(key), "-", "_", -1))
+			prefix := fmt.Sprintf("%s_", strings.ReplaceAll(strings.ToUpper(key), "-", "_"))
 			if i != 0 {
 				prefix += fmt.Sprintf("%d_", i)
 			}

@@ -37,7 +37,7 @@ func (b *Book) Checkout(step string) error {
 	// FIXME: keep vendor/ node_modules/ around before git clean, but them back as they will be updated the right way, less Internet traffic
 	// FIXME: if the checkout is to a later step, no need to remove the DB, we can just migrate it
 	os.Chdir(b.Dir)
-	step = strings.Replace(step, ".", "-", -1)
+	step = strings.ReplaceAll(step, ".", "-")
 	tag := fmt.Sprintf("step-%s", step)
 	branch := "work-" + tag
 	printBanner("<comment>[GIT]</> Check for not yet committed changes", b.Debug)

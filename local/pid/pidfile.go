@@ -146,7 +146,7 @@ func (p *PidFile) WaitForExit() error {
 	select {
 	case err := <-ch:
 		return err
-	case _ = <-time.After(30 * time.Second):
+	case <-time.After(30 * time.Second):
 		return errors.Errorf("Time out detected during \"%s\" process exit", p.ShortName())
 	}
 }
