@@ -58,6 +58,8 @@ type FileConfig struct {
 	} `yaml:"proxy"`
 	HTTP    *Config            `yaml:"http"`
 	Workers map[string]*Worker `yaml:"workers"`
+
+	filename string
 }
 
 type Worker struct {
@@ -141,7 +143,9 @@ func newConfigFromFile(configFile string) (*FileConfig, error) {
 		return nil, err
 	}
 
-	var fileConfig FileConfig
+	fileConfig := FileConfig{
+		filename: filepath.Base(configFile),
+	}
 	if err := yaml.Unmarshal(contents, &fileConfig); err != nil {
 		return nil, err
 	}
@@ -184,7 +188,7 @@ func (c *FileConfig) parseWorkers() error {
 
 	for k, v := range c.Workers {
 		if v == nil {
-			return errors.Errorf("The \"%s\" worker entry in \".symfony.local.yaml\" cannot be empty.", k)
+			return errors.Errorf(`The "%s" worker entry in ".%s" cannot be empty.`, k, c.filename)
 		}
 	}
 
