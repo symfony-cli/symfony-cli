@@ -36,7 +36,6 @@ import (
 
 	compose "github.com/compose-spec/compose-go/cli"
 	composeConsts "github.com/compose-spec/compose-go/consts"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	docker "github.com/docker/docker/client"
 	"github.com/symfony-cli/terminal"
@@ -53,7 +52,7 @@ func ComputeDockerUserAgent(appName, appVersion string) {
 	dockerUserAgent = fmt.Sprintf("Docker-Client/%s %s/%s", dockerClientVersion, appName, appVersion)
 }
 
-type sortedPorts []types.Port
+type sortedPorts []container.Port
 
 func (ps sortedPorts) Len() int           { return len(ps) }
 func (ps sortedPorts) Swap(i, j int)      { ps[i], ps[j] = ps[j], ps[i] }
@@ -148,7 +147,7 @@ func (l *Local) RelationshipsFromDocker() Relationships {
 	return relationships
 }
 
-func (l *Local) dockerServiceToRelationship(client *docker.Client, container types.Container) map[string]map[string]interface{} {
+func (l *Local) dockerServiceToRelationship(client *docker.Client, container container.Summary) map[string]map[string]interface{} {
 	if l.Debug {
 		fmt.Fprintf(os.Stderr, `found Docker container "%s" for project "%s" (image "%s")`+"\n", container.Labels["com.docker.compose.service"], container.Labels["com.docker.compose.project"], container.Image)
 	}
