@@ -136,7 +136,6 @@ func getProjectIDFromGitConfig(brand CloudBrand, projectRoot string, debug bool)
 		if len(matches) > 1 {
 			return string(matches[1])
 		}
-		return ""
 	}
 	if debug {
 		fmt.Fprintf(os.Stderr, "ERROR: unable to read the git config file\n")
