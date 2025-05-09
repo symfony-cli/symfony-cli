@@ -1,0 +1,32 @@
+version: "2"
+
+run:
+  issues-exit-code: 1
+
+formatters:
+  enable:
+    - gofmt
+    - gci
+
+linters:
+  enable:
+    - wrapcheck
+  settings:
+    wrapcheck:
+      ignore-package-globs:
+        # We already make sure your own packages wrap errors properly
+        - github.com/symfony-cli/*
+    errcheck:
+        exclude-functions:
+          - github.com/symfony-cli/terminal.Print
+          - github.com/symfony-cli/terminal.Printf
+          - github.com/symfony-cli/terminal.Println
+          - github.com/symfony-cli/terminal.Printfln
+          - github.com/symfony-cli/terminal.Eprint
+          - github.com/symfony-cli/terminal.Eprintf
+          - github.com/symfony-cli/terminal.Eprintln
+          - github.com/symfony-cli/terminal.Eprintfln
+          - github.com/symfony-cli/terminal.Eprint
+          - fmt.Fprintln
+          - fmt.Fprintf
+          - fmt.Fprint
