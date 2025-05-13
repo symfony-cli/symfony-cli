@@ -25,7 +25,7 @@ import (
 )
 
 func CreateAction(url, text string, args ...interface{}) string {
-	text = strings.Replace(text, "\n", "<br>", -1)
+	text = strings.ReplaceAll(text, "\n", "<br>")
 	text = fmt.Sprintf(text, args...)
 	return fmt.Sprintf(`<div style="text-align: center"><span class="button"><a href="%s">%s</a></span></div>`, url, text)
 }
@@ -43,7 +43,7 @@ func CreateTerminal(text string, args ...interface{}) string {
 }
 
 func doCreateTerminal(text string, color string, args ...interface{}) string {
-	text = strings.Replace(text, "\n", "<br>", -1)
+	text = strings.ReplaceAll(text, "\n", "<br>")
 	text = fmt.Sprintf(text, args...)
 	return fmt.Sprintf(`
 <div style="background-color:%s;padding:20px" class="terminal">

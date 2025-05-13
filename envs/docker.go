@@ -469,11 +469,12 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container con
 		"rel":  "simple",
 	}
 	// Official HTTP(s) ports or well know alternatives
-	if p.PrivatePort == 80 || p.PrivatePort == 8008 || p.PrivatePort == 8080 || p.PrivatePort == 8081 {
+	switch p.PrivatePort {
+	case 80, 8008, 8080, 8081:
 		rels[""]["scheme"] = "http"
-	} else if p.PrivatePort == 443 || p.PrivatePort == 8443 {
+	case 443, 8443:
 		rels[""]["scheme"] = "https"
-	} else {
+	default:
 		rels[""]["scheme"] = "tcp"
 	}
 	return rels

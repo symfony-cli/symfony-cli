@@ -251,7 +251,7 @@ type bufWriter struct {
 }
 
 func (w *bufWriter) Close() error {
-	if err := w.Writer.Flush(); err != nil {
+	if err := w.Flush(); err != nil {
 		w.closer.Close()
 		return errors.WithStack(err)
 	}

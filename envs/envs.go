@@ -121,7 +121,7 @@ func extractRelationshipsEnvs(env Environment) Envs {
 			if i != 0 {
 				prefix = fmt.Sprintf("%s_%d_", key, i)
 			}
-			prefix = strings.Replace(prefix, "-", "_", -1)
+			prefix = strings.ReplaceAll(prefix, "-", "_")
 
 			// HA support via scheme-replica
 			isPostgreSQL := strings.HasPrefix(scheme.(string), "pgsql")

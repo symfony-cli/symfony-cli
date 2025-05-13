@@ -188,10 +188,11 @@ func New(config *Config, ca *cert.CA, logger *log.Logger, debug bool) *Proxy {
 		}
 		r.URL.Scheme = "http"
 		r.URL.Host = r.Host
-		if r.URL.Path == "/proxy.pac" {
+		switch r.URL.Path {
+		case "/proxy.pac":
 			p.servePacFile(w, r)
 			return
-		} else if r.URL.Path == "/" {
+		case "/":
 			p.serveIndex(w, r)
 			return
 		}
@@ -310,7 +311,7 @@ $ symfony server:start --daemon --dir=%s`,
 }
 
 func (p *Proxy) Start() error {
-	go p.Config.Watch()
+	go p.Watch()
 	return errors.WithStack(http.ListenAndServe(":"+strconv.Itoa(p.Port), p.proxy))
 }
 
@@ -322,7 +323,7 @@ func (p *Proxy) servePacFile(w http.ResponseWriter, r *http.Request) {
 	// No need to fall back to p.Host and p.Port as r.Host is already checked
 	// upper in the stacktrace.
 	w.Header().Add("Content-Type", "application/x-ns-proxy-autoconfig")
-	w.Write([]byte(fmt.Sprintf(`// Only proxy *.%s requests
+	fmt.Fprintf(w, `// Only proxy *.%s requests
 // Configuration file in ~/.symfony5/proxy.json
 function FindProxyForURL (url, host) {
 	if (dnsDomainIs(host, '.%s')) {
@@ -335,7 +336,7 @@ function FindProxyForURL (url, host) {
 
 	return 'DIRECT';
 }
-`, p.TLD, p.TLD, r.Host)))
+`, p.TLD, p.TLD, r.Host)
 }
 
 func (p *Proxy) serveIndex(w http.ResponseWriter, r *http.Request) {

@@ -112,8 +112,7 @@ var localProxyStartCmd = &console.Command{
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		var lw io.Writer
-		lw = f
+		var lw io.Writer = f
 		logger := zerolog.New(decorateLogger(lw, c.Bool("no-humanize"))).With().Timestamp().Logger()
 
 		config, err := proxy.Load(homeDir)
