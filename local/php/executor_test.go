@@ -59,8 +59,9 @@ func testStdoutCapture(c *C, dst io.Writer) func() {
 
 	return func() {
 		// Close the writer end of the pipe
-		w.Sync()
-		w.Close()
+		if err := w.Close(); err != nil {
+			c.Errorf("err: %s", err)
+		}
 
 		// Reset stdout
 		os.Stdout = old
@@ -213,7 +214,11 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 	os.Chdir(filepath.Join(home, "project"))
 
 	os.Rename("git", ".git")
-	defer os.Rename(".git", "git")
+	defer func() {
+		// handling error is not really worth it here: we could not really recover it anyway and the original directory
+		// is commited
+		_ = os.Rename(".git", "git")
+	}()
 	defer cleanupExecutorTempFiles()
 
 	var output bytes.Buffer
@@ -232,8 +237,12 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 	projectFile := filepath.Join(".platform", "local", "project.yaml")
 	contents, err := os.ReadFile(projectFile)
 	c.Assert(err, IsNil)
-	defer os.WriteFile(projectFile, contents, 0644)
-	os.WriteFile(projectFile, bytes.Replace(contents, []byte("bew7pfa7t2ut2"), []byte("aew7pfa7t2ut2"), 1), 0644)
+	defer func() {
+		// handling error is not really worth it here: we could not really recover it and anyway the original file
+		// content is commited
+		_ = os.WriteFile(projectFile, contents, 0644)
+	}()
+	c.Assert(os.WriteFile(projectFile, bytes.Replace(contents, []byte("bew7pfa7t2ut2"), []byte("aew7pfa7t2ut2"), 1), 0644), IsNil)
 
 	output.Reset()
 	outCloser = testStdoutCapture(c, &output)

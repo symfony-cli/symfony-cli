@@ -59,7 +59,7 @@ func (s *ProxySuite) TestProxy(c *C) {
 		TLD:  "wip",
 		path: "testdata/.symfony5/proxy.json",
 	}, ca, log.New(zerolog.New(os.Stderr), "", 0), true)
-	os.MkdirAll("testdata/.symfony5", 0755)
+	c.Assert(os.MkdirAll("testdata/.symfony5", 0755), IsNil)
 	err = p.Save()
 	c.Assert(err, IsNil)
 
@@ -172,7 +172,8 @@ func (s *ProxySuite) TestProxy(c *C) {
 	{
 		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(200)
-			w.Write([]byte(`http://symfony-no-tls.wip`))
+			_, err := w.Write([]byte(`http://symfony-no-tls.wip`))
+			c.Assert(err, IsNil)
 		}))
 		defer backend.Close()
 		backendURL, err := url.Parse(backend.URL)
@@ -180,7 +181,7 @@ func (s *ProxySuite) TestProxy(c *C) {
 
 		p := pid.New("symfony_com_no_tls", nil)
 		port, _ := strconv.Atoi(backendURL.Port())
-		p.Write(os.Getpid(), port, "http")
+		c.Assert(p.Write(os.Getpid(), port, "http"), IsNil)
 
 		req, _ := http.NewRequest("GET", "http://symfony-no-tls.wip/", nil)
 		req.Close = true
