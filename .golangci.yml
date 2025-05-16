@@ -27,6 +27,20 @@ linters:
           - github.com/symfony-cli/terminal.Eprintln
           - github.com/symfony-cli/terminal.Eprintfln
           - github.com/symfony-cli/terminal.Eprint
+          - github.com/symfony-cli/terminal.SetLogLevel
           - fmt.Fprintln
           - fmt.Fprintf
           - fmt.Fprint
+  exclusions:
+    presets:
+      - std-error-handling
+      - common-false-positives
+    rules:
+      - path: _test\.go
+        linters:
+          - errcheck
+        text: "(?i)Error return value of .(os\\.(Chdir|Rename)|io\\.Copy). is not checked"
+      - path: _test\.go
+        linters:
+          - errcheck
+        text: "(?i)Error return value of .flags\\.Set. is not checked"
