@@ -239,8 +239,8 @@ var availableServices = []*service{
 	{
 		Type: "redis",
 		Versions: serviceVersions{
-			Deprecated: []string{"2.8", "3.0", "3.2", "4.0", "5.0", "6.0"},
-			Supported:  []string{"6.2", "7.0", "7.2"},
+			Deprecated: []string{"2.8", "3.0", "3.2", "4.0", "5.0", "6.0", "6.2", "7.0"},
+			Supported:  []string{"7.2", "8.0"},
 		},
 	},
 	{
