@@ -40,26 +40,26 @@ type Project struct {
 }
 
 // New creates a new PHP project
-func New(c *Config) (*Project, error) {
-	documentRoot, err := realDocumentRoot(c.ProjectDir, c.DocumentRoot)
+func New(c *config, appVersion string) (*Project, error) {
+	documentRoot, err := realDocumentRoot(c.ProjectDir, c.HTTP.DocumentRoot)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	passthru, err := realPassthru(documentRoot, c.Passthru)
+	passthru, err := realPassthru(documentRoot, c.HTTP.Passthru)
 	p := &Project{
 		Logger: c.Logger.With().Str("source", "HTTP").Logger(),
 		HTTP: &lhttp.Server{
-			DocumentRoot:  documentRoot,
-			Port:          c.Port,
-			PreferredPort: c.PreferredPort,
-			ListenIp:      c.ListenIp,
+			Appversion:    appVersion,
 			Logger:        c.Logger,
-			PKCS12:        c.PKCS12,
-			AllowHTTP:     c.AllowHTTP,
-			UseGzip:       c.UseGzip,
-			Appversion:    c.AppVersion,
-			TlsKeyLogFile: c.TlsKeyLogFile,
-			AllowCORS:     c.AllowCORS,
+			DocumentRoot:  documentRoot,
+			Port:          c.HTTP.Port,
+			PreferredPort: c.HTTP.PreferredPort,
+			ListenIp:      c.HTTP.ListenIp,
+			PKCS12:        c.HTTP.PKCS12,
+			AllowHTTP:     c.HTTP.AllowHTTP,
+			UseGzip:       c.HTTP.UseGzip,
+			TlsKeyLogFile: c.HTTP.TlsKeyLogFile,
+			AllowCORS:     c.HTTP.AllowCORS,
 		},
 	}
 	if err != nil {
@@ -68,13 +68,13 @@ func New(c *Config) (*Project, error) {
 			msg += ", disabling the PHP server"
 		}
 		p.Logger.Warn().Err(err).Msg(msg)
-	} else if c.Passthru == "index.html" {
+	} else if c.HTTP.Passthru == "index.html" {
 		p.HTTP.Callback = func(w http.ResponseWriter, r *http.Request, env map[string]string) error {
 			http.ServeFile(w, r, "/index.html")
 			return nil
 		}
 	} else {
-		p.PHPServer, err = php.NewServer(c.HomeDir, c.ProjectDir, documentRoot, passthru, c.AppVersion, c.Logger)
+		p.PHPServer, err = php.NewServer(c.HomeDir, c.ProjectDir, documentRoot, passthru, appVersion, c.Logger)
 		if err != nil {
 			return nil, err
 		}

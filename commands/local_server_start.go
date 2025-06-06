@@ -60,32 +60,11 @@ var localServerStartCmd = &console.Command{
 	Aliases:     []*console.Alias{{Name: "server:start"}, {Name: "serve"}},
 	Usage:       "Run a local web server",
 	Description: localWebServerProdWarningMsg,
-	Flags: []console.Flag{
+	Flags: append(
+		project.ConfigurationFlags,
 		dirFlag,
-		&console.BoolFlag{Name: "allow-http", Usage: "Prevent auto-redirection from HTTP to HTTPS"},
-		&console.StringFlag{Name: "document-root", Usage: "Project document root (auto-configured by default)"},
-		&console.StringFlag{Name: "passthru", Usage: "Project passthru index (auto-configured by default)"},
-		&console.IntFlag{Name: "port", DefaultValue: 8000, Usage: "Preferred HTTP port"},
-		&console.StringFlag{Name: "listen-ip", DefaultValue: "127.0.0.1", Usage: "The IP on which the CLI should listen"},
-		&console.BoolFlag{Name: "allow-all-ip", Usage: "Listen on all the available interfaces"},
-		&console.BoolFlag{Name: "daemon", Aliases: []string{"d"}, Usage: "Run the server in the background"},
 		&console.BoolFlag{Name: "no-humanize", Usage: "Do not format JSON logs"},
-		&console.StringFlag{Name: "p12", Usage: "Name of the file containing the TLS certificate to use in p12 format"},
-		&console.BoolFlag{Name: "no-tls", Usage: "Use HTTP instead of HTTPS"},
-		&console.BoolFlag{Name: "use-gzip", Usage: "Use GZIP"},
-		&console.StringFlag{
-			Name:  "tls-key-log-file",
-			Usage: "Destination for TLS master secrets in NSS key log format",
-			// If 'SSLKEYLOGFILE' environment variable is set, uses this as a
-			// destination of TLS key log. In this context, the name
-			// 'SSLKEYLOGFILE' is common, so using 'SSL' instead of 'TLS' name.
-			// This environment variable is preferred than the key log file
-			// from the console argument.
-			EnvVars: []string{"SSLKEYLOGFILE"},
-		},
-		&console.BoolFlag{Name: "no-workers", Usage: "Do not start workers"},
-		&console.BoolFlag{Name: "allow-cors", Usage: "Allow Cross-origin resource sharing (CORS) requests"},
-	},
+	),
 	Action: func(c *console.Context) error {
 		ui := terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin)
 		projectDir, err := getProjectDir(c.String("dir"))
@@ -109,12 +88,21 @@ var localServerStartCmd = &console.Command{
 			return console.Exit("", 1)
 		}
 
+		lw, err := pidFile.LogWriter()
+		if err != nil {
+			return err
+		}
+
 		reexec.NotifyForeground("config")
-		config, fileConfig, err := project.NewConfigFromContext(c, projectDir)
+		config, err := project.NewConfigFromContext(
+			c,
+			zerolog.New(lw).With().Str("source", "server").Timestamp().Logger(),
+			homeDir,
+			projectDir,
+		)
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		config.HomeDir = homeDir
 
 		if config.Daemon && !reexec.IsChild() {
 			varDir := filepath.Join(homeDir, "var")
@@ -148,20 +136,20 @@ var localServerStartCmd = &console.Command{
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		if fileConfig != nil && fileConfig.Proxy != nil {
-			if err := proxyConfig.ReplaceDirDomains(projectDir, fileConfig.Proxy.Domains); err != nil {
+		if len(config.Proxy.Domains) > 0 {
+			if err := proxyConfig.ReplaceDirDomains(projectDir, config.Proxy.Domains); err != nil {
 				return errors.WithStack(err)
 			}
 		}
 
 		reexec.NotifyForeground("tls")
-		if !config.NoTLS && config.PKCS12 == "" {
+		if !config.HTTP.NoTLS && config.HTTP.PKCS12 == "" {
 			ca, err := cert.NewCA(filepath.Join(homeDir, "certs"))
 			if err != nil {
 				return errors.WithStack(err)
 			} else if !ca.HasCA() {
 				ui.Warning(fmt.Sprintf(`run "%s server:ca:install" first if you want to run the web server with TLS support, or use "--p12" or "--no-tls" to avoid this warning`, c.App.HelpName))
-				config.NoTLS = true
+				config.HTTP.NoTLS = true
 			} else {
 				p12 := filepath.Join(homeDir, "certs", "default.p12")
 				if _, err := os.Stat(p12); os.IsNotExist(err) {
@@ -182,24 +170,19 @@ var localServerStartCmd = &console.Command{
 						ui.Warning(fmt.Sprintf(`Your local CA must be regenerated, run "%s %s --renew" first to renew it`, c.App.HelpName, localServerCAInstallCmd.FullName()))
 					}
 				}
-				config.PKCS12 = p12
+				config.HTTP.PKCS12 = p12
 			}
 		}
 
-		if config.TlsKeyLogFile != "" {
+		if config.HTTP.TlsKeyLogFile != "" {
 			ui.Warning(localWebServerTlsKeyLogWarningMsg)
 		}
 
-		if config.AllowCORS {
+		if config.HTTP.AllowCORS {
 			ui.Warning(localWebServerAllowsCORSLogWarningMsg)
 		}
 
-		lw, err := pidFile.LogWriter()
-		if err != nil {
-			return err
-		}
-		config.Logger = zerolog.New(lw).With().Str("source", "server").Timestamp().Logger()
-		p, err := project.New(config)
+		p, err := project.New(config, c.App.Version)
 		if err != nil {
 			return err
 		}
@@ -283,7 +266,7 @@ var localServerStartCmd = &console.Command{
 		}
 
 		scheme := "https"
-		if config.NoTLS {
+		if config.HTTP.NoTLS {
 			scheme = "http"
 		}
 
@@ -310,7 +293,7 @@ var localServerStartCmd = &console.Command{
 
 			reexec.NotifyForeground("listening")
 			ui.Warning(localWebServerProdWarningMsg)
-			if config.ListenIp == "127.0.0.1" {
+			if config.HTTP.ListenIp == "127.0.0.1" {
 				ui.Warning(`Please note that the Symfony CLI only listens on 127.0.0.1 by default since version 5.10.3.
           You can use the --allow-all-ip or --listen-ip flags to change this behavior.`)
 			}
@@ -321,16 +304,16 @@ var localServerStartCmd = &console.Command{
 			go tailer.Tail(terminal.Stderr)
 		}
 
-		if fileConfig != nil && !config.NoWorkers {
+		if !config.NoWorkers {
 			reexec.NotifyForeground("workers")
 
-			_, isDockerComposeWorkerConfigured := fileConfig.Workers[project.DockerComposeWorkerKey]
+			_, isDockerComposeWorkerConfigured := config.Workers[project.DockerComposeWorkerKey]
 			var dockerWg sync.WaitGroup
 			if isDockerComposeWorkerConfigured {
 				dockerWg.Add(1)
 			}
 
-			for name, worker := range fileConfig.Workers {
+			for name, worker := range config.Workers {
 				pidFile := pid.New(projectDir, worker.Cmd)
 				if pidFile.IsRunning() {
 					terminal.Eprintfln("<warning>WARNING</> Unable to start worker \"%s\": it is already running for this project as PID %d", name, pidFile.Pid)
