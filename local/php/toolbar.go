@@ -36,10 +36,6 @@ import (
 
 func (p *Server) processToolbarInResponse(resp *http.Response) (error, bool) {
 	req := resp.Request
-	env := req.Context().Value(environmentContextKey).(map[string]string)
-	if env["SYMFONY_TUNNEL"] != "" && env["SYMFONY_TUNNEL_ENV"] == "" {
-		p.logger.Warn().Msgf("Tunnel to %s open but environment variables not exposed", env["SYMFONY_TUNNEL_BRAND"])
-	}
 
 	if req.Method != http.MethodGet || req.Header.Get("x-requested-with") != "XMLHttpRequest" {
 		return nil, false
@@ -47,6 +43,11 @@ func (p *Server) processToolbarInResponse(resp *http.Response) (error, bool) {
 
 	if baseCT, _, _ := mime.ParseMediaType(resp.Header.Get("content-type")); baseCT != "text/html" {
 		return nil, false
+	}
+
+	env := req.Context().Value(environmentContextKey).(map[string]string)
+	if env["SYMFONY_TUNNEL"] != "" && env["SYMFONY_TUNNEL_ENV"] == "" {
+		p.logger.Warn().Msgf("Tunnel to %s open but environment variables not exposed", env["SYMFONY_TUNNEL_BRAND"])
 	}
 
 	var err error
@@ -82,16 +83,18 @@ func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.Rea
 		}, nil
 	}
 
-	toolbarHint := []byte("<!-- START of Symfony Web Debug Toolbar -->")
+	pre73toolbarHint := []byte("<!-- START of Symfony Web Debug Toolbar -->")
+	post73toolbarHint := []byte(`<div id="sfToolbarClearer-`)
 	if bn[0] == '<' {
-		toolbarHint = toolbarHint[1:]
+		pre73toolbarHint = pre73toolbarHint[1:]
+		post73toolbarHint = post73toolbarHint[1:]
 	}
-	start := bytes.Repeat([]byte{' '}, len(toolbarHint))
+	start := bytes.Repeat([]byte{' '}, len(pre73toolbarHint))
 	n, err = body.Read(start)
 	if n == len(start) && err != nil {
 		return nil, errors.WithStack(err)
 	}
-	if n != len(toolbarHint) || !bytes.Equal(start, toolbarHint) {
+	if n != len(pre73toolbarHint) || (!bytes.Equal(start, pre73toolbarHint) && !bytes.HasPrefix(start, post73toolbarHint)) {
 		return struct {
 			io.Reader
 			io.Closer
@@ -157,6 +160,7 @@ func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.Rea
 		return body, errors.WithStack(err)
 	}
 	content := []byte(`
+<!-- START of Symfony CLI Toolbar -->
 <div class="sf-cli sf-toolbar-block sf-toolbar-block-sf-cli ` + logoBg + ` sf-toolbar-block-right">
 	<div class="sf-toolbar-icon">
 		<span class="sf-toolbar-label">
@@ -193,9 +197,10 @@ func (p *Server) tweakToolbar(body io.ReadCloser, env map[string]string) (io.Rea
 	</div>
 	<div></div>
 </div>
+<!-- End of Symfony CLI Toolbar -->
 $1`)
 
-	re := regexp.MustCompile(`(<(?:a|button)[^"]+?class="hide-button")`)
+	re := regexp.MustCompile(`(<(?:a|button)[^"]+?class="(?:hide-button|sf-toolbar-toggle-button)")`)
 	b = re.ReplaceAll(b, content)
 
 	return struct {
