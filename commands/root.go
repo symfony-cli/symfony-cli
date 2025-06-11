@@ -34,7 +34,7 @@ import (
 )
 
 var (
-	dirFlag         = &console.StringFlag{Name: "dir", Usage: "Project directory"}
+	dirFlag         = &console.StringFlag{Name: "dir", Usage: "Project directory", Aliases: []string{"directory"}}
 	projectFlag     = &console.StringFlag{Name: "project", Aliases: []string{"p"}, Usage: "The project ID or URL"}
 	environmentFlag = &console.StringFlag{Name: "environment", Aliases: []string{"e"}, Usage: "The environment ID"}
 )
