@@ -87,7 +87,7 @@ release:
   footer: |
     **Full Changelog**: https://github.com/symfony-cli/symfony-cli/compare/{{ .PreviousTag }}...{{ .Tag }}
 
-brews:
+homebrew_casks:
   - repository:
       owner: symfony-cli
       name: homebrew-tap
@@ -95,7 +95,10 @@ brews:
     commit_author:
       name: Fabien Potencier
       email: fabien@symfony.com
-    directory: Formula
+    directory: Casks
+    # make the old formula conflict with the cask:
+    conflicts:
+    - formula: symfony-cli/tap/symfony-cli
     # Homebrew supports only a single GOARM variant and ARMv6 is upwards
     # compatible with ARMv7 so let's keep ARMv6 here (default value anyway)
     goarm: "6"
@@ -110,10 +113,12 @@ brews:
     test: |
       system "#{bin}/symfony version"
     dependencies:
-    - name: git
+    - formula: git
       type: optional
-    install: |-
-      bin.install "symfony"
+    hooks:
+      post:
+        install: |-
+          bin.install "symfony"
     service: |-
       run ["#{bin}/symfony", "local:proxy:start", "--foreground"]
       keep_alive true
