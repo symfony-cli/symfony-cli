@@ -1,0 +1,12 @@
+daemon: true
+
+proxy:
+  domains:
+    - bar
+
+workers:
+  docker_compose: ~
+  hello_world:
+    cmd: [ "echo", "hello", "world" ]
+  my_node_process:
+    cmd: ["npx", "foo"]

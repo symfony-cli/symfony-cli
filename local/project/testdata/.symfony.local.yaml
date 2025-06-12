@@ -1,0 +1,5 @@
+http:
+  no_workers: true
+
+workers:
+  messenger_consume_async: ~

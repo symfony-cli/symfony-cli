@@ -29,111 +29,251 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const DockerComposeWorkerKey = "docker_compose"
+const (
+	ConfigFilePrefix = ".symfony.local"
 
-// Config is the struct taken by New (should not be used for anything else)
-type Config struct {
-	HomeDir       string
-	ProjectDir    string
-	ListenIp      string
-	DocumentRoot  string `yaml:"document_root"`
-	Passthru      string `yaml:"passthru"`
-	Port          int    `yaml:"port"`
-	PreferredPort int    `yaml:"preferred_port"`
-	PKCS12        string `yaml:"p12"`
-	Logger        zerolog.Logger
-	AppVersion    string
-	AllowHTTP     bool   `yaml:"allow_http"`
-	NoTLS         bool   `yaml:"no_tls"`
-	Daemon        bool   `yaml:"daemon"`
-	UseGzip       bool   `yaml:"use_gzip"`
-	TlsKeyLogFile string `yaml:"tls_key_log_file"`
-	NoWorkers     bool   `yaml:"no_workers"`
-	AllowCORS     bool   `yaml:"allow_cors"`
+	DockerComposeWorkerKey = "docker_compose"
+)
+
+type config struct {
+	Logger     zerolog.Logger
+	HomeDir    string
+	ProjectDir string
+
+	NoWorkers bool
+	Daemon    bool
+
+	HTTP struct {
+		DocumentRoot  string
+		Passthru      string
+		Port          int
+		PreferredPort int
+		ListenIp      string
+		AllowHTTP     bool
+		NoTLS         bool
+		PKCS12        string
+		TlsKeyLogFile string
+		UseGzip       bool
+		AllowCORS     bool
+	}
+	Workers map[string]struct {
+		Cmd   []string
+		Watch []string
+	}
+	Proxy struct {
+		Domains []string
+	}
 }
 
-type FileConfig struct {
-	Proxy *struct {
-		Domains []string `yaml:"domains"`
-	} `yaml:"proxy"`
-	HTTP    *Config            `yaml:"http"`
-	Workers map[string]*Worker `yaml:"workers"`
+func NewConfigFromDirectory(logger zerolog.Logger, homeDir, projectDir string) (*config, error) {
+	config := &config{
+		Logger:     logger,
+		HomeDir:    homeDir,
+		ProjectDir: projectDir,
+		Workers: make(map[string]struct {
+			Cmd   []string
+			Watch []string
+		}),
+	}
+
+	// first consider project configuration files in this specific order
+	for _, suffix := range []string{".dist.yaml", ".yaml", ".override.yaml"} {
+		fileConfig, err := newConfigFromFile(filepath.Join(projectDir, ConfigFilePrefix+suffix))
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		} else if err != nil {
+			return nil, err
+		} else if fileConfig == nil {
+			continue
+		}
+
+		config.mergeWithFileConfig(*fileConfig)
+	}
+
+	for k, v := range config.Workers {
+		if len(v.Cmd) == 0 {
+			return nil, errors.Errorf(`The command for the "%s" worker entry cannot be empty.`, k)
+		}
+	}
+
+	return config, nil
 }
 
-type Worker struct {
-	Cmd   []string `yaml:"cmd"`
-	Watch []string `yaml:"watch"`
-}
-
-func NewConfigFromContext(c *console.Context, projectDir string) (*Config, *FileConfig, error) {
-	config := &Config{}
-	var fileConfig *FileConfig
-	var err error
-	fileConfig, err = newConfigFromFile(filepath.Join(projectDir, ".symfony.local.yaml"))
+func NewConfigFromContext(c *console.Context, logger zerolog.Logger, homeDir, projectDir string) (*config, error) {
+	config, err := NewConfigFromDirectory(logger, homeDir, projectDir)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	if fileConfig != nil {
-		if fileConfig.HTTP == nil {
-			fileConfig.HTTP = &Config{}
-		} else {
-			config = fileConfig.HTTP
-		}
-		if fileConfig.Workers == nil {
-			fileConfig.Workers = make(map[string]*Worker)
-		}
-	}
-	config.AppVersion = c.App.Version
-	config.ProjectDir = projectDir
+
+	// then each option that can be overridden by command line flags
+	config.mergeWithContext(c)
+
+	return config, nil
+}
+
+func (config *config) mergeWithContext(c *console.Context) {
 	if c.IsSet("allow-all-ip") {
-		config.ListenIp = ""
+		config.HTTP.ListenIp = ""
 	} else {
-		config.ListenIp = c.String("listen-ip")
+		config.HTTP.ListenIp = c.String("listen-ip")
 	}
 	if c.IsSet("document-root") {
-		config.DocumentRoot = c.String("document-root")
+		config.HTTP.DocumentRoot = c.String("document-root")
 	}
 	if c.IsSet("passthru") {
-		config.Passthru = c.String("passthru")
+		config.HTTP.Passthru = c.String("passthru")
 	}
 	if c.IsSet("port") {
-		config.Port = c.Int("port")
+		config.HTTP.Port = c.Int("port")
 	}
-	if config.Port == 0 {
-		config.PreferredPort = 8000
+	if config.HTTP.Port == 0 {
+		config.HTTP.PreferredPort = 8000
+	}
+	if c.IsSet("allow-cors") {
+		config.HTTP.AllowCORS = c.Bool("allow-cors")
 	}
 	if c.IsSet("allow-http") {
-		config.AllowHTTP = c.Bool("allow-http")
+		config.HTTP.AllowHTTP = c.Bool("allow-http")
 	}
 	if c.IsSet("p12") {
-		config.PKCS12 = c.String("p12")
+		config.HTTP.PKCS12 = c.String("p12")
 	}
 	if c.IsSet("no-tls") {
-		config.NoTLS = c.Bool("no-tls")
+		config.HTTP.NoTLS = c.Bool("no-tls")
+	}
+	if c.IsSet("tls-key-log-suffix") {
+		config.HTTP.TlsKeyLogFile = c.String("tls-key-log-suffix")
+	}
+	if c.IsSet("use-gzip") {
+		config.HTTP.UseGzip = c.Bool("use-gzip")
 	}
 	if c.IsSet("daemon") {
 		config.Daemon = c.Bool("daemon")
 	}
-	if c.IsSet("use-gzip") {
-		config.UseGzip = c.Bool("use-gzip")
-	}
-	if c.IsSet("tls-key-log-file") {
-		config.TlsKeyLogFile = c.String("tls-key-log-file")
-	}
 	if c.IsSet("no-workers") {
 		config.NoWorkers = c.Bool("no-workers")
 	}
-	if c.IsSet("allow-cors") {
-		config.AllowCORS = c.Bool("allow-cors")
+}
+
+func (config *config) mergeWithFileConfig(fileConfig fileConfig) {
+	config.Logger.Debug().Msgf("Loading configuration from %s", fileConfig.filename)
+
+	if fileConfig.Daemon != nil {
+		config.Daemon = *fileConfig.Daemon
+	}
+	if fileConfig.NoWorkers != nil {
+		config.NoWorkers = *fileConfig.NoWorkers
 	}
 
-	return config, fileConfig, nil
+	if fileConfig.Proxy != nil {
+		config.Proxy.Domains = fileConfig.Proxy.Domains
+	}
+
+	if fileConfig.Workers != nil {
+		for workerName, fileWorker := range fileConfig.Workers {
+			worker, hasWorkerDefined := config.Workers[workerName]
+
+			if fileWorker == nil {
+				if !hasWorkerDefined {
+					continue
+				}
+
+				delete(config.Workers, workerName)
+				continue
+			}
+
+			if fileWorker.Cmd != nil {
+				worker.Cmd = fileWorker.Cmd
+			}
+
+			if fileWorker.Watch != nil {
+				worker.Watch = fileWorker.Watch
+			}
+
+			config.Workers[workerName] = worker
+		}
+	}
+
+	if fileConfig.HTTP != nil {
+		if fileConfig.HTTP.DocumentRoot != nil {
+			config.HTTP.DocumentRoot = *fileConfig.HTTP.DocumentRoot
+		}
+		if fileConfig.HTTP.Passthru != nil {
+			config.HTTP.Passthru = *fileConfig.HTTP.Passthru
+		}
+		if fileConfig.HTTP.Port != nil {
+			config.HTTP.Port = *fileConfig.HTTP.Port
+		}
+		if fileConfig.HTTP.PreferredPort != nil {
+			config.HTTP.PreferredPort = *fileConfig.HTTP.PreferredPort
+		}
+		if fileConfig.HTTP.AllowCORS != nil {
+			config.HTTP.AllowCORS = *fileConfig.HTTP.AllowCORS
+		}
+		if fileConfig.HTTP.AllowHTTP != nil {
+			config.HTTP.AllowHTTP = *fileConfig.HTTP.AllowHTTP
+		}
+		if fileConfig.HTTP.NoTLS != nil {
+			config.HTTP.NoTLS = *fileConfig.HTTP.NoTLS
+		}
+		if fileConfig.HTTP.PKCS12 != nil {
+			config.HTTP.PKCS12 = *fileConfig.HTTP.PKCS12
+		}
+		if fileConfig.HTTP.TlsKeyLogFile != nil {
+			config.HTTP.TlsKeyLogFile = *fileConfig.HTTP.TlsKeyLogFile
+		}
+		if fileConfig.HTTP.UseGzip != nil {
+			config.HTTP.UseGzip = *fileConfig.HTTP.UseGzip
+		}
+
+		if fileConfig.HTTP.Daemon != nil {
+			config.Daemon = *fileConfig.HTTP.Daemon
+			config.Logger.Warn().Msgf(`"http.daemon" setting has been deprecated since v5.12.0, use the "daemon" (at root level) setting instead.`)
+		}
+		if fileConfig.HTTP.NoWorkers != nil {
+			config.NoWorkers = *fileConfig.HTTP.NoWorkers
+			config.Logger.Warn().Msgf(`"http.no_workers" setting has been deprecated since v5.12.0, use the "no_workers" (at root level) setting instead.`)
+		}
+	}
+}
+
+type fileConfig struct {
+	filename string
+
+	NoWorkers *bool `yaml:"no_workers"`
+	Daemon    *bool `yaml:"daemon"`
+
+	Proxy *struct {
+		Domains []string `yaml:"domains"`
+	} `yaml:"proxy"`
+	HTTP *struct {
+		DocumentRoot  *string `yaml:"document_root"`
+		Passthru      *string `yaml:"passthru"`
+		Port          *int    `yaml:"port"`
+		PreferredPort *int    `yaml:"preferred_port"`
+		AllowHTTP     *bool   `yaml:"allow_http"`
+		NoTLS         *bool   `yaml:"no_tls"`
+		PKCS12        *string `yaml:"p12"`
+		TlsKeyLogFile *string `yaml:"tls_key_log_file"`
+		UseGzip       *bool   `yaml:"use_gzip"`
+		AllowCORS     *bool   `yaml:"allow_cors"`
+
+		// BC-layer
+		Daemon    *bool `yaml:"daemon"`
+		NoWorkers *bool `yaml:"no_workers"`
+	} `yaml:"http"`
+	Workers map[string]*workerFileConfig `yaml:"workers"`
+}
+
+type workerFileConfig struct {
+	Cmd   []string `yaml:"cmd"`
+	Watch []string `yaml:"watch"`
 }
 
 // Should only be used when for customers
-func newConfigFromFile(configFile string) (*FileConfig, error) {
+func newConfigFromFile(configFile string) (*fileConfig, error) {
 	if _, err := os.Stat(configFile); err != nil {
-		return nil, nil
+		return nil, errors.Wrapf(err, "config file %s does not exist", configFile)
 	}
 
 	contents, err := os.ReadFile(configFile)
@@ -141,7 +281,9 @@ func newConfigFromFile(configFile string) (*FileConfig, error) {
 		return nil, err
 	}
 
-	var fileConfig FileConfig
+	fileConfig := fileConfig{
+		filename: filepath.Base(configFile),
+	}
 	if err := yaml.Unmarshal(contents, &fileConfig); err != nil {
 		return nil, err
 	}
@@ -153,14 +295,13 @@ func newConfigFromFile(configFile string) (*FileConfig, error) {
 	return &fileConfig, nil
 }
 
-func (c *FileConfig) parseWorkers() error {
+func (c *fileConfig) parseWorkers() error {
 	if c.Workers == nil {
-		c.Workers = make(map[string]*Worker)
 		return nil
 	}
 
 	if v, ok := c.Workers[DockerComposeWorkerKey]; ok && v == nil {
-		c.Workers[DockerComposeWorkerKey] = &Worker{
+		c.Workers[DockerComposeWorkerKey] = &workerFileConfig{
 			Cmd: []string{"docker", "compose", "up"},
 			Watch: []string{
 				"compose.yaml", "compose.override.yaml",
@@ -171,20 +312,14 @@ func (c *FileConfig) parseWorkers() error {
 		}
 	}
 	if v, ok := c.Workers["yarn_encore_watch"]; ok && v == nil {
-		c.Workers["yarn_encore_watch"] = &Worker{
+		c.Workers["yarn_encore_watch"] = &workerFileConfig{
 			Cmd: []string{"yarn", "encore", "dev", "--watch"},
 		}
 	}
 	if v, ok := c.Workers["messenger_consume_async"]; ok && v == nil {
-		c.Workers["messenger_consume_async"] = &Worker{
+		c.Workers["messenger_consume_async"] = &workerFileConfig{
 			Cmd:   []string{"symfony", "console", "messenger:consume", "async"},
 			Watch: []string{"config", "src", "templates", "vendor"},
-		}
-	}
-
-	for k, v := range c.Workers {
-		if v == nil {
-			return errors.Errorf("The \"%s\" worker entry in \".symfony.local.yaml\" cannot be empty.", k)
 		}
 	}
 
