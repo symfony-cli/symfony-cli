@@ -110,6 +110,9 @@ func (tailer *Tailer) Watch(pidFile *pid.PidFile) error {
 				if _, ok := seenDirs.Load(e.Path()); ok {
 					continue
 				}
+				if fi, err := os.Stat(e.Path()); err == nil && fi.IsDir() {
+					continue
+				}
 				p, err := pid.Load(e.Path())
 				if err != nil {
 					terminal.Printfln("<warning>WARNING</> %s", err)
