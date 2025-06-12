@@ -49,6 +49,7 @@ type PidFile struct {
 	CustomName string   `json:"name"`
 
 	path string
+	lw   io.WriteCloser // log writer, used to write logs to the log file
 }
 
 func New(dir string, args []string) *PidFile {
@@ -258,15 +259,24 @@ func (p *PidFile) LogReader() (io.ReadCloser, error) {
 }
 
 func (p *PidFile) LogWriter() (io.WriteCloser, error) {
-	logFile := p.LogFile()
-	if err := os.MkdirAll(filepath.Dir(logFile), 0755); err != nil {
-		return nil, err
+	// instantiate the log writer only once per process lifetime, this is useful
+	// to have a single truncate (and thus a clean log file) at the beginning of
+	// the process management but not truncate the log file when the process is
+	// restarted.
+	if p.lw != nil {
+		return p.lw, nil
 	}
-	w, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+
+	logFile := p.LogFile()
+	err := os.MkdirAll(filepath.Dir(logFile), 0755)
 	if err != nil {
 		return nil, err
 	}
-	return w, nil
+	p.lw, err = os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		return nil, err
+	}
+	return p.lw, nil
 }
 
 func (p *PidFile) Binary() string {
