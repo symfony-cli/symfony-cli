@@ -24,7 +24,10 @@ package php
 
 import (
 	"os"
+	"path/filepath"
 	"syscall"
+
+	"github.com/pkg/errors"
 )
 
 func shouldSignalBeIgnored(sig os.Signal) bool {
@@ -34,5 +37,13 @@ func shouldSignalBeIgnored(sig os.Signal) bool {
 }
 
 func symlink(oldname, newname string) error {
-	return os.Symlink(oldname, newname)
+	err := errors.WithStack(os.Symlink(oldname, newname))
+
+	if os.IsExist(errors.Cause(err)) {
+		if target, _ := filepath.EvalSymlinks(newname); target == oldname {
+			return nil
+		}
+	}
+
+	return err
 }
