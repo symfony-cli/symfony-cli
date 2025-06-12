@@ -200,7 +200,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 			p.StoppedChan <- true
 		}()
 
-		return errors.Wrap(errors.WithStack(runner.Run()), "PHP server exited unexpectedly")
+		return errors.Wrap(runner.Run(), "PHP server exited unexpectedly")
 	}, nil
 }
 
