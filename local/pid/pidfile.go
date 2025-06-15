@@ -27,6 +27,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -49,6 +50,9 @@ type PidFile struct {
 	CustomName string   `json:"name"`
 
 	path string
+
+	lwInit sync.Once      // used to ensure that the log writer is only created once
+	lw     io.WriteCloser // log writer, used to write logs to the log file
 }
 
 func New(dir string, args []string) *PidFile {
@@ -257,16 +261,34 @@ func (p *PidFile) LogReader() (io.ReadCloser, error) {
 	return r, nil
 }
 
+// LogWriter returns a writer to write logs to the log file. It creates the log
+// file if it does not exist, and truncates it if it does. It is safe to call
+// this method multiple times, it will only create the log file once per process
+// lifetime: it is useful to have a single truncation (and thus a clean log
+// file) at the beginning of the process management but not to truncate the log
+// file when the process is restarted.
+// Please note this method might not return a writer even if the error is nil
+// (the error is returned only for the first call).
 func (p *PidFile) LogWriter() (io.WriteCloser, error) {
-	logFile := p.LogFile()
-	if err := os.MkdirAll(filepath.Dir(logFile), 0755); err != nil {
-		return nil, err
-	}
-	w, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	var err error
+
+	p.lwInit.Do(func() {
+		logFile := p.LogFile()
+		if err = errors.WithStack(os.MkdirAll(filepath.Dir(logFile), 0755)); err != nil {
+			return
+		}
+		p.lw, err = os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+		if err != nil {
+			err = errors.WithStack(err)
+			return
+		}
+	})
+
 	if err != nil {
 		return nil, err
 	}
-	return w, nil
+
+	return p.lw, err
 }
 
 func (p *PidFile) Binary() string {
