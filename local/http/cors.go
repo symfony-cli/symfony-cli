@@ -26,7 +26,7 @@ import (
 )
 
 func corsWrapper(h http.Handler, logger zerolog.Logger) http.Handler {
-	var corsHeaders = []string{"Access-Control-Allow-Origin", "Access-Control-Allow-Methods", "Access-Control-Allow-Headers"}
+	var corsHeaders = []string{"Access-Control-Allow-Origin", "Access-Control-Allow-Methods", "Access-Control-Allow-Headers", "Access-Control-Expose-Headers"}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		for _, corsHeader := range corsHeaders {
