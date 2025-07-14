@@ -198,7 +198,7 @@ var availableServices = []*service{
 	{
 		Type: "mysql",
 		Versions: serviceVersions{
-			Deprecated: []string{"5.5", "10.0", "10.1", "10.2"},
+			Deprecated: []string{"5.5", "10.0", "10.1", "10.2", "10.4", "11.2"},
 			Supported:  []string{"10.3", "10.4", "10.5", "10.6", "10.11", "11.0"},
 		},
 	},
@@ -213,7 +213,7 @@ var availableServices = []*service{
 		Type: "opensearch",
 		Versions: serviceVersions{
 			Deprecated: []string{"1.1", "1.2"},
-			Supported:  []string{"1", "2"},
+			Supported:  []string{"1", "2", "3"},
 		},
 	},
 	{
