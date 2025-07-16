@@ -170,8 +170,8 @@ var availableServices = []*service{
 	{
 		Type: "mariadb",
 		Versions: serviceVersions{
-			Deprecated: []string{"5.5", "10.0", "10.1", "10.2", "10.3"},
-			Supported:  []string{"10.4", "10.5", "10.6", "10.11", "11.0", "11.2", "11.4"},
+			Deprecated: []string{"5.5", "10.0", "10.1", "10.2", "10.3", "10.4", "10.5", "11.2"},
+			Supported:  []string{"10.6", "10.11", "11.0", "11.4"},
 		},
 	},
 	{
