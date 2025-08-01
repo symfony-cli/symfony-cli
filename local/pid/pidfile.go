@@ -305,6 +305,11 @@ func AllWorkers(dir string) []*PidFile {
 // Remove a pidfile
 func (p *PidFile) Remove() error {
 	for _, file := range []string{p.LogFile(), p.PidFile()} {
+		// Ensure log writer is closed first to avoid "file is being used" on Windows
+		if p.lw != nil {
+			_ = p.lw.Close()
+			p.lw = nil
+		}
 		if err := os.Remove(file); err != nil && !os.IsNotExist(err) {
 			return errors.WithStack(err)
 		}
