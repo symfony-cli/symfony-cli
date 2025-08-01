@@ -23,4 +23,4 @@
 package commands
 
 const LatestPhpMajorVersion = "8.4"
-const LatestPhpMinorVersion = "8.4.10"
+const LatestPhpMinorVersion = "8.4.11"
