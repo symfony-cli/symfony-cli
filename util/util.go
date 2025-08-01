@@ -20,28 +20,41 @@
 package util
 
 import (
+	"os"
 	"os/user"
 	"path/filepath"
-
-	"github.com/mitchellh/go-homedir"
 )
 
+const confDir = "symfony5"
+
 func GetHomeDir() string {
-	return filepath.Join(getUserHomeDir(), ".symfony5")
+	return getUserHomeDir()
 }
 
 func getUserHomeDir() string {
+
 	if InCloud() {
 		u, err := user.Current()
 		if err != nil {
-			return "/tmp"
+			return filepath.Join(os.TempDir(), confDir)
 		}
-		return "/tmp/" + u.Username
+		return filepath.Join(os.TempDir(), u.Username, confDir)
 	}
 
-	if homeDir, err := homedir.Dir(); err == nil {
-		return homeDir
+	home, err := os.UserHomeDir()
+	if err != nil {
+		home = "."
 	}
 
-	return "."
+	// use the old path if it exists already
+	legacyPath := filepath.Join(home, "."+confDir)
+	if _, err := os.Stat(legacyPath); !os.IsNotExist(err) {
+		return legacyPath
+	}
+
+	if userCfg, err := os.UserConfigDir(); err == nil {
+		return filepath.Join(userCfg, confDir)
+	}
+
+	return filepath.Join(".", "."+confDir)
 }
