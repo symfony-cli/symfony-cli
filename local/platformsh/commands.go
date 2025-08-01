@@ -863,6 +863,40 @@ var Commands = []*console.Command{
 	},
 	{
 		Category: "cloud:environment",
+		Name:     "deploy",
+		Aliases: []*console.Alias{
+			{Name: "environment:deploy", Hidden: true},
+			{Name: "upsun:environment:deploy", Hidden: true},
+			{Name: "cloud:env:deploy"},
+			{Name: "upsun:env:deploy", Hidden: true},
+			{Name: "env:deploy", Hidden: true},
+		},
+		Usage: "Deploy an environment's staged changes",
+		Flags: []console.Flag{
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"}},
+			&console.BoolFlag{Name: "no-wait", Aliases: []string{"W"}},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"}},
+			&console.BoolFlag{Name: "wait"},
+		},
+	},
+	{
+		Category: "cloud:environment",
+		Name:     "deploy:type",
+		Aliases: []*console.Alias{
+			{Name: "environment:deploy:type", Hidden: true},
+			{Name: "upsun:environment:deploy:type", Hidden: true},
+		},
+		Usage: "Show or set the environment deployment type",
+		Flags: []console.Flag{
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"}},
+			&console.BoolFlag{Name: "no-wait", Aliases: []string{"W"}},
+			&console.BoolFlag{Name: "pipe"},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"}},
+			&console.BoolFlag{Name: "wait"},
+		},
+	},
+	{
+		Category: "cloud:environment",
 		Name:     "http-access",
 		Aliases: []*console.Alias{
 			{Name: "environment:http-access", Hidden: true},
@@ -2178,6 +2212,7 @@ var Commands = []*console.Command{
 		Flags: []console.Flag{
 			&console.StringFlag{Name: "app"},
 			&console.StringFlag{Name: "columns", Aliases: []string{"c"}},
+			&console.StringFlag{Name: "cpu-type"},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"}},
 			&console.StringFlag{Name: "format", DefaultValue: "table"},
 			&console.BoolFlag{Name: "no-header"},
