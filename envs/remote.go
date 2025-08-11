@@ -202,8 +202,8 @@ func (r *Remote) Extra() Envs {
 		}
 
 		if url, ok := v["SYMFONY_PROJECT_DEFAULT_ROUTE_URL"]; ok {
-	        v["DEFAULT_URI"] = url
-	    }
+			v["DEFAULT_URI"] = url
+		}
 	}
 	if value := r.extractApplicationDefaultUrl(); value != nil {
 		port := value.Port()
