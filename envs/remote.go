@@ -201,9 +201,7 @@ func (r *Remote) Extra() Envs {
 			v[fmt.Sprintf("%sPORT", prefix)] = port
 		}
 
-		if url, ok := v["SYMFONY_PROJECT_DEFAULT_ROUTE_URL"]; ok {
-			v["DEFAULT_URI"] = url
-		}
+		v["DEFAULT_URI"] = value.String()
 	}
 	if value := r.extractApplicationDefaultUrl(); value != nil {
 		port := value.Port()
