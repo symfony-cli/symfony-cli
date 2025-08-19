@@ -200,6 +200,8 @@ func (r *Remote) Extra() Envs {
 			v[fmt.Sprintf("%sPATH", prefix)] = value.Path
 			v[fmt.Sprintf("%sPORT", prefix)] = port
 		}
+
+		v["DEFAULT_URI"] = value.String()
 	}
 	if value := r.extractApplicationDefaultUrl(); value != nil {
 		port := value.Port()
