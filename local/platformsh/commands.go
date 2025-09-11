@@ -384,6 +384,25 @@ var Commands = []*console.Command{
 		Usage: "Verify your phone number interactively",
 	},
 	{
+		Category: "cloud:autoscaling",
+		Name:     "get",
+		Aliases: []*console.Alias{
+			{Name: "autoscaling:get", Hidden: true},
+			{Name: "upsun:autoscaling:get", Hidden: true},
+			{Name: "cloud:autoscaling"},
+			{Name: "upsun:autoscaling", Hidden: true},
+			{Name: "autoscaling", Hidden: true},
+		},
+		Usage: "View the autoscaling configuration of apps and workers on an environment",
+		Flags: []console.Flag{
+			&console.StringFlag{Name: "columns", Aliases: []string{"c"}},
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"}},
+			&console.StringFlag{Name: "format", DefaultValue: "table"},
+			&console.BoolFlag{Name: "no-header"},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"}},
+		},
+	},
+	{
 		Category: "cloud:backup",
 		Name:     "create",
 		Aliases: []*console.Alias{
@@ -867,6 +886,9 @@ var Commands = []*console.Command{
 		Aliases: []*console.Alias{
 			{Name: "environment:deploy", Hidden: true},
 			{Name: "upsun:environment:deploy", Hidden: true},
+			{Name: "cloud:e:deploy"},
+			{Name: "upsun:e:deploy", Hidden: true},
+			{Name: "e:deploy", Hidden: true},
 			{Name: "cloud:env:deploy"},
 			{Name: "upsun:env:deploy", Hidden: true},
 			{Name: "env:deploy", Hidden: true},
@@ -876,6 +898,7 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"}},
 			&console.BoolFlag{Name: "no-wait", Aliases: []string{"W"}},
 			&console.StringFlag{Name: "project", Aliases: []string{"p"}},
+			&console.StringFlag{Name: "strategy", Aliases: []string{"s"}},
 			&console.BoolFlag{Name: "wait"},
 		},
 	},
