@@ -2,10 +2,6 @@ name: slug
 
 type: php:8.0
 
-dependencies:
-    php:
-        composer/composer: "^2"
-
 runtime:
     extensions:
         - apcu
