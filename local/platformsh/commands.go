@@ -403,6 +403,31 @@ var Commands = []*console.Command{
 		},
 	},
 	{
+		Category: "cloud:autoscaling",
+		Name:     "set",
+		Aliases: []*console.Alias{
+			{Name: "autoscaling:set", Hidden: true},
+			{Name: "upsun:autoscaling:set", Hidden: true},
+		},
+		Usage: "Set the autoscaling configuration of apps or workers in an environment",
+		Flags: []console.Flag{
+			&console.StringFlag{Name: "cooldown-down"},
+			&console.StringFlag{Name: "cooldown-up"},
+			&console.BoolFlag{Name: "dry-run"},
+			&console.StringFlag{Name: "duration-down"},
+			&console.StringFlag{Name: "duration-up"},
+			&console.StringFlag{Name: "enabled"},
+			&console.StringFlag{Name: "environment", Aliases: []string{"e"}},
+			&console.StringFlag{Name: "instances-max"},
+			&console.StringFlag{Name: "instances-min"},
+			&console.StringFlag{Name: "metric", Aliases: []string{"m"}},
+			&console.StringFlag{Name: "project", Aliases: []string{"p"}},
+			&console.StringFlag{Name: "service", Aliases: []string{"s"}},
+			&console.StringFlag{Name: "threshold-down"},
+			&console.StringFlag{Name: "threshold-up"},
+		},
+	},
+	{
 		Category: "cloud:backup",
 		Name:     "create",
 		Aliases: []*console.Alias{
@@ -886,6 +911,9 @@ var Commands = []*console.Command{
 		Aliases: []*console.Alias{
 			{Name: "environment:deploy", Hidden: true},
 			{Name: "upsun:environment:deploy", Hidden: true},
+			{Name: "cloud:deploy"},
+			{Name: "upsun:deploy", Hidden: true},
+			{Name: "deploy", Hidden: true},
 			{Name: "cloud:e:deploy"},
 			{Name: "upsun:e:deploy", Hidden: true},
 			{Name: "e:deploy", Hidden: true},
@@ -1781,6 +1809,7 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "country"},
 			&console.StringFlag{Name: "label"},
 			&console.StringFlag{Name: "name"},
+			&console.StringFlag{Name: "type", DefaultValue: "flexible"},
 		},
 	},
 	{
@@ -1859,6 +1888,7 @@ var Commands = []*console.Command{
 			&console.BoolFlag{Name: "no-header"},
 			&console.BoolFlag{Name: "reverse"},
 			&console.StringFlag{Name: "sort"},
+			&console.StringFlag{Name: "type"},
 		},
 	},
 	{
@@ -2109,6 +2139,7 @@ var Commands = []*console.Command{
 			&console.BoolFlag{Name: "my"},
 			&console.BoolFlag{Name: "no-header"},
 			&console.StringFlag{Name: "org", Aliases: []string{"o"}},
+			&console.StringFlag{Name: "org-type"},
 			&console.StringFlag{Name: "page"},
 			&console.BoolFlag{Name: "pipe"},
 			&console.StringFlag{Name: "refresh"},
