@@ -22,6 +22,7 @@ package envs
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -242,7 +243,28 @@ func extractRelationshipsEnvs(env Environment) Envs {
 				if !isMaster(endpoint) {
 					continue
 				}
-				values[fmt.Sprintf("%sURL", prefix)] = fmt.Sprintf("%s://%s:%s@%s:%s/?authSource=%s", endpoint["scheme"].(string), endpoint["username"].(string), endpoint["password"].(string), endpoint["host"].(string), formatInt(endpoint["port"]), endpoint["path"].(string))
+				var uri *url.URL
+				providedHost, err := url.Parse(endpoint["host"].(string))
+				if err != nil {
+					panic(err)
+				}
+				if providedHost.Scheme != "" {
+					// BC: some Symfony Cloud systems provided a fully-formed mongodb URL.
+					uri = providedHost
+				} else {
+					values := url.Values{}
+					for k, v := range endpoint["query"].(map[string]string) {
+						values.Add(k, v)
+					}
+					uri = &url.URL{
+						Scheme:   endpoint["scheme"].(string),
+						User:     url.UserPassword(endpoint["username"].(string), endpoint["password"].(string)),
+						Host:     endpoint["host"].(string),
+						Path:     endpoint["path"].(string),
+						RawQuery: values.Encode(),
+					}
+				}
+				values[fmt.Sprintf("%sURL", prefix)] = uri.String()
 				values[fmt.Sprintf("%sSERVER", prefix)] = formatServer(endpoint)
 				values[fmt.Sprintf("%sHOST", prefix)] = endpoint["host"].(string)
 				values[fmt.Sprintf("%sPORT", prefix)] = formatInt(endpoint["port"])
