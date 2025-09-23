@@ -252,16 +252,11 @@ func extractRelationshipsEnvs(env Environment) Envs {
 					// BC: some Symfony Cloud systems provided a fully-formed mongodb URL.
 					uri = providedHost
 				} else {
-					values := url.Values{}
-					for k, v := range endpoint["query"].(map[string]string) {
-						values.Add(k, v)
-					}
 					uri = &url.URL{
-						Scheme:   endpoint["scheme"].(string),
-						User:     url.UserPassword(endpoint["username"].(string), endpoint["password"].(string)),
-						Host:     endpoint["host"].(string),
-						Path:     endpoint["path"].(string),
-						RawQuery: values.Encode(),
+						Scheme: endpoint["scheme"].(string),
+						User:   url.UserPassword(endpoint["username"].(string), endpoint["password"].(string)),
+						Host:   endpoint["host"].(string),
+						Path:   endpoint["path"].(string),
 					}
 				}
 				values[fmt.Sprintf("%sURL", prefix)] = uri.String()
