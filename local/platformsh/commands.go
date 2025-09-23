@@ -48,7 +48,7 @@ var Commands = []*console.Command{
 		Aliases: []*console.Alias{
 			{Name: "upsun:bot", Hidden: true},
 		},
-		Usage:  "The Platform.sh/Upsun Bot",
+		Usage:  "The Upsun (formerly Platform.sh/Upsun) Bot",
 		Hidden: console.Hide,
 		Flags: []console.Flag{
 			&console.BoolFlag{Name: "parrot"},
@@ -95,18 +95,6 @@ var Commands = []*console.Command{
 	},
 	{
 		Category: "cloud",
-		Name:     "legacy-migrate",
-		Aliases: []*console.Alias{
-			{Name: "upsun:legacy-migrate", Hidden: true},
-		},
-		Usage:  "Migrate from the legacy file structure",
-		Hidden: console.Hide,
-		Flags: []console.Flag{
-			&console.BoolFlag{Name: "no-backup"},
-		},
-	},
-	{
-		Category: "cloud",
 		Name:     "multi",
 		Aliases: []*console.Alias{
 			{Name: "upsun:multi", Hidden: true},
@@ -125,7 +113,7 @@ var Commands = []*console.Command{
 		Aliases: []*console.Alias{
 			{Name: "upsun:welcome", Hidden: true},
 		},
-		Usage:  "Welcome to Platform.sh/Upsun",
+		Usage:  "Welcome to Upsun (formerly Platform.sh/Upsun)",
 		Hidden: console.Hide,
 	},
 	{
@@ -237,7 +225,7 @@ var Commands = []*console.Command{
 			{Name: "api:curl", Hidden: true},
 			{Name: "upsun:api:curl", Hidden: true},
 		},
-		Usage:  "Run an authenticated cURL request on the Platform.sh/Upsun API",
+		Usage:  "Run an authenticated cURL request on the Upsun (formerly Platform.sh/Upsun) API",
 		Hidden: console.Hide,
 		Flags: []console.Flag{
 			&console.StringFlag{Name: "data", Aliases: []string{"d"}},
@@ -306,7 +294,7 @@ var Commands = []*console.Command{
 			{Name: "auth:api-token-login", Hidden: true},
 			{Name: "upsun:auth:api-token-login", Hidden: true},
 		},
-		Usage: "Log in to Platform.sh/Upsun using an API token",
+		Usage: "Log in to Upsun (formerly Platform.sh/Upsun) using an API token",
 	},
 	{
 		Category: "cloud:auth",
@@ -318,7 +306,7 @@ var Commands = []*console.Command{
 			{Name: "upsun:login", Hidden: true},
 			{Name: "login", Hidden: true},
 		},
-		Usage: "Log in to Platform.sh/Upsun via a browser",
+		Usage: "Log in to Upsun (formerly Platform.sh/Upsun) via a browser",
 		Flags: []console.Flag{
 			&console.StringFlag{Name: "browser"},
 			&console.BoolFlag{Name: "force", Aliases: []string{"f"}},
@@ -354,7 +342,7 @@ var Commands = []*console.Command{
 			{Name: "upsun:logout", Hidden: true},
 			{Name: "logout", Hidden: true},
 		},
-		Usage: "Log out of Platform.sh/Upsun",
+		Usage: "Log out of Upsun (formerly Platform.sh/Upsun)",
 		Flags: []console.Flag{
 			&console.BoolFlag{Name: "all", Aliases: []string{"a"}},
 			&console.BoolFlag{Name: "other"},
@@ -367,7 +355,7 @@ var Commands = []*console.Command{
 			{Name: "auth:token", Hidden: true},
 			{Name: "upsun:auth:token", Hidden: true},
 		},
-		Usage:  "Obtain an OAuth 2 access token for requests to Platform.sh/Upsun APIs",
+		Usage:  "Obtain an OAuth 2 access token for requests to Upsun (formerly Platform.sh/Upsun) APIs",
 		Hidden: console.Hide,
 		Flags: []console.Flag{
 			&console.BoolFlag{Name: "header", Aliases: []string{"H"}},
