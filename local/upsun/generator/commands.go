@@ -167,6 +167,9 @@ func parseCommands(cloudPath string) (string, error) {
 		}
 		aliases = append(aliases, fmt.Sprintf("{Name: \"upsun:%s\", Hidden: true}", command.Name))
 		for _, alias := range cmdAliases {
+			if alias == "deploy" {
+				continue
+			}
 			aliases = append(aliases, fmt.Sprintf("{Name: \"cloud:%s\"}", alias))
 			aliases = append(aliases, fmt.Sprintf("{Name: \"upsun:%s\", Hidden: true}", alias))
 			if namespace != "cloud" && !strings.HasPrefix(command.Name, "self:") {

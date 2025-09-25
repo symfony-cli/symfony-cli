@@ -83,6 +83,7 @@ func CommonCommands() []*console.Command {
 		projectLocalRabbitMQManagementOpenCmd,
 		projectLocalServiceOpenCmd,
 		projectLocalOpenCmd,
+		upsunDeployCmd,
 	}
 	return append(localCommands, adminCommands...)
 }
