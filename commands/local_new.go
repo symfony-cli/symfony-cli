@@ -26,7 +26,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -168,10 +167,8 @@ var localNewCmd = &console.Command{
 		}
 
 		if !c.Bool("no-git") {
-			if _, err := exec.LookPath("git"); err == nil {
-				if err := initProjectGit(c, dir); err != nil {
-					return err
-				}
+			if err := initProjectGit(c, dir); err != nil {
+				return err
 			}
 		}
 
@@ -197,10 +194,12 @@ var localNewCmd = &console.Command{
 			if err := runComposer(c, dir, []string{"require", "platformsh"}, c.Bool("debug")); err != nil {
 				return err
 			}
-			buf, err := git.AddAndCommit(dir, []string{"."}, "Add more packages", c.Bool("debug"))
-			if err != nil {
-				fmt.Print(buf.String())
-				return err
+			if !c.Bool("no-git") {
+				buf, err := git.AddAndCommit(dir, []string{"."}, "Add more packages", c.Bool("debug"))
+				if err != nil {
+					fmt.Print(buf.String())
+					return err
+				}
 			}
 			brand := platformsh.PlatformshBrand
 			if c.Bool("upsun") {
@@ -249,6 +248,9 @@ func initCloud(c *console.Context, brand platformsh.CloudBrand, minorPHPVersion,
 		return err
 	}
 
+	if !c.Bool("no-git") {
+		return nil
+	}
 	buf, err := git.AddAndCommit(dir, []string{"."}, fmt.Sprintf("Add %s configuration", brand), c.Bool("debug"))
 	if err != nil {
 		fmt.Print(buf.String())
