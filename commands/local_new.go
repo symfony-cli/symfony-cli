@@ -26,7 +26,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -168,10 +167,8 @@ var localNewCmd = &console.Command{
 		}
 
 		if !c.Bool("no-git") {
-			if _, err := exec.LookPath("git"); err == nil {
-				if err := initProjectGit(c, dir); err != nil {
-					return err
-				}
+			if err := initProjectGit(c, dir); err != nil {
+				return err
 			}
 		}
 
