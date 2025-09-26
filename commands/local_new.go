@@ -62,6 +62,7 @@ var localNewCmd = &console.Command{
 		},
 		&console.BoolFlag{Name: "full", Usage: "Use github.com/symfony/website-skeleton (deprecated, use --webapp instead)"},
 		&console.BoolFlag{Name: "demo", Usage: "Use github.com/symfony/demo"},
+		&console.StringFlag{Name: "skeleton", Usage: "Skeleton to use (symfony, sulu, or a custom package name)", DefaultValue: "symfony"},
 		&console.BoolFlag{Name: "webapp", Usage: "Add the webapp pack to get a fully configured web project"},
 		&console.BoolFlag{Name: "api", Usage: "Add the api pack to get a fully configured api project"},
 		&console.BoolFlag{Name: "book", Usage: "Clone the Symfony: The Fast Track book project"},
@@ -135,6 +136,9 @@ var localNewCmd = &console.Command{
 
 		if symfonyVersion != "" && c.Bool("demo") {
 			return console.Exit("The --version flag is not supported for the Symfony Demo", 1)
+		}
+		if c.Bool("demo") && c.String("skeleton") != "symfony" {
+			return console.Exit("The --demo flag cannot be used with --skeleton", 1)
 		}
 		if c.Bool("webapp") && c.Bool("api") {
 			return console.Exit("The --api flag cannot be used with --webapp", 1)
@@ -364,23 +368,10 @@ func initProjectGit(c *console.Context, dir string) error {
 }
 
 func createProjectWithComposer(c *console.Context, dir, version string) error {
-	if c.Bool("demo") {
-		terminal.Println("* Creating a new Symfony Demo project with Composer")
-	} else if version != "" {
-		if version == "lts" || version == "previous" || version == "stable" || version == "next" || version == "dev" {
-			var err error
-			version, err = getSpecialVersion(version)
-			if err != nil {
-				return err
-			}
-		}
-
-		terminal.Printfln("* Creating a new Symfony %s project with Composer", version)
-	} else {
-		terminal.Println("* Creating a new Symfony project with Composer")
-	}
-
+	// Determine the repository and project type
 	repo := "symfony/skeleton"
+	projectType := "Symfony"
+
 	if r := os.Getenv("SYMFONY_REPO"); r != "" {
 		repo = r
 	} else if c.Bool("full") {
@@ -388,6 +379,49 @@ func createProjectWithComposer(c *console.Context, dir, version string) error {
 		repo = "symfony/website-skeleton"
 	} else if c.Bool("demo") {
 		repo = "symfony/symfony-demo"
+	} else if c.String("skeleton") != "" {
+		// Handle skeleton flag
+		skeleton := c.String("skeleton")
+		switch skeleton {
+		case "symfony":
+			repo = "symfony/skeleton"
+			projectType = "Symfony"
+		case "sulu":
+			repo = "sulu/skeleton"
+			projectType = "Sulu"
+		case "demo":
+			repo = "symfony/symfony-demo"
+			projectType = "Symfony Demo"
+		default:
+			// Use custom Composer package directly
+			repo = skeleton
+
+			// Use the package name as the project type
+			parts := strings.Split(skeleton, "/")
+			if len(parts) > 1 {
+				projectType = parts[1]
+			} else {
+				projectType = skeleton
+			}
+		}
+	}
+
+	// Display appropriate message based on project type
+	if c.Bool("demo") {
+		terminal.Println("* Creating a new Symfony Demo project with Composer")
+	} else if version != "" {
+		// Only handle special versions for Symfony projects
+		if projectType == "Symfony" && (version == "lts" || version == "previous" || version == "stable" || version == "next" || version == "dev") {
+			var err error
+			version, err = getSpecialVersion(version)
+			if err != nil {
+				return err
+			}
+		}
+
+		terminal.Printfln("* Creating a new %s %s project with Composer", projectType, version)
+	} else {
+		terminal.Printfln("* Creating a new %s project with Composer", projectType)
 	}
 
 	if ok, _ := regexp.MatchString("^\\d+\\.\\d+$", version); ok {
