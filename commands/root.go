@@ -42,8 +42,6 @@ var (
 func CommonCommands() []*console.Command {
 	adminCommands := []*console.Command{
 		// common cloud commands
-		// FIXME: this command should be renamed (it's a special command as it's local but creates cloud files)
-		projectInitCmd,
 		// FIXME: this command should be renamed (it works locally AND in the cloud)
 		variableExportCmd,
 		// commands that we override to provide more features
@@ -153,7 +151,7 @@ func WelcomeAction(c *console.Context) error {
 	if err != nil {
 		return err
 	}
-	displayCommandsHelp(c, append([]*console.Command{projectInitCmd}, psh.PSHMainCommands()...))
+	displayCommandsHelp(c, psh.PSHMainCommands())
 	terminal.Println("")
 	terminal.Printf("Show all commands with <info>%s help</>,\n", c.App.HelpName)
 	terminal.Printf("Get help for a specific command with <info>%s help COMMAND</>.\n", c.App.HelpName)

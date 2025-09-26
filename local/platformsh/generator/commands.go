@@ -118,7 +118,6 @@ func parseCommands(cloudPath string) (string, error) {
 		"self:stats":        true,
 		"decode":            true,
 		"environment:drush": true,
-		"project:init":      true,
 	}
 
 	excludedOptions := console.AnsiFlag.Names()
