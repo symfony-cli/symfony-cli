@@ -26,7 +26,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/envs"
-	"github.com/symfony-cli/symfony-cli/local/platformsh"
+	"github.com/symfony-cli/symfony-cli/local/upsun"
 	"github.com/symfony-cli/symfony-cli/reexec"
 	"github.com/symfony-cli/symfony-cli/updater"
 	"github.com/symfony-cli/symfony-cli/util"
@@ -104,12 +104,12 @@ func InitAppFunc(c *console.Context) error {
 
 	envs.ComputeDockerUserAgent(c.App.Name, c.App.Version)
 
-	psh, err := platformsh.Get()
+	upsun, err := upsun.Get()
 	if err != nil {
 		return err
 	}
-	for name, f := range platformshBeforeHooks {
-		psh.AddBeforeHook(name, f)
+	for name, f := range upsunBeforeHooks {
+		upsun.AddBeforeHook(name, f)
 	}
 
 	checkForUpdates(c)
@@ -149,7 +149,7 @@ func WelcomeAction(c *console.Context) error {
 	terminal.Println("")
 	terminal.Println("<comment>Manage a project on Cloud</>")
 	terminal.Println("")
-	psh, err := platformsh.Get()
+	psh, err := upsun.Get()
 	if err != nil {
 		return err
 	}

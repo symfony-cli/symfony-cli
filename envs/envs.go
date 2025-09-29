@@ -29,7 +29,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/symfony-cli/symfony-cli/local/platformsh"
+	"github.com/symfony-cli/symfony-cli/local/upsun"
 	"github.com/symfony-cli/symfony-cli/util"
 )
 
@@ -165,7 +165,7 @@ func extractRelationshipsEnvs(env Environment) Envs {
 					versionKey := fmt.Sprintf("%sVERSION", prefix)
 					if v, ok := endpoint["type"]; ok {
 						// configuration from doctrine.yaml takes precedence over psh config
-						if doctrineConfigVersion, err := platformsh.ReadDBVersionFromDoctrineConfigYAML(env.Path()); err == nil && doctrineConfigVersion != "" {
+						if doctrineConfigVersion, err := upsun.ReadDBVersionFromDoctrineConfigYAML(env.Path()); err == nil && doctrineConfigVersion != "" {
 							// configuration from doctrine.yaml
 							values[versionKey] = doctrineConfigVersion
 						} else {

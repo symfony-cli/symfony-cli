@@ -27,8 +27,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/symfony-cli/local/pid"
-	"github.com/symfony-cli/symfony-cli/local/platformsh"
 	"github.com/symfony-cli/symfony-cli/local/proxy"
+	"github.com/symfony-cli/symfony-cli/local/upsun"
 	"github.com/symfony-cli/symfony-cli/util"
 )
 
@@ -157,10 +157,10 @@ func (l *Local) Relationships() Relationships {
 	// we need to call it in all cases so that l.DockerEnv is set correctly
 	dockerRel := l.RelationshipsFromDocker()
 
-	project, err := platformsh.ProjectFromDir(l.Dir, l.Debug)
+	project, err := upsun.ProjectFromDir(l.Dir, l.Debug)
 	if err != nil {
 		if l.Debug {
-			if brand := platformsh.GuessCloudFromDirectory(l.Dir); brand != platformsh.NoBrand {
+			if brand := upsun.GuessCloudFromDirectory(l.Dir); brand != upsun.NoBrand {
 				fmt.Fprintf(os.Stderr, "ERROR: unable to get %s project information\n", brand)
 			}
 		}
@@ -199,7 +199,7 @@ func (l *Local) Extra() Envs {
 	env := Envs{
 		"SYMFONY_TUNNEL":       l.Tunnel,
 		"SYMFONY_TUNNEL_ENV":   sc,
-		"SYMFONY_TUNNEL_BRAND": platformsh.GuessCloudFromDirectory(l.Dir).Name,
+		"SYMFONY_TUNNEL_BRAND": upsun.GuessCloudFromDirectory(l.Dir).Name,
 		"SYMFONY_DOCKER_ENV":   docker,
 	}
 	if _, err := os.Stat(filepath.Join(l.Dir, ".prod")); err == nil {
@@ -219,17 +219,17 @@ func (l *Local) Language() string {
 	if language != "" {
 		return language
 	}
-	projectRoot, err := platformsh.GetProjectRoot(l.Debug)
+	projectRoot, err := upsun.GetProjectRoot(l.Debug)
 	if err != nil {
 		if l.Debug {
 			fmt.Fprint(os.Stderr, "ERROR: unable to get project root\n")
 		}
 		return "php"
 	}
-	app := platformsh.GuessSelectedAppByWd(platformsh.FindLocalApplications(projectRoot))
+	app := upsun.GuessSelectedAppByWd(upsun.FindLocalApplications(projectRoot))
 	if app == nil {
 		if l.Debug {
-			if platformsh.GuessCloudFromDirectory(l.Dir) != platformsh.NoBrand {
+			if upsun.GuessCloudFromDirectory(l.Dir) != upsun.NoBrand {
 				fmt.Fprint(os.Stderr, "ERROR: unable to get project configuration\n")
 			}
 		}

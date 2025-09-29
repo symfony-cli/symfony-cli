@@ -17,29 +17,19 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package platformsh
+package upsun
 
-type service struct {
-	Type     string
-	Versions serviceVersions
-}
+import "strings"
 
-type serviceVersions struct {
-	Deprecated []string
-	Supported  []string
-}
-
-func ServiceLastVersion(name string) string {
-	for _, s := range availableServices {
-		if s.Type == name {
-			versions := s.Versions.Supported
-			if len(versions) == 0 {
-				versions = s.Versions.Deprecated
-			}
-			if len(versions) > 0 {
-				return versions[len(versions)-1]
-			}
+func IsPhpExtensionAvailable(ext, phpVersion string) bool {
+	versions, ok := availablePHPExts[strings.ToLower(ext)]
+	if !ok {
+		return false
+	}
+	for _, v := range versions {
+		if v == phpVersion {
+			return true
 		}
 	}
-	return ""
+	return false
 }

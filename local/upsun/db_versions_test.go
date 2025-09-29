@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-present Fabien Potencier <fabien@symfony.com>
+ * Copyright (c) 2024-present Fabien Potencier <fabien@symfony.com>
  *
  * This file is part of Symfony CLI project
  *
@@ -17,19 +17,22 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package platformsh
+package upsun
 
-import "strings"
+import (
+	"testing"
 
-func IsPhpExtensionAvailable(ext, phpVersion string) bool {
-	versions, ok := availablePHPExts[strings.ToLower(ext)]
-	if !ok {
-		return false
-	}
-	for _, v := range versions {
-		if v == phpVersion {
-			return true
-		}
-	}
-	return false
+	. "gopkg.in/check.v1"
+)
+
+func Test(t *testing.T) { TestingT(t) }
+
+type PlatformSuite struct{}
+
+var _ = Suite(&PlatformSuite{})
+
+func (s *PlatformSuite) TestReadDBVersionFromDoctrineConfigYAML(c *C) {
+	version, err := ReadDBVersionFromDoctrineConfigYAML("testdata/projectA")
+	c.Assert(err, IsNil)
+	c.Assert(version, Equals, "")
 }

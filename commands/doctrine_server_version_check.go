@@ -23,17 +23,17 @@ import (
 	"fmt"
 
 	"github.com/rs/zerolog"
-	"github.com/symfony-cli/symfony-cli/local/platformsh"
+	"github.com/symfony-cli/symfony-cli/local/upsun"
 )
 
 // checkDoctrineServerVersionSetting checks that project has a DB and that server version is set properly
 func checkDoctrineServerVersionSetting(projectDir string, logger zerolog.Logger) error {
-	if len(platformsh.FindLocalApplications(projectDir)) > 1 {
+	if len(upsun.FindLocalApplications(projectDir)) > 1 {
 		logger.Debug().Msg("Doctrine server version check disabled on a multiple applications project")
 		return nil
 	}
 
-	configFile, dbName, dbVersion := platformsh.ReadDBVersionFromPlatformServiceYAML(projectDir, logger)
+	configFile, dbName, dbVersion := upsun.ReadDBVersionFromPlatformServiceYAML(projectDir, logger)
 	if dbName == "" {
 		// no DB
 		return nil
@@ -47,19 +47,19 @@ but %%s.
 Before deploying, fix the version mismatch.
  `, configFile, dbName, dbVersion)
 
-	dotEnvVersion, err := platformsh.ReadDBVersionFromDotEnv(projectDir)
+	dotEnvVersion, err := upsun.ReadDBVersionFromDotEnv(projectDir)
 	if err != nil {
 		return nil
 	}
-	if platformsh.DatabaseVersiondUnsynced(dotEnvVersion, dbVersion) {
+	if upsun.DatabaseVersiondUnsynced(dotEnvVersion, dbVersion) {
 		return fmt.Errorf(errorTpl, fmt.Sprintf("the \".env\" file requires version %s", dotEnvVersion))
 	}
 
-	doctrineConfigVersion, err := platformsh.ReadDBVersionFromDoctrineConfigYAML(projectDir)
+	doctrineConfigVersion, err := upsun.ReadDBVersionFromDoctrineConfigYAML(projectDir)
 	if err != nil {
 		return nil
 	}
-	if platformsh.DatabaseVersiondUnsynced(doctrineConfigVersion, dbVersion) {
+	if upsun.DatabaseVersiondUnsynced(doctrineConfigVersion, dbVersion) {
 		return fmt.Errorf(errorTpl, fmt.Sprintf("the \"config/packages/doctrine.yaml\" file requires version %s", doctrineConfigVersion))
 	}
 
@@ -73,7 +73,7 @@ As the database is not available when Doctrine is warming up its cache on %s,
 you need to explicitly set the database version in the ".env" or "config/packages/doctrine.yaml" file.
 
 Set the "server_version" parameter to "%s" in "config/packages/doctrine.yaml".
- `, configFile, dbName, platformsh.GuessCloudFromDirectory(projectDir).Name, dbVersion)
+ `, configFile, dbName, upsun.GuessCloudFromDirectory(projectDir).Name, dbVersion)
 	}
 
 	return nil

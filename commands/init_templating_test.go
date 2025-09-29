@@ -26,7 +26,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/symfony-cli/symfony-cli/local/platformsh"
+	"github.com/symfony-cli/symfony-cli/local/upsun"
 )
 
 func TestCreateRequiredFilesProject(t *testing.T) {
@@ -50,7 +50,7 @@ func TestCreateRequiredFilesProject(t *testing.T) {
 		},
 	}
 
-	if _, err := createRequiredFilesProject(platformsh.PlatformshBrand, projectDir, slug, "", "8.0", services, false, true); err != nil {
+	if _, err := createRequiredFilesProject(upsun.PlatformshBrand, projectDir, slug, "", "8.0", services, false, true); err != nil {
 		panic(err)
 	}
 
@@ -98,7 +98,7 @@ func TestCreateRequiredFilesProjectForUpsun(t *testing.T) {
 		},
 	}
 
-	if _, err := createRequiredFilesProject(platformsh.UpsunBrand, projectDir, slug, "", "8.0", services, false, true); err != nil {
+	if _, err := createRequiredFilesProject(upsun.UpsunBrand, projectDir, slug, "", "8.0", services, false, true); err != nil {
 		panic(err)
 	}
 

@@ -33,7 +33,7 @@ import (
 	"github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/symfony-cli/git"
-	"github.com/symfony-cli/symfony-cli/local/platformsh"
+	"github.com/symfony-cli/symfony-cli/local/upsun"
 	"github.com/symfony-cli/symfony-cli/util"
 	"github.com/symfony-cli/terminal"
 	"gopkg.in/yaml.v2"
@@ -47,7 +47,7 @@ type nopCloser struct {
 
 func (nopCloser) Close() error { return nil }
 
-func createRequiredFilesProject(brand platformsh.CloudBrand, rootDirectory, projectSlug, templateName string, minorPHPVersion string, cloudServices []*CloudService, dump, force bool) ([]string, error) {
+func createRequiredFilesProject(brand upsun.CloudBrand, rootDirectory, projectSlug, templateName string, minorPHPVersion string, cloudServices []*CloudService, dump, force bool) ([]string, error) {
 	createdFiles := []string{}
 	templates, err := getTemplates(brand, rootDirectory, templateName, minorPHPVersion)
 	if err != nil {
@@ -158,7 +158,7 @@ func isValidFilePath(toTest string) bool {
 	return true
 }
 
-func getTemplates(brand platformsh.CloudBrand, rootDirectory, chosenTemplateName string, minorPHPVersion string) (map[string]*template.Template, error) {
+func getTemplates(brand upsun.CloudBrand, rootDirectory, chosenTemplateName string, minorPHPVersion string) (map[string]*template.Template, error) {
 	var foundTemplate *configTemplate
 
 	s := terminal.NewSpinner(terminal.Stderr)
@@ -186,7 +186,7 @@ func getTemplates(brand platformsh.CloudBrand, rootDirectory, chosenTemplateName
 		}
 	}
 
-	if brand == platformsh.UpsunBrand {
+	if brand == upsun.UpsunBrand {
 		directory = filepath.Join(directory, "upsun")
 	}
 	if isURL, isFile := isValidURL(chosenTemplateName), isValidFilePath(chosenTemplateName); isURL || isFile {
@@ -298,7 +298,7 @@ func getTemplates(brand platformsh.CloudBrand, rootDirectory, chosenTemplateName
 
 	templateFuncs := getTemplateFuncs(rootDirectory, minorPHPVersion)
 	var templates map[string]*template.Template
-	if brand == platformsh.UpsunBrand {
+	if brand == upsun.UpsunBrand {
 		templates = map[string]*template.Template{
 			".upsun/config.yaml": template.Must(template.New("output").Funcs(templateFuncs).Parse(foundTemplate.Template)),
 			"php.ini":            template.Must(template.New("output").Funcs(templateFuncs).Parse(string(phpini))),
@@ -372,7 +372,7 @@ func getTemplateFuncs(rootDirectory, minorPHPVersion string) template.FuncMap {
 			// FIXME: obsolete, replaced by PHPExtensions, should be removed
 			return phpExtensions(rootDirectory)
 		},
-		"php_extension_available": platformsh.IsPhpExtensionAvailable,
+		"php_extension_available": upsun.IsPhpExtensionAvailable,
 		"php_at_least": func(v string) bool {
 			minVersion, err := version.NewVersion(v)
 			if err != nil {

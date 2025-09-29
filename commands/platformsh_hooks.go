@@ -23,11 +23,11 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/envs"
-	"github.com/symfony-cli/symfony-cli/local/platformsh"
+	"github.com/symfony-cli/symfony-cli/local/upsun"
 	"github.com/symfony-cli/terminal"
 )
 
-var platformshBeforeHooks = map[string]console.BeforeFunc{
+var upsunBeforeHooks = map[string]console.BeforeFunc{
 	"environment:push": func(c *console.Context) error {
 		// check that project has a DB and that server version is set properly
 		projectDir, err := getProjectDir(c.String("dir"))
@@ -41,14 +41,14 @@ var platformshBeforeHooks = map[string]console.BeforeFunc{
 
 		app := c.String("app")
 		env := c.String("environment")
-		var project *platformsh.Project
+		var project *upsun.Project
 		projectID := c.String("project")
 		if projectID == "" {
 			projectDir, err := getProjectDir(c.String("dir"))
 			if err != nil {
 				return err
 			}
-			project, err = platformsh.ProjectFromDir(projectDir, false)
+			project, err = upsun.ProjectFromDir(projectDir, false)
 			if err != nil {
 				return err
 			}
@@ -59,7 +59,7 @@ var platformshBeforeHooks = map[string]console.BeforeFunc{
 				project.Env = env
 			}
 		} else {
-			project = &platformsh.Project{
+			project = &upsun.Project{
 				ID:  projectID,
 				App: app,
 				Env: env,

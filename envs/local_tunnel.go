@@ -30,7 +30,7 @@ import (
 	"strconv"
 
 	"github.com/mitchellh/go-homedir"
-	"github.com/symfony-cli/symfony-cli/local/platformsh"
+	"github.com/symfony-cli/symfony-cli/local/upsun"
 	"github.com/symfony-cli/symfony-cli/util"
 )
 
@@ -44,8 +44,8 @@ type pshtunnel struct {
 }
 
 func (l *Local) relationshipsFromTunnel() Relationships {
-	brand := platformsh.GuessCloudFromDirectory(l.Dir)
-	project, err := platformsh.ProjectFromDir(l.Dir, l.Debug)
+	brand := upsun.GuessCloudFromDirectory(l.Dir)
+	project, err := upsun.ProjectFromDir(l.Dir, l.Debug)
 	if err != nil {
 		if l.Debug {
 			fmt.Fprintf(os.Stderr, "WARNING: unable to detect %s project: %s\n", brand, err)
@@ -101,7 +101,7 @@ func (l *Local) relationshipsFromTunnel() Relationships {
 var pathCleaningRegex = regexp.MustCompile(`[^a-zA-Z0-9-\.]+`)
 
 type Tunnel struct {
-	Project *platformsh.Project
+	Project *upsun.Project
 	Worker  string
 	Debug   bool
 }

@@ -19,7 +19,7 @@
 
 package main
 
-//go:generate go run ./local/platformsh/generator/...
+//go:generate go run ./local/upsun/generator/...
 
 import (
 	"fmt"
@@ -29,7 +29,7 @@ import (
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/commands"
 	"github.com/symfony-cli/symfony-cli/local/php"
-	"github.com/symfony-cli/symfony-cli/local/platformsh"
+	"github.com/symfony-cli/symfony-cli/local/upsun"
 	"github.com/symfony-cli/terminal"
 )
 
@@ -106,7 +106,7 @@ func main() {
 	}
 
 	cmds := commands.CommonCommands()
-	psh, err := platformsh.Get()
+	psh, err := upsun.Get()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)

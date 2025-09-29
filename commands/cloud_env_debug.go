@@ -25,7 +25,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
-	"github.com/symfony-cli/symfony-cli/local/platformsh"
+	"github.com/symfony-cli/symfony-cli/local/upsun"
 	"github.com/symfony-cli/terminal"
 )
 
@@ -45,11 +45,11 @@ var cloudEnvDebugCmd = &console.Command{
 		spinner.Start()
 		defer spinner.Stop()
 
-		psh, err := platformsh.Get()
+		psh, err := upsun.Get()
 		if err != nil {
 			return err
 		}
-		prefix := platformsh.GuessCloudFromCommandName(c.Command.UserName).CommandPrefix
+		prefix := upsun.GuessCloudFromCommandName(c.Command.UserName).CommandPrefix
 
 		projectID := c.String("project")
 		if projectID == "" {

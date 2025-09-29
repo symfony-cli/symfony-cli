@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 
 	"github.com/mitchellh/go-homedir"
-	"github.com/symfony-cli/symfony-cli/local/platformsh"
+	"github.com/symfony-cli/symfony-cli/local/upsun"
 	. "gopkg.in/check.v1"
 )
 
@@ -58,7 +58,7 @@ func (s *LocalSuite) TestTunnelFilePath(c *C) {
 	defer func() {
 		os.Rename("testdata/project/.git", "testdata/project/git")
 	}()
-	project, err := platformsh.ProjectFromDir(l.Dir, true)
+	project, err := upsun.ProjectFromDir(l.Dir, true)
 	if err != nil {
 		panic(err)
 	}
