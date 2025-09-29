@@ -58,7 +58,7 @@ var commandsTemplate = template.Must(template.New("output").Parse(`// Code gener
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package platformsh
+package upsun
 
 import (
 	"github.com/symfony-cli/console"
