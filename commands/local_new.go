@@ -38,7 +38,7 @@ import (
 	"github.com/symfony-cli/symfony-cli/book"
 	"github.com/symfony-cli/symfony-cli/git"
 	"github.com/symfony-cli/symfony-cli/local/php"
-	"github.com/symfony-cli/symfony-cli/local/platformsh"
+	"github.com/symfony-cli/symfony-cli/local/upsun"
 	"github.com/symfony-cli/symfony-cli/util"
 	"github.com/symfony-cli/terminal"
 )
@@ -201,9 +201,9 @@ var localNewCmd = &console.Command{
 					return err
 				}
 			}
-			brand := platformsh.PlatformshBrand
+			brand := upsun.PlatformshBrand
 			if c.Bool("upsun") {
-				brand = platformsh.UpsunBrand
+				brand = upsun.UpsunBrand
 			}
 			if err := initCloud(c, brand, minorPHPVersion, dir); err != nil {
 				return err
@@ -234,7 +234,7 @@ func isEmpty(dir string) (bool, error) {
 	return false, err
 }
 
-func initCloud(c *console.Context, brand platformsh.CloudBrand, minorPHPVersion, dir string) error {
+func initCloud(c *console.Context, brand upsun.CloudBrand, minorPHPVersion, dir string) error {
 	terminal.Printfln("* Adding %s configuration", brand)
 
 	cloudServices, err := parseCloudServices(dir, c.StringSlice("service"))
@@ -280,9 +280,9 @@ func parseCLIServices(services []string) ([]*CloudService, error) {
 		parts := strings.Split(config, ":")
 		if len(parts) == 1 {
 			// service == name
-			service = &CloudService{Name: parts[0], Type: parts[0], Version: platformsh.ServiceLastVersion(parts[1])}
+			service = &CloudService{Name: parts[0], Type: parts[0], Version: upsun.ServiceLastVersion(parts[1])}
 		} else if len(parts) == 2 {
-			service = &CloudService{Name: parts[0], Type: parts[1], Version: platformsh.ServiceLastVersion(parts[1])}
+			service = &CloudService{Name: parts[0], Type: parts[1], Version: upsun.ServiceLastVersion(parts[1])}
 		} else if len(parts) == 3 {
 			service = &CloudService{Name: parts[0], Type: parts[1], Version: parts[2]}
 		} else {
@@ -333,7 +333,7 @@ func parseDockerComposeServices(dir string) []*CloudService {
 				s.Name = service.Name
 				parts := strings.Split(service.Image, ":")
 				s.Version = regexp.MustCompile(`\d+(\.\d+)?`).FindString(parts[len(parts)-1])
-				serviceLastVersion := platformsh.ServiceLastVersion(s.Type)
+				serviceLastVersion := upsun.ServiceLastVersion(s.Type)
 				if s.Version == "" {
 					s.Version = serviceLastVersion
 				} else if s.Version > serviceLastVersion {

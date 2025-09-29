@@ -8,7 +8,7 @@ on your local machine. It provides:
 * The best way to [create new Symfony applications][2];
 * A powerful [local web server][3] to develop your projects with support for [TLS certificates][4];
 * A tool to [check for security vulnerabilities][5];
-* Seamless integration with [Platform.sh][6].
+* Seamless integration with [Upsun (formerly Platform.sh)][6].
 
 Installation
 ------------

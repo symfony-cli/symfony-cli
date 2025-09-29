@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-present Fabien Potencier <fabien@symfony.com>
+ * Copyright (c) 2021-present Fabien Potencier <fabien@symfony.com>
  *
  * This file is part of Symfony CLI project
  *
@@ -17,22 +17,29 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package platformsh
+package upsun
 
-import (
-	"testing"
+type service struct {
+	Type     string
+	Versions serviceVersions
+}
 
-	. "gopkg.in/check.v1"
-)
+type serviceVersions struct {
+	Deprecated []string
+	Supported  []string
+}
 
-func Test(t *testing.T) { TestingT(t) }
-
-type PlatformSuite struct{}
-
-var _ = Suite(&PlatformSuite{})
-
-func (s *PlatformSuite) TestReadDBVersionFromDoctrineConfigYAML(c *C) {
-	version, err := ReadDBVersionFromDoctrineConfigYAML("testdata/projectA")
-	c.Assert(err, IsNil)
-	c.Assert(version, Equals, "")
+func ServiceLastVersion(name string) string {
+	for _, s := range availableServices {
+		if s.Type == name {
+			versions := s.Versions.Supported
+			if len(versions) == 0 {
+				versions = s.Versions.Deprecated
+			}
+			if len(versions) > 0 {
+				return versions[len(versions)-1]
+			}
+		}
+	}
+	return ""
 }

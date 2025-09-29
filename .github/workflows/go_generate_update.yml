@@ -47,11 +47,11 @@ jobs:
                 run: go run .
 
             -
-                name: Commit the update for PSH-related code
+                name: Commit the update for Upsun-related code
                 if: steps.git.outputs.gitstatus != ''
                 run: |
-                    git add local/platformsh/commands.go local/platformsh/config.go
-                    git diff --staged --quiet || git commit -m "Update supported Platform.sh services"
+                    git add local/upsun/commands.go local/upsun/config.go
+                    git diff --staged --quiet || git commit -m "Update supported Upsun services"
 
             -   name: Commit the update for Docker-related code
                 if: steps.git.outputs.gitstatus != ''

@@ -24,11 +24,11 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/symfony-cli/symfony-cli/local/platformsh"
+	"github.com/symfony-cli/symfony-cli/local/upsun"
 )
 
 func TestParseDockerComposeServices(t *testing.T) {
-	lastVersion := platformsh.ServiceLastVersion("postgresql")
+	lastVersion := upsun.ServiceLastVersion("postgresql")
 
 	if n, err := strconv.Atoi(lastVersion); err != nil {
 		t.Error("Could not generate test cases:", err)
