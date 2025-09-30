@@ -201,11 +201,11 @@ var localNewCmd = &console.Command{
 					return err
 				}
 			}
-			brand := upsun.PlatformshBrand
+			product := upsun.Fixed
 			if c.Bool("upsun") {
-				brand = upsun.UpsunBrand
+				product = upsun.Flex
 			}
-			if err := initCloud(c, brand, minorPHPVersion, dir); err != nil {
+			if err := initCloud(c, product, minorPHPVersion, dir); err != nil {
 				return err
 			}
 		}
@@ -234,8 +234,8 @@ func isEmpty(dir string) (bool, error) {
 	return false, err
 }
 
-func initCloud(c *console.Context, brand upsun.CloudBrand, minorPHPVersion, dir string) error {
-	terminal.Printfln("* Adding %s configuration", brand)
+func initCloud(c *console.Context, product upsun.CloudProduct, minorPHPVersion, dir string) error {
+	terminal.Printfln("* Adding %s configuration", product)
 
 	cloudServices, err := parseCloudServices(dir, c.StringSlice("service"))
 	if err != nil {
@@ -243,7 +243,7 @@ func initCloud(c *console.Context, brand upsun.CloudBrand, minorPHPVersion, dir 
 	}
 
 	// FIXME: display or hide output based on debug flag
-	_, err = createRequiredFilesProject(brand, dir, "app", "", minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
+	_, err = createRequiredFilesProject(product, dir, "app", "", minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
 	if err != nil {
 		return err
 	}
@@ -251,7 +251,7 @@ func initCloud(c *console.Context, brand upsun.CloudBrand, minorPHPVersion, dir 
 	if !c.Bool("no-git") {
 		return nil
 	}
-	buf, err := git.AddAndCommit(dir, []string{"."}, fmt.Sprintf("Add %s configuration", brand), c.Bool("debug"))
+	buf, err := git.AddAndCommit(dir, []string{"."}, fmt.Sprintf("Add %s configuration", product), c.Bool("debug"))
 	if err != nil {
 		fmt.Print(buf.String())
 	}

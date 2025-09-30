@@ -47,7 +47,7 @@ func (s *LocalSuite) TestExtra(c *C) {
 	c.Assert(l.Extra(), DeepEquals, Envs{
 		"SYMFONY_TUNNEL":       "",
 		"SYMFONY_TUNNEL_ENV":   "",
-		"SYMFONY_TUNNEL_BRAND": "Upsun",
+		"SYMFONY_TUNNEL_BRAND": "Upsun Flex",
 		"SYMFONY_DOCKER_ENV":   "",
 	})
 }

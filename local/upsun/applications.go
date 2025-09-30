@@ -103,8 +103,8 @@ func FindLocalApplications(rootDirectory string) LocalApplications {
 		return apps
 	}
 
-	brand := GuessCloudFromDirectory(rootDirectory)
-	if brand == NoBrand {
+	product := GuessProductFromDirectory(rootDirectory)
+	if product == NoProduct {
 		return apps
 	}
 	go func() {
@@ -115,7 +115,7 @@ func FindLocalApplications(rootDirectory string) LocalApplications {
 				continue
 			}
 
-			if brand == UpsunBrand {
+			if product == Flex {
 				var config UpsunDotYaml
 				if err := yaml.Unmarshal(content, &config); err != nil {
 					terminal.Logger.Error().Msgf("Could not decode %s YAML file: %s\n", file, err)
@@ -157,7 +157,7 @@ func FindLocalApplications(rootDirectory string) LocalApplications {
 		appParsingDone <- true
 	}()
 
-	for _, path := range findAppConfigFiles(brand, rootDirectory) {
+	for _, path := range findAppConfigFiles(product, rootDirectory) {
 		appParser <- path
 	}
 
@@ -168,10 +168,10 @@ func FindLocalApplications(rootDirectory string) LocalApplications {
 	return apps
 }
 
-func findAppConfigFiles(brand CloudBrand, dir string) []string {
+func findAppConfigFiles(product CloudProduct, dir string) []string {
 	files := []string{}
-	if brand == UpsunBrand {
-		dir = filepath.Join(dir, brand.ProjectConfigPath)
+	if product == Flex {
+		dir = filepath.Join(dir, product.ProjectConfigPath)
 		fs, err := os.ReadDir(dir)
 		if err != nil {
 			return files

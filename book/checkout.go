@@ -119,8 +119,8 @@ func (b *Book) Checkout(step string) error {
 	printBanner("<comment>[WEB]</> Stopping the Local Web Server", b.Debug)
 	executeCommand([]string{"symfony", "server:stop"}, b.Debug, true, nil)
 
-	brand := upsun.GuessCloudFromDirectory(b.Dir)
-	printBanner(fmt.Sprintf("<comment>[WEB]</> Stopping the %s tunnel", brand.Name), b.Debug)
+	product := upsun.GuessProductFromDirectory(b.Dir)
+	printBanner(fmt.Sprintf("<comment>[WEB]</> Stopping the %s tunnel", product.Name), b.Debug)
 	if err := executeCommand([]string{"symfony", "tunnel:close", "-y"}, b.Debug, true, nil); err != nil {
 		return err
 	}

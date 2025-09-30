@@ -73,7 +73,7 @@ As the database is not available when Doctrine is warming up its cache on %s,
 you need to explicitly set the database version in the ".env" or "config/packages/doctrine.yaml" file.
 
 Set the "server_version" parameter to "%s" in "config/packages/doctrine.yaml".
- `, configFile, dbName, upsun.GuessCloudFromDirectory(projectDir).Name, dbVersion)
+ `, configFile, dbName, upsun.GuessProductFromDirectory(projectDir).Name, dbVersion)
 	}
 
 	return nil

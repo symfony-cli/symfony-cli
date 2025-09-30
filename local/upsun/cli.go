@@ -89,7 +89,7 @@ func (p *CLI) AddBeforeHook(name string, f console.BeforeFunc) {
 	}
 }
 
-func (p *CLI) getPath(brand CloudBrand) string {
+func (p *CLI) getPath(product CloudProduct) string {
 	if p.path != "" {
 		return p.path
 	}
@@ -100,9 +100,9 @@ func (p *CLI) getPath(brand CloudBrand) string {
 	}
 
 	// the Platform.sh CLI is always available on the containers thanks to the configurator
-	p.path = filepath.Join(home, brand.BinaryPath())
+	p.path = filepath.Join(home, product.BinaryPath())
 	if !util.InCloud() {
-		if cloudPath, err := Install(home, brand); err == nil {
+		if cloudPath, err := Install(home, product); err == nil {
 			p.path = cloudPath
 		}
 	}
@@ -138,7 +138,7 @@ func (p *CLI) proxyPSHCmd(commandName string) console.ActionFunc {
 					return err
 				}
 			}
-			brand := GuessCloudFromCommandName(ctx.Command.UserName)
+			product := GuessProductFromCommandName(ctx.Command.UserName)
 			args := os.Args[1:]
 			for i := range args {
 				if args[i] == ctx.Command.UserName {
@@ -146,16 +146,16 @@ func (p *CLI) proxyPSHCmd(commandName string) console.ActionFunc {
 					break
 				}
 			}
-			return p.executor(brand, args).Run()
+			return p.executor(product, args).Run()
 		}
 	}(commandName)
 }
 
-func (p *CLI) executor(brand CloudBrand, args []string) *exec.Cmd {
-	prefix := brand.CLIPrefix
+func (p *CLI) executor(product CloudProduct, args []string) *exec.Cmd {
+	prefix := product.CLIPrefix
 
 	env := []string{
-		fmt.Sprintf("%sAPPLICATION_NAME=%s CLI for Symfony", prefix, brand),
+		fmt.Sprintf("%sAPPLICATION_NAME=%s CLI for Symfony", prefix, product),
 		fmt.Sprintf("%sAPPLICATION_EXECUTABLE=symfony", prefix),
 		"XDEBUG_MODE=off",
 		fmt.Sprintf("%sWRAPPED=1", prefix),
@@ -164,7 +164,7 @@ func (p *CLI) executor(brand CloudBrand, args []string) *exec.Cmd {
 		env = append(env, fmt.Sprintf("%sUPDATES_CHECK=0", prefix))
 	}
 	args[0] = strings.TrimPrefix(strings.TrimPrefix(args[0], "upsun:"), "cloud:")
-	cmd := exec.Command(p.getPath(brand), args...)
+	cmd := exec.Command(p.getPath(product), args...)
 	cmd.Env = append(os.Environ(), env...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -174,8 +174,8 @@ func (p *CLI) executor(brand CloudBrand, args []string) *exec.Cmd {
 
 func (p *CLI) RunInteractive(logger zerolog.Logger, projectDir string, args []string, debug bool, stdin io.Reader) (bytes.Buffer, bool) {
 	var buf bytes.Buffer
-	brand := GuessCloudFromCommandName(args[0])
-	cmd := p.executor(brand, args)
+	product := GuessProductFromCommandName(args[0])
+	cmd := p.executor(product, args)
 	if projectDir != "" {
 		cmd.Dir = projectDir
 	}
@@ -189,7 +189,7 @@ func (p *CLI) RunInteractive(logger zerolog.Logger, projectDir string, args []st
 	if stdin != nil {
 		cmd.Stdin = stdin
 	}
-	logger.Debug().Str("cmd", strings.Join(cmd.Args, " ")).Msgf("Executing %s CLI command interactively", GuessCloudFromCommandName(args[0]))
+	logger.Debug().Str("cmd", strings.Join(cmd.Args, " ")).Msgf("Executing %s CLI command interactively", GuessProductFromCommandName(args[0]))
 	if err := cmd.Run(); err != nil {
 		return buf, false
 	}
@@ -202,8 +202,8 @@ func (p *CLI) WrapHelpPrinter() func(w io.Writer, templ string, data interface{}
 		switch cmd := data.(type) {
 		case *console.Command:
 			if strings.HasPrefix(cmd.Category, "cloud") && cmd.FullName() != "cloud:deploy" {
-				brand := GuessCloudFromCommandName(cmd.UserName)
-				cmd := p.executor(brand, []string{cmd.FullName(), "--help"})
+				product := GuessProductFromCommandName(cmd.UserName)
+				cmd := p.executor(product, []string{cmd.FullName(), "--help"})
 				cmd.Run()
 			} else {
 				currentHelpPrinter(w, templ, data)
