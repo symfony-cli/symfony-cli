@@ -160,8 +160,8 @@ func (l *Local) Relationships() Relationships {
 	project, err := upsun.ProjectFromDir(l.Dir, l.Debug)
 	if err != nil {
 		if l.Debug {
-			if brand := upsun.GuessCloudFromDirectory(l.Dir); brand != upsun.NoBrand {
-				fmt.Fprintf(os.Stderr, "ERROR: unable to get %s project information\n", brand)
+			if product := upsun.GuessProductFromDirectory(l.Dir); product != upsun.NoProduct {
+				fmt.Fprintf(os.Stderr, "ERROR: unable to get %s project information\n", product)
 			}
 		}
 		return dockerRel
@@ -199,7 +199,7 @@ func (l *Local) Extra() Envs {
 	env := Envs{
 		"SYMFONY_TUNNEL":       l.Tunnel,
 		"SYMFONY_TUNNEL_ENV":   sc,
-		"SYMFONY_TUNNEL_BRAND": upsun.GuessCloudFromDirectory(l.Dir).Name,
+		"SYMFONY_TUNNEL_BRAND": upsun.GuessProductFromDirectory(l.Dir).Name,
 		"SYMFONY_DOCKER_ENV":   docker,
 	}
 	if _, err := os.Stat(filepath.Join(l.Dir, ".prod")); err == nil {
@@ -229,7 +229,7 @@ func (l *Local) Language() string {
 	app := upsun.GuessSelectedAppByWd(upsun.FindLocalApplications(projectRoot))
 	if app == nil {
 		if l.Debug {
-			if upsun.GuessCloudFromDirectory(l.Dir) != upsun.NoBrand {
+			if upsun.GuessProductFromDirectory(l.Dir) != upsun.NoProduct {
 				fmt.Fprint(os.Stderr, "ERROR: unable to get project configuration\n")
 			}
 		}

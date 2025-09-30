@@ -47,9 +47,9 @@ type nopCloser struct {
 
 func (nopCloser) Close() error { return nil }
 
-func createRequiredFilesProject(brand upsun.CloudBrand, rootDirectory, projectSlug, templateName string, minorPHPVersion string, cloudServices []*CloudService, dump, force bool) ([]string, error) {
+func createRequiredFilesProject(product upsun.CloudProduct, rootDirectory, projectSlug, templateName string, minorPHPVersion string, cloudServices []*CloudService, dump, force bool) ([]string, error) {
 	createdFiles := []string{}
-	templates, err := getTemplates(brand, rootDirectory, templateName, minorPHPVersion)
+	templates, err := getTemplates(product, rootDirectory, templateName, minorPHPVersion)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not determine template to use")
 	}
@@ -158,7 +158,7 @@ func isValidFilePath(toTest string) bool {
 	return true
 }
 
-func getTemplates(brand upsun.CloudBrand, rootDirectory, chosenTemplateName string, minorPHPVersion string) (map[string]*template.Template, error) {
+func getTemplates(product upsun.CloudProduct, rootDirectory, chosenTemplateName string, minorPHPVersion string) (map[string]*template.Template, error) {
 	var foundTemplate *configTemplate
 
 	s := terminal.NewSpinner(terminal.Stderr)
@@ -186,7 +186,7 @@ func getTemplates(brand upsun.CloudBrand, rootDirectory, chosenTemplateName stri
 		}
 	}
 
-	if brand == upsun.UpsunBrand {
+	if product == upsun.Flex {
 		directory = filepath.Join(directory, "upsun")
 	}
 	if isURL, isFile := isValidURL(chosenTemplateName), isValidFilePath(chosenTemplateName); isURL || isFile {
@@ -298,7 +298,7 @@ func getTemplates(brand upsun.CloudBrand, rootDirectory, chosenTemplateName stri
 
 	templateFuncs := getTemplateFuncs(rootDirectory, minorPHPVersion)
 	var templates map[string]*template.Template
-	if brand == upsun.UpsunBrand {
+	if product == upsun.Flex {
 		templates = map[string]*template.Template{
 			".upsun/config.yaml": template.Must(template.New("output").Funcs(templateFuncs).Parse(foundTemplate.Template)),
 			"php.ini":            template.Must(template.New("output").Funcs(templateFuncs).Parse(string(phpini))),

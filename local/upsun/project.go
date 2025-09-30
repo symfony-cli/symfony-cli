@@ -97,23 +97,23 @@ func repositoryRootDir(currentDir string) string {
 }
 
 func getProjectID(projectRoot string, debug bool) string {
-	brand := GuessCloudFromDirectory(projectRoot)
-	if brand == NoBrand {
+	product := GuessProductFromDirectory(projectRoot)
+	if product == NoProduct {
 		return ""
 	}
-	id := getProjectIDFromConfigFile(brand, projectRoot, debug)
+	id := getProjectIDFromConfigFile(product, projectRoot, debug)
 	if id != "" {
 		return id
 	}
 
-	return getProjectIDFromGitConfig(brand, projectRoot, debug)
+	return getProjectIDFromGitConfig(product, projectRoot, debug)
 }
 
-func getProjectIDFromConfigFile(brand CloudBrand, projectRoot string, debug bool) string {
-	contents, err := os.ReadFile(filepath.Join(projectRoot, brand.ProjectConfigPath, "local", "project.yaml"))
+func getProjectIDFromConfigFile(product CloudProduct, projectRoot string, debug bool) string {
+	contents, err := os.ReadFile(filepath.Join(projectRoot, product.ProjectConfigPath, "local", "project.yaml"))
 	if err != nil {
 		if debug {
-			fmt.Fprintf(os.Stderr, "WARNING: unable to find %s config file: %s\n", brand, err)
+			fmt.Fprintf(os.Stderr, "WARNING: unable to find %s config file: %s\n", product, err)
 		}
 		return ""
 	}
@@ -122,15 +122,15 @@ func getProjectIDFromConfigFile(brand CloudBrand, projectRoot string, debug bool
 	}
 	if err := yaml.Unmarshal(contents, &config); err != nil {
 		if debug {
-			fmt.Fprintf(os.Stderr, "ERROR: unable to decode %s config file: %s\n", brand, err)
+			fmt.Fprintf(os.Stderr, "ERROR: unable to decode %s config file: %s\n", product, err)
 		}
 		return ""
 	}
 	return config.ID
 }
 
-func getProjectIDFromGitConfig(brand CloudBrand, projectRoot string, debug bool) string {
-	for _, remote := range []string{brand.GitRemoteName, "origin"} {
+func getProjectIDFromGitConfig(product CloudProduct, projectRoot string, debug bool) string {
+	for _, remote := range []string{product.GitRemoteName, "origin"} {
 		url := git.GetRemoteURL(projectRoot, remote)
 		matches := regexp.MustCompile(`^([a-z0-9]{12,})@git\.`).FindStringSubmatch(url)
 		if len(matches) > 1 {

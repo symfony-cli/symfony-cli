@@ -49,7 +49,7 @@ var cloudEnvDebugCmd = &console.Command{
 		if err != nil {
 			return err
 		}
-		prefix := upsun.GuessCloudFromCommandName(c.Command.UserName).CommandPrefix
+		prefix := upsun.GuessProductFromCommandName(c.Command.UserName).CommandPrefix
 
 		projectID := c.String("project")
 		if projectID == "" {

@@ -44,11 +44,11 @@ type pshtunnel struct {
 }
 
 func (l *Local) relationshipsFromTunnel() Relationships {
-	brand := upsun.GuessCloudFromDirectory(l.Dir)
+	product := upsun.GuessProductFromDirectory(l.Dir)
 	project, err := upsun.ProjectFromDir(l.Dir, l.Debug)
 	if err != nil {
 		if l.Debug {
-			fmt.Fprintf(os.Stderr, "WARNING: unable to detect %s project: %s\n", brand, err)
+			fmt.Fprintf(os.Stderr, "WARNING: unable to detect %s project: %s\n", product, err)
 		}
 		return nil
 	}
@@ -57,7 +57,7 @@ func (l *Local) relationshipsFromTunnel() Relationships {
 	if err != nil {
 		userHomeDir = ""
 	}
-	tunnelFile := filepath.Join(userHomeDir, brand.CLIConfigPath, "tunnel-info.json")
+	tunnelFile := filepath.Join(userHomeDir, product.CLIConfigPath, "tunnel-info.json")
 	data, err := os.ReadFile(tunnelFile)
 	if err != nil {
 		if l.Debug {

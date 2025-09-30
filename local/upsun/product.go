@@ -25,7 +25,7 @@ import (
 	"strings"
 )
 
-type CloudBrand struct {
+type CloudProduct struct {
 	Name              string
 	ProjectConfigPath string
 	CommandPrefix     string
@@ -35,8 +35,8 @@ type CloudBrand struct {
 	BinName           string
 }
 
-var UpsunBrand = CloudBrand{
-	Name:              "Upsun",
+var Flex = CloudProduct{
+	Name:              "Upsun Flex",
 	ProjectConfigPath: ".upsun",
 	CLIConfigPath:     ".upsun-cli",
 	CLIPrefix:         "UPSUN_CLI_",
@@ -44,8 +44,8 @@ var UpsunBrand = CloudBrand{
 	GitRemoteName:     "upsun",
 	BinName:           "upsun",
 }
-var PlatformshBrand = CloudBrand{
-	Name:              "Platform.sh",
+var Fixed = CloudProduct{
+	Name:              "Upun Fixed",
 	ProjectConfigPath: ".platform",
 	CLIConfigPath:     ".platformsh",
 	CLIPrefix:         "PLATFORMSH_CLI_",
@@ -54,8 +54,8 @@ var PlatformshBrand = CloudBrand{
 	BinName:           "platform",
 }
 
-// NoBrand is used when there is no explicit setting for the brand.
-var NoBrand = CloudBrand{
+// NoProduct is used when there is no explicit setting for the product.
+var NoProduct = CloudProduct{
 	Name:              "",
 	ProjectConfigPath: "",
 	CLIConfigPath:     ".platformsh",
@@ -65,33 +65,33 @@ var NoBrand = CloudBrand{
 	BinName:           "platform",
 }
 
-func (b CloudBrand) String() string {
+func (b CloudProduct) String() string {
 	return b.Name
 }
 
 // BinaryPath returns the cloud binary path.
-func (b CloudBrand) BinaryPath() string {
+func (b CloudProduct) BinaryPath() string {
 	return filepath.Join(b.CLIConfigPath, "bin", b.BinName)
 }
 
-func GuessCloudFromCommandName(name string) CloudBrand {
-	// if the namespace is upsun, then that's the brand we want to use
+func GuessProductFromCommandName(name string) CloudProduct {
+	// if the namespace is upsun, then that's the product we want to use
 	if strings.HasPrefix(name, "upsun:") {
-		return UpsunBrand
+		return Flex
 	}
 
 	if dir, err := os.Getwd(); err == nil {
-		return GuessCloudFromDirectory(dir)
+		return GuessProductFromDirectory(dir)
 	}
 
-	return PlatformshBrand
+	return Fixed
 }
 
-func GuessCloudFromDirectory(dir string) CloudBrand {
-	for _, brand := range []CloudBrand{UpsunBrand, PlatformshBrand} {
-		if _, err := os.Stat(filepath.Join(dir, brand.ProjectConfigPath)); err == nil {
-			return brand
+func GuessProductFromDirectory(dir string) CloudProduct {
+	for _, product := range []CloudProduct{Flex, Fixed} {
+		if _, err := os.Stat(filepath.Join(dir, product.ProjectConfigPath)); err == nil {
+			return product
 		}
 	}
-	return NoBrand
+	return NoProduct
 }

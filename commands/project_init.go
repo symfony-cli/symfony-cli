@@ -81,11 +81,11 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 			return err
 		}
 
-		brand := upsun.PlatformshBrand
+		product := upsun.Fixed
 		if c.Bool("upsun") {
-			brand = upsun.UpsunBrand
+			product = upsun.Flex
 		}
-		createdFiles, err := createRequiredFilesProject(brand, projectDir, slug, c.String("template"), minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
+		createdFiles, err := createRequiredFilesProject(product, projectDir, slug, c.String("template"), minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
 		if err != nil {
 			return err
 		}
@@ -107,7 +107,7 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 			ui.Section("Next Steps")
 
 			terminal.Println(" * Adapt the generated files if needed")
-			terminal.Printf(" * Commit them: <info>git add %s && git commit -m\"Add %s configuration\"</>\n", strings.Join(createdFiles, " "), brand)
+			terminal.Printf(" * Commit them: <info>git add %s && git commit -m\"Add %s configuration\"</>\n", strings.Join(createdFiles, " "), product)
 			terminal.Printf(" * Deploy: <info>%s deploy</>\n", c.App.HelpName)
 		} else {
 			terminal.Printf("Deploy the project via <info>%s deploy</>.\n", c.App.HelpName)
