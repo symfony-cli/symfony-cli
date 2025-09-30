@@ -201,7 +201,7 @@ func (p *CLI) WrapHelpPrinter() func(w io.Writer, templ string, data interface{}
 	return func(w io.Writer, templ string, data interface{}) {
 		switch cmd := data.(type) {
 		case *console.Command:
-			if strings.HasPrefix(cmd.Category, "cloud") {
+			if strings.HasPrefix(cmd.Category, "cloud") && cmd.FullName() != "cloud:deploy" {
 				brand := GuessCloudFromCommandName(cmd.UserName)
 				cmd := p.executor(brand, []string{cmd.FullName(), "--help"})
 				cmd.Run()

@@ -899,9 +899,6 @@ var Commands = []*console.Command{
 		Aliases: []*console.Alias{
 			{Name: "environment:deploy", Hidden: true},
 			{Name: "upsun:environment:deploy", Hidden: true},
-			{Name: "cloud:deploy"},
-			{Name: "upsun:deploy", Hidden: true},
-			{Name: "deploy", Hidden: true},
 			{Name: "cloud:e:deploy"},
 			{Name: "upsun:e:deploy", Hidden: true},
 			{Name: "e:deploy", Hidden: true},
