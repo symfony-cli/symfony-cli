@@ -205,8 +205,8 @@ var availableServices = []*service{
 	{
 		Type: "network-storage",
 		Versions: serviceVersions{
-			Deprecated: []string{"1.0"},
-			Supported:  []string{"2.0"},
+			Deprecated: []string{"2.0"},
+			Supported:  []string{"1.0"},
 		},
 	},
 	{
