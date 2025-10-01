@@ -44,9 +44,24 @@ import (
 )
 
 type CloudService struct {
-	Name    string
-	Type    string
-	Version string
+	Name     string
+	Type     string
+	Endpoint string
+	Version  string
+}
+
+// SetEndpoint validates and sets the endpoint based on the service type.
+// It handles special type mappings (e.g., redis-persistent -> redis, oracle-mysql -> mysql)
+// and defaults to using the type as the endpoint for standard services.
+func (s *CloudService) SetEndpoint() {
+	switch s.Type {
+	case "redis-persistent":
+		s.Endpoint = "redis"
+	case "oracle-mysql":
+		s.Endpoint = "mysql"
+	default:
+		s.Endpoint = s.Type
+	}
 }
 
 var localNewCmd = &console.Command{
@@ -284,7 +299,7 @@ func parseCLIServices(services []string) ([]*CloudService, error) {
 		parts := strings.Split(config, ":")
 		if len(parts) == 1 {
 			// service == name
-			service = &CloudService{Name: parts[0], Type: parts[0], Version: upsun.ServiceLastVersion(parts[1])}
+			service = &CloudService{Name: parts[0], Type: parts[0], Version: upsun.ServiceLastVersion(parts[0])}
 		} else if len(parts) == 2 {
 			service = &CloudService{Name: parts[0], Type: parts[1], Version: upsun.ServiceLastVersion(parts[1])}
 		} else if len(parts) == 3 {
@@ -292,6 +307,15 @@ func parseCLIServices(services []string) ([]*CloudService, error) {
 		} else {
 			return nil, errors.Errorf("unable to parse service \"%s\"", config)
 		}
+
+		// Set endpoint based on type, handling special cases
+		service.SetEndpoint()
+
+		// For redis-persistent, update version based on the endpoint
+		if service.Type == "redis-persistent" {
+			service.Version = upsun.ServiceLastVersion(service.Endpoint)
+		}
+
 		cloudServices = append(cloudServices, service)
 	}
 	return cloudServices, nil
@@ -315,7 +339,15 @@ func parseDockerComposeServices(dir string) []*CloudService {
 			var s *CloudService
 			switch port.Target {
 			case 3306:
-				s = &CloudService{Type: "mysql"}
+				// Distinguish between MySQL and MariaDB based on image name
+				dbType := "mysql"
+				if strings.Contains(strings.ToLower(service.Image), "mariadb") {
+					dbType = "mariadb"
+				} else if strings.Contains(strings.ToLower(service.Image), "mysql") {
+					dbType = "oracle-mysql"
+				}
+
+				s = &CloudService{Type: dbType}
 			case 5432:
 				s = &CloudService{Type: "postgresql"}
 			case 6379:
@@ -335,6 +367,10 @@ func parseDockerComposeServices(dir string) []*CloudService {
 			if s != nil && !done {
 				seen[service.Name] = true
 				s.Name = service.Name
+
+				// Set endpoint based on type
+				s.SetEndpoint()
+
 				parts := strings.Split(service.Image, ":")
 				s.Version = regexp.MustCompile(`\d+(\.\d+)?`).FindString(parts[len(parts)-1])
 				serviceLastVersion := upsun.ServiceLastVersion(s.Type)
