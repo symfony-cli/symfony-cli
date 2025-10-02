@@ -248,7 +248,7 @@ func initCloud(c *console.Context, product upsun.CloudProduct, minorPHPVersion, 
 		return err
 	}
 
-	if !c.Bool("no-git") {
+	if c.Bool("no-git") {
 		return nil
 	}
 	buf, err := git.AddAndCommit(dir, []string{"."}, fmt.Sprintf("Add %s configuration", product), c.Bool("debug"))
