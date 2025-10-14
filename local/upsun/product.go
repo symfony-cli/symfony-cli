@@ -45,7 +45,7 @@ var Flex = CloudProduct{
 	BinName:           "upsun",
 }
 var Fixed = CloudProduct{
-	Name:              "Upun Fixed",
+	Name:              "Upsun Fixed",
 	ProjectConfigPath: ".platform",
 	CLIConfigPath:     ".platformsh",
 	CLIPrefix:         "PLATFORMSH_CLI_",
