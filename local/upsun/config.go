@@ -252,6 +252,13 @@ var availableServices = []*service{
 		},
 	},
 	{
+		Type: "valkey",
+		Versions: serviceVersions{
+			Deprecated: []string{},
+			Supported:  []string{"8.0"},
+		},
+	},
+	{
 		Type: "varnish",
 		Versions: serviceVersions{
 			Deprecated: []string{"5.1", "5.2", "6.3", "6.4", "7.1"},
