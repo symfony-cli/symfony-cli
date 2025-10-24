@@ -44,9 +44,24 @@ import (
 )
 
 type CloudService struct {
-	Name    string
-	Type    string
-	Version string
+	Name     string
+	Type     string
+	Endpoint string
+	Version  string
+}
+
+// SetEndpoint validates and sets the endpoint based on the service type.
+// It handles special type mappings (e.g., redis-persistent -> redis, oracle-mysql -> mysql)
+// and defaults to using the type as the endpoint for standard services.
+func (s *CloudService) SetEndpoint() {
+	switch s.Type {
+	case "redis-persistent":
+		s.Endpoint = "redis"
+	case "oracle-mysql":
+		s.Endpoint = "mysql"
+	default:
+		s.Endpoint = s.Type
+	}
 }
 
 var localNewCmd = &console.Command{
@@ -62,6 +77,7 @@ var localNewCmd = &console.Command{
 		},
 		&console.BoolFlag{Name: "full", Usage: "Use github.com/symfony/website-skeleton (deprecated, use --webapp instead)"},
 		&console.BoolFlag{Name: "demo", Usage: "Use github.com/symfony/demo"},
+		&console.StringFlag{Name: "skeleton", Usage: "Skeleton to use (symfony, sulu, or a custom package name)", DefaultValue: "symfony"},
 		&console.BoolFlag{Name: "webapp", Usage: "Add the webapp pack to get a fully configured web project"},
 		&console.BoolFlag{Name: "api", Usage: "Add the api pack to get a fully configured api project"},
 		&console.BoolFlag{Name: "book", Usage: "Clone the Symfony: The Fast Track book project"},
@@ -135,6 +151,9 @@ var localNewCmd = &console.Command{
 
 		if symfonyVersion != "" && c.Bool("demo") {
 			return console.Exit("The --version flag is not supported for the Symfony Demo", 1)
+		}
+		if c.Bool("demo") && c.String("skeleton") != "symfony" {
+			return console.Exit("The --demo flag cannot be used with --skeleton", 1)
 		}
 		if c.Bool("webapp") && c.Bool("api") {
 			return console.Exit("The --api flag cannot be used with --webapp", 1)
@@ -280,7 +299,7 @@ func parseCLIServices(services []string) ([]*CloudService, error) {
 		parts := strings.Split(config, ":")
 		if len(parts) == 1 {
 			// service == name
-			service = &CloudService{Name: parts[0], Type: parts[0], Version: upsun.ServiceLastVersion(parts[1])}
+			service = &CloudService{Name: parts[0], Type: parts[0], Version: upsun.ServiceLastVersion(parts[0])}
 		} else if len(parts) == 2 {
 			service = &CloudService{Name: parts[0], Type: parts[1], Version: upsun.ServiceLastVersion(parts[1])}
 		} else if len(parts) == 3 {
@@ -288,6 +307,14 @@ func parseCLIServices(services []string) ([]*CloudService, error) {
 		} else {
 			return nil, errors.Errorf("unable to parse service \"%s\"", config)
 		}
+
+		service.SetEndpoint()
+
+		// For redis-persistent, update version based on the endpoint
+		if service.Type == "redis-persistent" {
+			service.Version = upsun.ServiceLastVersion(service.Endpoint)
+		}
+
 		cloudServices = append(cloudServices, service)
 	}
 	return cloudServices, nil
@@ -311,7 +338,15 @@ func parseDockerComposeServices(dir string) []*CloudService {
 			var s *CloudService
 			switch port.Target {
 			case 3306:
-				s = &CloudService{Type: "mysql"}
+				// Distinguish between MySQL and MariaDB based on image name
+				dbType := "mysql"
+				if strings.Contains(strings.ToLower(service.Image), "mariadb") {
+					dbType = "mariadb"
+				} else if strings.Contains(strings.ToLower(service.Image), "mysql") {
+					dbType = "oracle-mysql"
+				}
+
+				s = &CloudService{Type: dbType}
 			case 5432:
 				s = &CloudService{Type: "postgresql"}
 			case 6379:
@@ -331,6 +366,9 @@ func parseDockerComposeServices(dir string) []*CloudService {
 			if s != nil && !done {
 				seen[service.Name] = true
 				s.Name = service.Name
+
+				s.SetEndpoint()
+
 				parts := strings.Split(service.Image, ":")
 				s.Version = regexp.MustCompile(`\d+(\.\d+)?`).FindString(parts[len(parts)-1])
 				serviceLastVersion := upsun.ServiceLastVersion(s.Type)
@@ -364,23 +402,10 @@ func initProjectGit(c *console.Context, dir string) error {
 }
 
 func createProjectWithComposer(c *console.Context, dir, version string) error {
-	if c.Bool("demo") {
-		terminal.Println("* Creating a new Symfony Demo project with Composer")
-	} else if version != "" {
-		if version == "lts" || version == "previous" || version == "stable" || version == "next" || version == "dev" {
-			var err error
-			version, err = getSpecialVersion(version)
-			if err != nil {
-				return err
-			}
-		}
-
-		terminal.Printfln("* Creating a new Symfony %s project with Composer", version)
-	} else {
-		terminal.Println("* Creating a new Symfony project with Composer")
-	}
-
+	// Determine the repository and project type
 	repo := "symfony/skeleton"
+	projectType := "Symfony"
+
 	if r := os.Getenv("SYMFONY_REPO"); r != "" {
 		repo = r
 	} else if c.Bool("full") {
@@ -388,6 +413,49 @@ func createProjectWithComposer(c *console.Context, dir, version string) error {
 		repo = "symfony/website-skeleton"
 	} else if c.Bool("demo") {
 		repo = "symfony/symfony-demo"
+	} else if c.String("skeleton") != "" {
+		// Handle skeleton flag
+		skeleton := c.String("skeleton")
+		switch skeleton {
+		case "symfony":
+			repo = "symfony/skeleton"
+			projectType = "Symfony"
+		case "sulu":
+			repo = "sulu/skeleton"
+			projectType = "Sulu"
+		case "demo":
+			repo = "symfony/symfony-demo"
+			projectType = "Symfony Demo"
+		default:
+			// Use custom Composer package directly
+			repo = skeleton
+
+			// Use the package name as the project type
+			parts := strings.Split(skeleton, "/")
+			if len(parts) > 1 {
+				projectType = parts[1]
+			} else {
+				projectType = skeleton
+			}
+		}
+	}
+
+	// Display appropriate message based on project type
+	if c.Bool("demo") {
+		terminal.Println("* Creating a new Symfony Demo project with Composer")
+	} else if version != "" {
+		// Only handle special versions for Symfony projects
+		if projectType == "Symfony" && (version == "lts" || version == "previous" || version == "stable" || version == "next" || version == "dev") {
+			var err error
+			version, err = getSpecialVersion(version)
+			if err != nil {
+				return err
+			}
+		}
+
+		terminal.Printfln("* Creating a new %s %s project with Composer", projectType, version)
+	} else {
+		terminal.Printfln("* Creating a new %s project with Composer", projectType)
 	}
 
 	if ok, _ := regexp.MatchString("^\\d+\\.\\d+$", version); ok {
