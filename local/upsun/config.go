@@ -212,8 +212,8 @@ var availableServices = []*service{
 	{
 		Type: "opensearch",
 		Versions: serviceVersions{
-			Deprecated: []string{"1.1", "1.2"},
-			Supported:  []string{"1", "2", "3"},
+			Deprecated: []string{"1.1", "1.2", "1.3"},
+			Supported:  []string{"2", "3"},
 		},
 	},
 	{
