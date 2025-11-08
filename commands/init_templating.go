@@ -70,7 +70,7 @@ func createRequiredFilesProject(product upsun.CloudProduct, rootDirectory, proje
 	}
 	phpExts := append(phpExtensions(rootDirectory), "apcu", "mbstring", "sodium", "xsl", "blackfire")
 	for _, service := range cloudServices {
-		if v, ok := availablePHPExtensions[service.Type]; ok {
+		if v, ok := availablePHPExtensions[service.Endpoint]; ok {
 			phpExts = append(phpExts, v...)
 		}
 	}
