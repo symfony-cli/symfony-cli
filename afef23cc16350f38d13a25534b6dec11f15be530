@@ -1,0 +1,95 @@
+---------------------------------------------------------------------------
+
+by chirimoya at 2025-09-09T15:31:06Z
+
+@nicolas-grekas one question just to make sure I understood the code correctly that handles template selection for the cloud configuration: I need to contribute a new Sulu template to https://github.com/symfonycorp/cloud-templates in the `upsun/` directory (e.g. `upsun/sulu.yaml`), so that it is automatically matched by the `has_composer_package` requirement in the YAML template, correct? Also, what would be the best way to test it before merging?
+
+---------------------------------------------------------------------------
+
+by tucksaun at 2025-09-18T06:24:06Z
+
+Because this might open the possibility to use others skeletons I would instead go with a string flag to specify the skeleton repository to use. This would let the user specify any repo and we could add some shortcut as `symfony` or `sulu`.  The default value would be `symfony`.
+For sulu usage this would mean a `symfony new --skeleton=sulu my-project`
+
+WDYT?
+
+---------------------------------------------------------------------------
+
+by tucksaun at 2025-09-18T06:28:30Z
+
+> I need to contribute a new Sulu template to https://github.com/symfonycorp/cloud-templates in the `upsun/` directory (e.g. `upsun/sulu.yaml`), so that it is automatically matched by the `has_composer_package` requirement in the YAML template, correct?
+
+Correct but only if you need specifics. If you don't the generic Symfony template might be sufficient
+
+> Also, what would be the best way to test it before merging?
+
+If you are ok with building the CLI locally, you can edit `github.com/symfony-cli/symfony-cli/commands.templatesGitRepository` constant and change the value with your fork instead.
+
+---------------------------------------------------------------------------
+
+by chirimoya at 2025-09-19T14:38:04Z
+
+> For sulu usage this would mean a `symfony new --skeleton=sulu my-project`
+
+@tucksaun thanks for your feedback! I’ve refactored the code according to your suggestions.
+
+In the meantime, I’ve figured out how to test the upsun templates and forked the template repository (https://github.com/chirimoya/cloud-templates/tree/feature/sulu-upsun-template/upsun). So far it looks good, but I’m running into some challenges with the template definition and could use some input:
+
+- We normally use MySQL, but the Docker Compose detection of services and their mapping to upsun services doesn’t seem to work with MySQL. I’m not sure how to fix that.
+- We’d like to set up a proper production configuration that also includes Varnish, but I’m facing a couple of issues:
+  - How can we combine the Docker Compose detection with predefined services?
+  - The application server needs to know the IP of the Varnish server for cache purging, but this doesn’t seem to work on upsun due to circular dependencies (see https://docs.upsun.com/add-services/varnish.html#circular-relationships).
+
+Any suggestions on how to solve these issues? /cc @nicolas-grekas
+
+---------------------------------------------------------------------------
+
+by tucksaun at 2025-09-20T11:41:21Z
+
+> * We normally use MySQL, but the Docker Compose detection of services and their mapping to upsun services doesn’t seem to work with MySQL. I’m not sure how to fix that.
+
+You might need to debug what `parseCloudServices` is returning (you can use `dumper.Dump` to start introspecting it)
+
+> * The application server needs to know the IP of the Varnish server for cache purging, but this doesn’t seem to work on upsun due to circular dependencies (see https://docs.upsun.com/add-services/varnish.html#circular-relationships).
+
+IIRC on SymfonyCloud one trick that was working was to use a "public" URL but protected with credentials.
+
+---------------------------------------------------------------------------
+
+by chirimoya at 2025-09-24T11:30:14Z
+
+>   * How can we combine the Docker Compose detection with predefined services?
+
+@tucksaun ... do you have any suggestions on how to solve this issue? By “predefined services,” I am referring to Varnish. Most projects I know don’t use Varnish for local development, but we highly recommend it for production.
+
+---------------------------------------------------------------------------
+
+by tucksaun at 2025-09-25T06:28:36Z
+
+@chirimoya I'm not sure to understand your question because if I got it correctly by “predefined services” you are mostly referring to Varnish in production, but in such case the CLI is out of its scope here and won't be in use, so no interaction with “predefined services” whatsoever 🤔
+
+---------------------------------------------------------------------------
+
+by chirimoya at 2025-09-25T09:42:45Z
+
+@tucksaun ... by “predefined services” I’m referring to the `cloudServices` used during the upsun project initialization. They are parsed either from the CLI or from the Docker file within the `parseCloudServices`. The question is whether we can define additional services somewhere, e.g. Varnish for a Sulu project?
+
+---------------------------------------------------------------------------
+
+by chirimoya at 2025-10-16T08:20:00Z
+
+@tucksaun @fabpot ... any idea why the pipeline is failing? I’m not sure which change caused it. Any suggestions?
+
+---------------------------------------------------------------------------
+
+by fabpot at 2025-10-17T07:13:14Z
+
+> @tucksaun @fabpot ... any idea why the pipeline is failing? I’m not sure which change caused it. Any suggestions?
+
+Nothing you can do, it's a BC break upstream: https://github.com/platformsh/platformsh-docs/pull/5067#issuecomment-3414167662
+
+---------------------------------------------------------------------------
+
+by nicolas-grekas at 2025-11-07T15:55:58Z
+
+PR unlocked by merging https://github.com/symfonycorp/cloud-templates/pull/43
