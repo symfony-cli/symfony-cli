@@ -30,8 +30,6 @@ import (
 )
 
 const (
-	ConfigFilePrefix = ".symfony.local"
-
 	DockerComposeWorkerKey = "docker_compose"
 )
 
@@ -76,18 +74,28 @@ func NewConfigFromDirectory(logger zerolog.Logger, homeDir, projectDir string) (
 		}),
 	}
 
-	// first consider project configuration files in this specific order
-	for _, suffix := range []string{".dist.yaml", ".yaml", ".override.yaml"} {
-		fileConfig, err := newConfigFromFile(filepath.Join(projectDir, ConfigFilePrefix+suffix))
-		if errors.Is(err, os.ErrNotExist) {
-			continue
-		} else if err != nil {
-			return nil, err
-		} else if fileConfig == nil {
-			continue
+	// Only one nomenclature can be used at a time
+	for _, prefix := range []string{".symfony.cli", ".symfony.local"} {
+		found := false
+
+		// first consider project configuration files in this specific order
+		for _, suffix := range []string{".dist.yaml", ".yaml", ".override.yaml"} {
+			fileConfig, err := newConfigFromFile(filepath.Join(projectDir, prefix+suffix))
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			} else if err != nil {
+				return nil, err
+			} else if fileConfig == nil {
+				continue
+			}
+
+			config.mergeWithFileConfig(*fileConfig)
+			found = true
 		}
 
-		config.mergeWithFileConfig(*fileConfig)
+		if found {
+			break
+		}
 	}
 
 	for k, v := range config.Workers {
