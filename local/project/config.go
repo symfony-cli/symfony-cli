@@ -319,7 +319,7 @@ func (c *fileConfig) parseWorkers() error {
 	if v, ok := c.Workers["messenger_consume_async"]; ok && v == nil {
 		c.Workers["messenger_consume_async"] = &workerFileConfig{
 			Cmd:   []string{"symfony", "console", "messenger:consume", "async"},
-			Watch: []string{"config", "src", "templates", "vendor"},
+			Watch: []string{"config", "src", "templates", "vendor/composer/installed.json"},
 		}
 	}
 
