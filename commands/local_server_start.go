@@ -64,6 +64,7 @@ var localServerStartCmd = &console.Command{
 		project.ConfigurationFlags,
 		dirFlag,
 		&console.BoolFlag{Name: "no-humanize", Usage: "Do not format JSON logs"},
+		&console.BoolFlag{Name: "open", Usage: "Open the application in the browser after starting the server"},
 	),
 	Action: func(c *console.Context) error {
 		ui := terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin)
@@ -274,11 +275,21 @@ var localServerStartCmd = &console.Command{
 		if p.PHPServer != nil {
 			msg += fmt.Sprintf("     The Web server is using %s %s\n", p.PHPServer.Version.ServerTypeName(), p.PHPServer.Version.Version)
 		}
-		msg += fmt.Sprintf("\n     <href=%s://127.0.0.1:%d>%s://127.0.0.1:%d</>", scheme, port, scheme, port)
+		applicationUrl := fmt.Sprintf("%s://127.0.0.1:%d", scheme, port)
+		msg += fmt.Sprintf("\n     <href=%s>%s</>", applicationUrl, applicationUrl)
 		if proxyConf, err := proxy.Load(homeDir); err == nil {
 			for _, domain := range proxyConf.GetDomains(projectDir) {
 				msg += fmt.Sprintf("\n     <href=%s://%s>%s://%s</>", scheme, domain, scheme, domain)
 			}
+
+			domains := proxyConf.GetReachableDomains(projectDir)
+			if len(domains) > 0 {
+				applicationUrl = fmt.Sprintf("%s://%s", scheme, domains[0])
+			}
+		}
+
+		if c.Bool("open") {
+			abstractOpenCmd(applicationUrl)
 		}
 
 		select {
