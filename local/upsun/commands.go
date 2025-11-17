@@ -1083,6 +1083,7 @@ var Commands = []*console.Command{
 		Usage: "Push code to an environment",
 		Flags: []console.Flag{
 			&console.BoolFlag{Name: "activate"},
+			&console.StringFlag{Name: "deploy-strategy", Aliases: []string{"s"}},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"}},
 			&console.BoolFlag{Name: "force", Aliases: []string{"f"}},
 			&console.BoolFlag{Name: "force-with-lease"},
@@ -1552,30 +1553,6 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "service", Aliases: []string{"s"}},
 			&console.StringFlag{Name: "to"},
 			&console.StringFlag{Name: "type"},
-		},
-	},
-	{
-		Category: "cloud:metrics",
-		Name:     "curl",
-		Aliases: []*console.Alias{
-			{Name: "metrics:curl", Hidden: true},
-			{Name: "upsun:metrics:curl", Hidden: true},
-		},
-		Usage:  "Run an authenticated cURL request on an environment's metrics API",
-		Hidden: console.Hide,
-		Flags: []console.Flag{
-			&console.StringFlag{Name: "data", Aliases: []string{"d"}},
-			&console.BoolFlag{Name: "disable-compression"},
-			&console.BoolFlag{Name: "enable-glob"},
-			&console.StringFlag{Name: "environment", Aliases: []string{"e"}},
-			&console.BoolFlag{Name: "fail", Aliases: []string{"f"}},
-			&console.BoolFlag{Name: "head", Aliases: []string{"I"}},
-			&console.StringFlag{Name: "header", Aliases: []string{"H"}},
-			&console.BoolFlag{Name: "include", Aliases: []string{"i"}},
-			&console.StringFlag{Name: "json"},
-			&console.BoolFlag{Name: "no-retry-401"},
-			&console.StringFlag{Name: "project", Aliases: []string{"p"}},
-			&console.StringFlag{Name: "request", Aliases: []string{"X"}},
 		},
 	},
 	{
