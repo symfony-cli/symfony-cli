@@ -2181,7 +2181,8 @@ var Commands = []*console.Command{
 			{Name: "upsun:build-resources", Hidden: true},
 			{Name: "build-resources", Hidden: true},
 		},
-		Usage: "View the build resources of a project",
+		Usage:  "View the build resources of a project",
+		Hidden: console.Hide,
 		Flags: []console.Flag{
 			&console.StringFlag{Name: "columns", Aliases: []string{"c"}},
 			&console.StringFlag{Name: "format", DefaultValue: "table"},
