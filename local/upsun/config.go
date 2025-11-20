@@ -247,8 +247,8 @@ var availableServices = []*service{
 	{
 		Type: "solr",
 		Versions: serviceVersions{
-			Deprecated: []string{"3.6", "4.10", "6.3", "6.6", "7.6", "7.7", "8.0", "8.4", "8.6"},
-			Supported:  []string{"8.11", "9.1", "9.2", "9.4", "9.6", "9.9"},
+			Deprecated: []string{"3.6", "4.10", "6.3", "6.6", "7.6", "7.7", "8.0", "8.4", "8.6", "8.11"},
+			Supported:  []string{"9.1", "9.2", "9.4", "9.6", "9.9"},
 		},
 	},
 	{
