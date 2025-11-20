@@ -1,0 +1,66 @@
+---------------------------------------------------------------------------
+
+by fabpot at 2025-11-12T13:47:12Z
+
+I'm not sure I'd like to always open a browser.
+Overall, I'm not convinced that this is "useful".
+
+---------------------------------------------------------------------------
+
+by Kocal at 2025-11-12T21:00:34Z
+
+I think it depends on what kind of project you're working. Indeed that's not useful for an API-oriented application, but it is for a Twig-based app.
+
+I've worked on quite a few JavaScript projects (mostly based on Vite), and having the app open automatically in the browser was super convenient.
+
+Here, the option is disabled by default, and it helps to resolves https://github.com/symfony-cli/symfony-cli/issues/639 (where you have to scroll a tons of log to find the application URL). I think that's fine?
+
+---------------------------------------------------------------------------
+
+by tucksaun at 2025-11-13T10:34:23Z
+
+I think I agree with @fabpot here: while I see the use of the `--open` flag, I'm not sure having it the configuration is that useful
+
+---------------------------------------------------------------------------
+
+by Kocal at 2025-11-13T11:15:01Z
+
+A setting `open` can be configured in these most (very) popular JS bundlers:
+- https://vite.dev/config/server-options#server-open
+- https://vite.dev/config/preview-options#preview-open
+- https://webpack.js.org/configuration/dev-server/#devserveropen
+- https://rsbuild.rs/config/server/open#serveropen
+
+Why can't we add it to the Symfony CLI?
+
+---------------------------------------------------------------------------
+
+by tucksaun at 2025-11-13T11:26:39Z
+
+I'm not saying we can't, I'm saying I'm not sure this is that useful (again in the configuration as I'm convinced of the flag.
+
+Because from experience I usually do something like `symfony serve && symfony open:local` and switch back and forth with `symfony serve` depending on my needs.
+
+But I'm not against having it
+
+---------------------------------------------------------------------------
+
+by fabpot at 2025-11-14T07:25:34Z
+
+I'm fine adding the `--cloud` flag, without adding an option in the configuration file.
+
+---------------------------------------------------------------------------
+
+by Kocal at 2025-11-14T07:48:20Z
+
+I just removed the `open` option from the configuration file.
+
+---------------------------------------------------------------------------
+
+by tucksaun at 2025-11-14T14:21:03Z
+
+It is if you are the same package (ie. directory)
+
+> Message ID: ***@***.***
+> com>
+>
