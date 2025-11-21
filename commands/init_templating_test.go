@@ -49,6 +49,9 @@ func TestCreateRequiredFilesProject(t *testing.T) {
 			Version: "baz2",
 		},
 	}
+	for _, service := range services {
+		service.SetEndpoint()
+	}
 
 	if _, err := createRequiredFilesProject(upsun.Fixed, projectDir, slug, "", "8.0", services, false, true); err != nil {
 		panic(err)

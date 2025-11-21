@@ -2,17 +2,13 @@ routes:
     "https://{all}/": { type: upstream, upstream: "slug:http" }
     "http://{all}/": { type: redirect, to: "https://{all}/" }
 
-services: 
+services:
     foo:
         type: bar:baz
-
     foo1:
         type: bar1:baz1
-
     foo2:
         type: postgresql:baz2
-
-    
 
 applications:
     slug:
@@ -31,11 +27,11 @@ applications:
                 - pdo_pgsql
                 - sodium
                 - xsl
-                
 
         variables:
             php:
                 opcache.preload: config/preload.php
+
         build:
             flavor: none
 
@@ -47,14 +43,15 @@ applications:
                     passthru: "/index.php"
 
         mounts:
-            "/var": { source: storage, source_path: var }
+            "/var/cache": { source: instance, source_path: var/cache }
+            "/var/share": { source: storage, source_path: var/share }
             
 
         relationships:
             foo: "foo:bar"
             foo1: "foo1:bar1"
             foo2: "foo2:postgresql"
-            
+
         hooks:
             build: |
                 set -x -e
