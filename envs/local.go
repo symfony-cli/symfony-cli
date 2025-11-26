@@ -281,5 +281,7 @@ func (l *Local) webServer() Envs {
 		env[prefix+"PATH"] = "/"
 	}
 
+	env["DEFAULT_URI"] = url
+
 	return env
 }
