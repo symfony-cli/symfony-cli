@@ -138,8 +138,8 @@ func findComposer(extraBin string, logger zerolog.Logger) (string, error) {
 	for _, file := range []string{extraBin, "composer", "composer.phar"} {
 		logger.Debug().Str("source", "Composer").Msgf(`Looking for Composer in the PATH as "%s"`, file)
 		if pharPath, _ := LookPath(file); pharPath != "" {
-			// On Windows, we don't want the .bat, but the real composer phar/PHP file
-			if strings.HasSuffix(pharPath, ".bat") {
+			// On Windows, we don't want the .bat or .cmd, but the real composer phar/PHP file
+			if strings.HasSuffix(pharPath, ".bat") || strings.HasSuffix(pharPath, ".cmd") {
 				pharPath = pharPath[:len(pharPath)-4] + ".phar"
 			}
 			logger.Debug().Str("source", "Composer").Msgf(`Found potential Composer as "%s"`, pharPath)
