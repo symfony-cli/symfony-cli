@@ -60,7 +60,17 @@ func GetHomeDir() string {
 		if _, err := os.Stat(legacyPath); !errors.Is(err, fs.ErrNotExist) {
 			terminal.Logger.Warn().Str("directory", legacyPath).Err(err).Msg("Legacy configuration directory detected")
 			legacyPathWarning.Do(func() {
-				terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin).Warning(fmt.Sprintf("The configuration location for the Symfony CLI has changed in v5.12.0.\nHaving the configuration stored in \"$HOME/.symfony5\" is deprecated and will not be supported in next major versions.Please migrate the \"%s\" directory manually to \"%s\" at your earliest convenience after stopping the proxy and every instances running.", legacyPath, configurationPath))
+				terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin).Warning(fmt.Sprintf(
+					`The configuration location for the Symfony CLI has changed in v5.17.0.
+
+Your configuration is still stored in the legacy directory.
+
+Please follow these instructions:
+
+ * symfony server:stop --all
+ * symfony proxy:stop
+ * move "%s" to "%s"
+`, legacyPath, configurationPath))
 			})
 			return legacyPath
 		}
