@@ -1,0 +1,7 @@
+---------------------------------------------------------------------------
+
+by tucksaun at 2025-11-13T20:41:25Z
+
+I took the liberty to rebase the PR, update the new directory named and add a warning to let users know about the change
+
+CI errors seems unrelated (I guess the GH action has a hard time figuring out was is new from what is not because the PR has been opened before it was added)
