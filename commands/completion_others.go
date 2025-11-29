@@ -27,10 +27,14 @@ import (
 	"github.com/symfony-cli/console"
 )
 
+func autocompletePieWrapper(context *console.Context, args complete.Args) []string {
+	return []string{}
+}
+
 func autocompleteComposerWrapper(context *console.Context, args complete.Args) []string {
 	return []string{}
 }
 
-func autocompleteSymfonyConsoleWrapper(context *console.Context, args complete.Args) []string {
+func autocompleteApplicationConsoleWrapper(context *console.Context, args complete.Args) []string {
 	return []string{}
 }

@@ -48,7 +48,7 @@ _complete_{{ .App.HelpName }}() {
     for ((i = 1; i <= $#words; i++)); do
         if [[ "${words[i]}" != -* ]]; then
               case "${words[i]}" in
-              console|composer)
+              console|composer|pie)
                 (( CURRENT-- ))
                 ;;
               {{range $i, $name := (.App.Command "php").Names }}{{if $i}}|{{end}}{{$name}}{{end}})
