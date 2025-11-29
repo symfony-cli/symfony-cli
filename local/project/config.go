@@ -20,12 +20,14 @@
 package project
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/symfony-cli/console"
+	"github.com/symfony-cli/terminal"
 	"gopkg.in/yaml.v2"
 )
 
@@ -87,6 +89,11 @@ func NewConfigFromDirectory(logger zerolog.Logger, homeDir, projectDir string) (
 				return nil, err
 			} else if fileConfig == nil {
 				continue
+			}
+
+			if prefix == ".symfony.local" {
+				terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin).Warning(fmt.Sprintf(`The "%s" configuration file have been deprecated since v5.17.0,
+please use "%s" instead.`, prefix+suffix, ".symfony.cli"+suffix))
 			}
 
 			config.mergeWithFileConfig(*fileConfig)
