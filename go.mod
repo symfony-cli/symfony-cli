@@ -10,7 +10,7 @@ require (
 	github.com/elazarl/goproxy v1.7.2
 	github.com/fabpot/local-php-security-checker/v2 v2.1.3
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
-	github.com/hashicorp/go-version v1.7.0
+	github.com/hashicorp/go-version v1.8.0
 	github.com/hashicorp/golang-lru/arc/v2 v2.0.7
 	github.com/joho/godotenv v1.5.1
 	github.com/mitchellh/go-homedir v1.1.0
@@ -26,7 +26,7 @@ require (
 	github.com/soheilhy/cmux v0.1.5
 	github.com/stoicperlman/fls v0.0.0-20171222144224-f073b7a01081
 	github.com/symfony-cli/cert v1.0.7
-	github.com/symfony-cli/console v1.2.2
+	github.com/symfony-cli/console v1.2.3
 	github.com/symfony-cli/phpstore v1.0.14
 	github.com/symfony-cli/terminal v1.0.7
 	golang.org/x/sync v0.18.0
@@ -81,8 +81,8 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.38.0 // indirect
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
-	golang.org/x/crypto v0.44.0 // indirect
-	golang.org/x/exp v0.0.0-20251113190631-e25ba8c21ef6 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/exp v0.0.0-20251125195548-87e1e737ad39 // indirect
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/term v0.37.0 // indirect
