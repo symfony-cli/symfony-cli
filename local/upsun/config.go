@@ -256,7 +256,7 @@ var availableServices = []*service{
 		Type: "valkey",
 		Versions: serviceVersions{
 			Deprecated: []string{},
-			Supported:  []string{"8.0"},
+			Supported:  []string{"8.0", "8.1"},
 		},
 	},
 	{
