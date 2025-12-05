@@ -20,6 +20,7 @@
 package php
 
 import (
+	"os"
 	"path/filepath"
 
 	. "gopkg.in/check.v1"
@@ -45,4 +46,46 @@ func (s *UtilsSuite) TestIsPHPScript(c *C) {
 	} {
 		c.Assert(isPHPScript(filepath.Join(dir, validScripts)), Equals, true)
 	}
+}
+
+func (s *UtilsSuite) TestIsPHPScriptNixWrapper(c *C) {
+	dir, err := filepath.Abs("testdata/php_scripts")
+	c.Assert(err, IsNil)
+
+	// Test Nix wrapper with valid PHP script
+	c.Assert(isPHPScript(filepath.Join(dir, "nix-wrapper")), Equals, true,
+		Commentf("Nix wrapper with valid PHP wrapped file should be detected as PHP script"))
+
+	// Test Nix wrapper with invalid wrapped file
+	c.Assert(isPHPScript(filepath.Join(dir, "nix-wrapper-invalid")), Equals, false,
+		Commentf("Nix wrapper with invalid wrapped file should not be detected as PHP script"))
+}
+
+func (s *UtilsSuite) TestIsNixWrapperEdgeCases(c *C) {
+	dir, err := filepath.Abs("testdata/php_scripts")
+	c.Assert(err, IsNil)
+
+	c.Assert(isNixWrapper(""), Equals, false)
+	c.Assert(isNixWrapper("/nonexistent/path"), Equals, false)
+	c.Assert(isNixWrapper(filepath.Join(dir, "usual-one")), Equals, false,
+		Commentf("Regular PHP script without a wrapped companion should not be detected as Nix wrapper"))
+	c.Assert(isNixWrapper(filepath.Join(dir, "invalid")), Equals, false,
+		Commentf("Non-PHP file without a wrapped companion should not be detected as Nix wrapper"))
+}
+
+func (s *UtilsSuite) TestIsPHPScriptNixWrapperSymlink(c *C) {
+	dir, err := filepath.Abs("testdata/php_scripts")
+	c.Assert(err, IsNil)
+
+	// Create a temp directory to simulate a Nix profile directory
+	// that contains symlinks to the actual Nix store binaries
+	profileDir := c.MkDir()
+	symlink := filepath.Join(profileDir, "nix-wrapper")
+	err = os.Symlink(filepath.Join(dir, "nix-wrapper"), symlink)
+	c.Assert(err, IsNil)
+
+	// The symlink's directory does NOT contain .nix-wrapper-wrapped,
+	// but the resolved target's directory does
+	c.Assert(isPHPScript(symlink), Equals, true,
+		Commentf("Nix wrapper accessed via symlink (like Nix profiles) should be detected as PHP script"))
 }
