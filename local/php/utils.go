@@ -19,6 +19,15 @@ func isPHPScript(path string) bool {
 	}
 
 	// Check for Nix-style wrappers (e.g., composer -> .composer-wrapped)
+	return isNixWrapper(path)
+}
+
+// isNixWrapper checks if the file is a Nix wrapper binary with a valid wrapped PHP script
+func isNixWrapper(path string) bool {
+	if path == "" {
+		return false
+	}
+
 	dir := filepath.Dir(path)
 	base := filepath.Base(path)
 	wrappedPath := filepath.Join(dir, "."+base+"-wrapped")
