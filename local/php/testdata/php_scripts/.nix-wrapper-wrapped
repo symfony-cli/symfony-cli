@@ -1,0 +1,4 @@
+#!/nix/store/ka93claiq3y8ydzj6ln0kan2skq9zyp2-php-with-extensions-8.4.13/bin/php
+<?php
+
+echo 'Nix wrapped Composer';
