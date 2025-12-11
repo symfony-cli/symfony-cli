@@ -221,7 +221,7 @@ var availableServices = []*service{
 		Type: "oracle-mysql",
 		Versions: serviceVersions{
 			Deprecated: []string{},
-			Supported:  []string{"5.7", "8.0"},
+			Supported:  []string{"5.7", "8.0", "8.4"},
 		},
 	},
 	{
