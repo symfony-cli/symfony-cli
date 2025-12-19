@@ -148,6 +148,13 @@ var availableServices = []*service{
 		},
 	},
 	{
+		Type: "clickhouse",
+		Versions: serviceVersions{
+			Deprecated: []string{},
+			Supported:  []string{"23.8", "24.3", "25.3"},
+		},
+	},
+	{
 		Type: "elasticsearch",
 		Versions: serviceVersions{
 			Deprecated: []string{"1.4", "1.7", "2.4", "5.2", "5.4", "6.5", "6.8", "7.2", "7.5", "7.7", "7.9", "7.10"},
@@ -199,8 +206,8 @@ var availableServices = []*service{
 	{
 		Type: "mysql",
 		Versions: serviceVersions{
-			Deprecated: []string{"5.5", "10.0", "10.1", "10.2", "10.4", "11.2"},
-			Supported:  []string{"10.3", "10.4", "10.5", "10.6", "10.11", "11.0"},
+			Deprecated: []string{"5.5", "10.0", "10.1", "10.2", "10.3", "10.4", "10.5", "11.0", "11.2"},
+			Supported:  []string{"10.6", "10.11", "11.4", "11.8"},
 		},
 	},
 	{
