@@ -162,6 +162,13 @@ var availableServices = []*service{
 		},
 	},
 	{
+		Type: "gotenberg",
+		Versions: serviceVersions{
+			Deprecated: []string{},
+			Supported:  []string{"8"},
+		},
+	},
+	{
 		Type: "influxdb",
 		Versions: serviceVersions{
 			Deprecated: []string{"1.2", "1.3", "1.7", "1.8", "2.2"},
