@@ -307,7 +307,7 @@ func initDdev(c *console.Context, minorPHPVersion, dir string) error {
 
 	// set pwd to symfony project dir
 	if err := os.Chdir(dir); err != nil {
-		return err
+		return fmt.Errorf("could not change directory to %q: %w", dir, err)
 	}
 
 	os.Setenv("SYMFONY_COMPOSER_PATH", "ddev composer")
