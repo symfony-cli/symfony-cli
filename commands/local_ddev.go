@@ -64,7 +64,7 @@ func isDdevAvailable() error {
 
 	_, err := getDdevVersion()
 	if err != nil {
-		return err
+		return fmt.Errorf("ddev CLI is not available: %w", err)
 	}
 
 	return nil
@@ -82,7 +82,7 @@ func getDdevVersion() (string, error) {
 func getLatestDdevPHPVersion() (string, error) {
 	ddevVersion, err := getDdevVersion()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("could not get DDEV version: %w", err)
 	}
 
 	v, err := parseSemver(ddevVersion)
@@ -102,7 +102,7 @@ func getLatestDdevPHPVersion() (string, error) {
 
 func createDdevConfigFile(dir string, phpVersion string, services []*Service) error {
 	if err := os.MkdirAll(filepath.Join(dir, ".ddev"), 0o755); err != nil {
-		return err
+		return fmt.Errorf("could not create .ddev directory: %w", err)
 	}
 
 	phpVersion = strings.TrimSpace(phpVersion)
@@ -134,18 +134,19 @@ func createDdevConfigFile(dir string, phpVersion string, services []*Service) er
 	outPath := filepath.Join(dir, ".ddev", "config.yaml")
 	f, err := os.OpenFile(outPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not create .ddev/config.yaml file: %w", err)
 	}
+
 	defer func() { _ = f.Close() }()
 
 	enc := yaml.NewEncoder(f)
 	enc.SetIndent(2)
 	if err := enc.Encode(&cfg); err != nil {
 		_ = enc.Close()
-		return err
+		return fmt.Errorf("could not write .ddev/config.yaml file: %w", err)
 	}
 	if err := enc.Close(); err != nil {
-		return err
+		return fmt.Errorf("could not close .ddev/config.yaml file: %w", err)
 	}
 
 	return nil
@@ -170,15 +171,15 @@ func parseSemver(s string) (semver, error) {
 
 	maj, err := strconv.Atoi(m[1])
 	if err != nil {
-		return semver{}, err
+		return semver{}, fmt.Errorf("could not parse major version from %q: %w", s, err)
 	}
 	min, err := strconv.Atoi(m[2])
 	if err != nil {
-		return semver{}, err
+		return semver{}, fmt.Errorf("could not parse minor version from %q: %w", s, err)
 	}
 	pat, err := strconv.Atoi(m[3])
 	if err != nil {
-		return semver{}, err
+		return semver{}, fmt.Errorf("could not parse patch version from %q: %w", s, err)
 	}
 
 	return semver{major: maj, minor: min, patch: pat}, nil
