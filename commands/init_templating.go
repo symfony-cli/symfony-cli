@@ -47,7 +47,7 @@ type nopCloser struct {
 
 func (nopCloser) Close() error { return nil }
 
-func createRequiredFilesProject(product upsun.CloudProduct, rootDirectory, projectSlug, templateName string, minorPHPVersion string, cloudServices []*CloudService, dump, force bool) ([]string, error) {
+func createRequiredFilesProject(product upsun.CloudProduct, rootDirectory, projectSlug, templateName string, minorPHPVersion string, services []*Service, dump, force bool) ([]string, error) {
 	createdFiles := []string{}
 	templates, err := getTemplates(product, rootDirectory, templateName, minorPHPVersion)
 	if err != nil {
@@ -69,7 +69,7 @@ func createRequiredFilesProject(product upsun.CloudProduct, rootDirectory, proje
 		"rabbitmq":   {"amqp"},
 	}
 	phpExts := append(phpExtensions(rootDirectory), "apcu", "mbstring", "sodium", "xsl", "blackfire")
-	for _, service := range cloudServices {
+	for _, service := range services {
 		if v, ok := availablePHPExtensions[service.Endpoint]; ok {
 			phpExts = append(phpExts, v...)
 		}
@@ -85,7 +85,7 @@ func createRequiredFilesProject(product upsun.CloudProduct, rootDirectory, proje
 		PublicDirectory  string
 		PhpVersion       string
 		PHPExtensions    []string
-		Services         []*CloudService
+		Services         []*Service
 		ServiceDiskSizes map[string]string
 	}{
 		Slug:             projectSlug,
@@ -93,7 +93,7 @@ func createRequiredFilesProject(product upsun.CloudProduct, rootDirectory, proje
 		PublicDirectory:  publicDirectory,
 		PhpVersion:       minorPHPVersion,
 		PHPExtensions:    phpExts,
-		Services:         cloudServices,
+		Services:         services,
 		ServiceDiskSizes: serviceDiskSizes,
 	}
 

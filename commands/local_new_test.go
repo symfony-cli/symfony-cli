@@ -37,7 +37,7 @@ func TestParseDockerComposeServices(t *testing.T) {
 		defer os.Unsetenv("POSTGRES_NEXT_VERSION")
 	}
 
-	for dir, expected := range map[string]CloudService{
+	for dir, expected := range map[string]Service{
 		"testdata/docker/postgresql/noversion/": {
 			Name:    "database",
 			Type:    "postgresql",

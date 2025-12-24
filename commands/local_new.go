@@ -43,7 +43,7 @@ import (
 	"github.com/symfony-cli/terminal"
 )
 
-type CloudService struct {
+type Service struct {
 	Name     string
 	Type     string
 	Endpoint string
@@ -53,7 +53,7 @@ type CloudService struct {
 // SetEndpoint validates and sets the endpoint based on the service type.
 // It handles special type mappings (e.g., redis-persistent -> redis, oracle-mysql -> mysql)
 // and defaults to using the type as the endpoint for standard services.
-func (s *CloudService) SetEndpoint() {
+func (s *Service) SetEndpoint() {
 	switch s.Type {
 	case "redis-persistent":
 		s.Endpoint = "redis"
@@ -85,6 +85,7 @@ var localNewCmd = &console.Command{
 		&console.BoolFlag{Name: "no-git", Usage: "Do not initialize Git"},
 		&console.BoolFlag{Name: "upsun", Usage: "Initialize Upsun configuration"},
 		&console.BoolFlag{Name: "cloud", Usage: "Initialize Platform.sh configuration"},
+		&console.BoolFlag{Name: "ddev", Usage: "Initialize DDEV configuration"},
 		&console.StringSliceFlag{Name: "service", Usage: "Configure some services", Hidden: true},
 		&console.BoolFlag{Name: "debug", Usage: "Display commands output"},
 		&console.StringFlag{Name: "php", Usage: "PHP version to use"},
@@ -100,6 +101,7 @@ var localNewCmd = &console.Command{
 		return nil
 	},
 	Action: func(c *console.Context) error {
+		ddev := c.Bool("ddev")
 		dir := c.Args().Get("directory")
 		if c.String("dir") != "" {
 			dir = c.String("dir")
@@ -113,7 +115,7 @@ var localNewCmd = &console.Command{
 			if err != nil {
 				return errors.Wrapf(err, "Unable to access project directory %s", dir)
 			}
-			if !empty {
+			if !empty && !ddev {
 				return console.Exit(fmt.Sprintf("Project directory %s is not empty", dir), 1)
 			}
 		}
@@ -158,9 +160,13 @@ var localNewCmd = &console.Command{
 		if c.Bool("webapp") && c.Bool("api") {
 			return console.Exit("The --api flag cannot be used with --webapp", 1)
 		}
+		if ddev && c.Bool("docker") {
+			return console.Exit("The --docker flag cannot be used with --ddev", 1)
+		}
+
 		withCloud := c.Bool("cloud") || c.Bool("upsun")
-		if len(c.StringSlice("service")) > 0 && !withCloud {
-			return console.Exit("The --service flag cannot be used without --cloud or --upsun", 1)
+		if len(c.StringSlice("service")) > 0 && !withCloud && !ddev {
+			return console.Exit("The --service flag cannot be used without --cloud, --upsun or --ddev", 1)
 		}
 		if withCloud && c.Bool("no-git") {
 			return console.Exit("The --no-git flag cannot be used with --cloud or --upsun", 1)
@@ -170,12 +176,18 @@ var localNewCmd = &console.Command{
 		s.Start()
 		defer s.Stop()
 
-		minorPHPVersion, err := forcePHPVersion(c.String("php"), dir)
+		minorPHPVersion, err := forcePHPVersion(c.String("php"), dir, ddev)
 		if err != nil {
 			return err
 		}
 
-		if err := createProjectWithComposer(c, dir, symfonyVersion); err != nil {
+		if ddev {
+			if err := initDdev(c, minorPHPVersion, dir); err != nil {
+				return err
+			}
+		}
+
+		if err := createProjectWithComposer(c, dir, symfonyVersion, ddev); err != nil {
 			return err
 		}
 
@@ -256,13 +268,13 @@ func isEmpty(dir string) (bool, error) {
 func initCloud(c *console.Context, product upsun.CloudProduct, minorPHPVersion, dir string) error {
 	terminal.Printfln("* Adding %s configuration", product)
 
-	cloudServices, err := parseCloudServices(dir, c.StringSlice("service"))
+	services, err := parseServices(dir, c.StringSlice("service"))
 	if err != nil {
 		return err
 	}
 
 	// FIXME: display or hide output based on debug flag
-	_, err = createRequiredFilesProject(product, dir, "app", "", minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
+	_, err = createRequiredFilesProject(product, dir, "app", "", minorPHPVersion, services, c.Bool("dump"), c.Bool("force"))
 	if err != nil {
 		return err
 	}
@@ -277,33 +289,57 @@ func initCloud(c *console.Context, product upsun.CloudProduct, minorPHPVersion, 
 	return err
 }
 
-func parseCloudServices(dir string, services []string) ([]*CloudService, error) {
+func initDdev(c *console.Context, minorPHPVersion, dir string) error {
+	terminal.Println("* Adding DDEV configuration")
+
+	ddevServices, err := parseServices(dir, c.StringSlice("service"))
+	if err != nil {
+		return err
+	}
+
+	if err := isDdevAvailable(); err != nil {
+		return err
+	}
+
+	if err := createDdevConfigFile(dir, minorPHPVersion, ddevServices); err != nil {
+		return err
+	}
+
+	// set pwd to symfony project dir
+	os.Chdir(dir)
+	os.Setenv("SYMFONY_COMPOSER_PATH", "ddev composer")
+	os.Setenv("DDEV_PROJECT", dir)
+
+	return nil
+}
+
+func parseServices(dir string, services []string) ([]*Service, error) {
 	// from CLI flag
-	cloudServices, err := parseCLIServices(services)
+	combinedServices, err := parseCLIServices(services)
 	if err != nil {
 		return nil, err
 	}
 
 	// from Docker Compose configuration
-	cloudServices = append(cloudServices, parseDockerComposeServices(dir)...)
+	combinedServices = append(combinedServices, parseDockerComposeServices(dir)...)
 
-	return cloudServices, nil
+	return combinedServices, nil
 }
 
-func parseCLIServices(services []string) ([]*CloudService, error) {
-	var cloudServices []*CloudService
+func parseCLIServices(services []string) ([]*Service, error) {
+	var cliServices []*Service
 
 	for _, config := range services {
 		// up to 3 parts -> database:postgresql:13
-		var service *CloudService
+		var service *Service
 		parts := strings.Split(config, ":")
 		if len(parts) == 1 {
 			// service == name
-			service = &CloudService{Name: parts[0], Type: parts[0], Version: upsun.ServiceLastVersion(parts[0])}
+			service = &Service{Name: parts[0], Type: parts[0], Version: upsun.ServiceLastVersion(parts[0])}
 		} else if len(parts) == 2 {
-			service = &CloudService{Name: parts[0], Type: parts[1], Version: upsun.ServiceLastVersion(parts[1])}
+			service = &Service{Name: parts[0], Type: parts[1], Version: upsun.ServiceLastVersion(parts[1])}
 		} else if len(parts) == 3 {
-			service = &CloudService{Name: parts[0], Type: parts[1], Version: parts[2]}
+			service = &Service{Name: parts[0], Type: parts[1], Version: parts[2]}
 		} else {
 			return nil, errors.Errorf("unable to parse service \"%s\"", config)
 		}
@@ -315,13 +351,13 @@ func parseCLIServices(services []string) ([]*CloudService, error) {
 			service.Version = upsun.ServiceLastVersion(service.Endpoint)
 		}
 
-		cloudServices = append(cloudServices, service)
+		cliServices = append(cliServices, service)
 	}
-	return cloudServices, nil
+	return cliServices, nil
 }
 
-func parseDockerComposeServices(dir string) []*CloudService {
-	var cloudServices []*CloudService
+func parseDockerComposeServices(dir string) []*Service {
+	var services []*Service
 
 	options, err := compose.NewProjectOptions(nil, compose.WithWorkingDirectory(dir), compose.WithDefaultConfigPath, compose.WithConfigFileEnv, compose.WithEnv(os.Environ()))
 	if err != nil {
@@ -335,7 +371,7 @@ func parseDockerComposeServices(dir string) []*CloudService {
 	seen := map[string]bool{}
 	for _, service := range project.Services {
 		for _, port := range service.Ports {
-			var s *CloudService
+			var s *Service
 			switch port.Target {
 			case 3306:
 				// Distinguish between MySQL and MariaDB based on image name
@@ -346,21 +382,21 @@ func parseDockerComposeServices(dir string) []*CloudService {
 					dbType = "oracle-mysql"
 				}
 
-				s = &CloudService{Type: dbType}
+				s = &Service{Type: dbType}
 			case 5432:
-				s = &CloudService{Type: "postgresql"}
+				s = &Service{Type: "postgresql"}
 			case 6379:
-				s = &CloudService{Type: "redis"}
+				s = &Service{Type: "redis"}
 			case 11211:
-				s = &CloudService{Type: "memcached"}
+				s = &Service{Type: "memcached"}
 			case 5672:
-				s = &CloudService{Type: "rabbitmq"}
+				s = &Service{Type: "rabbitmq"}
 			case 9200:
-				s = &CloudService{Type: "elasticsearch"}
+				s = &Service{Type: "elasticsearch"}
 			case 27017:
-				s = &CloudService{Type: "mongodb"}
+				s = &Service{Type: "mongodb"}
 			case 9092:
-				s = &CloudService{Type: "kafka"}
+				s = &Service{Type: "kafka"}
 			}
 			_, done := seen[service.Name]
 			if s != nil && !done {
@@ -378,11 +414,11 @@ func parseDockerComposeServices(dir string) []*CloudService {
 					terminal.Printf("Unsupported %s version %s using version %s\n", s.Type, s.Version, serviceLastVersion)
 					s.Version = serviceLastVersion
 				}
-				cloudServices = append(cloudServices, s)
+				services = append(services, s)
 			}
 		}
 	}
-	return cloudServices
+	return services
 }
 
 func initProjectGit(c *console.Context, dir string) error {
@@ -401,7 +437,7 @@ func initProjectGit(c *console.Context, dir string) error {
 	return err
 }
 
-func createProjectWithComposer(c *console.Context, dir, version string) error {
+func createProjectWithComposer(c *console.Context, dir, version string, ddev bool) error {
 	// Determine the repository and project type
 	repo := "symfony/skeleton"
 	projectType := "Symfony"
@@ -514,9 +550,14 @@ func getSpecialVersion(version string) (string, error) {
 	return v, nil
 }
 
-func forcePHPVersion(v, dir string) (string, error) {
+func forcePHPVersion(v, dir string, ddev bool) (string, error) {
 	store := phpstore.New(util.GetHomeDir(), true, nil)
 	if v == "" {
+		if ddev {
+			// If DDEV is enabled, we can use the DDEV PHP version
+			return getLatestDdevPHPVersion()
+		}
+
 		minor, _, _, err := store.BestVersionForDir(dir)
 		if err != nil {
 			return "", err
@@ -527,7 +568,7 @@ func forcePHPVersion(v, dir string) (string, error) {
 		return "", errors.Errorf("unable to parse PHP version \"%s\"", v)
 	}
 	// check that the version is available
-	if !store.IsVersionAvailable(v) {
+	if !store.IsVersionAvailable(v) && !ddev {
 		return "", errors.Errorf("PHP version \"%s\" is not available locally", v)
 	}
 	os.Setenv("FORCED_PHP_VERSION", v)
