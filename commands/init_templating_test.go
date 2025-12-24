@@ -32,7 +32,7 @@ import (
 func TestCreateRequiredFilesProject(t *testing.T) {
 	projectDir := "./testdata/project"
 	slug := "slug"
-	services := []*CloudService{
+	services := []*Service{
 		{
 			Name:    "foo",
 			Type:    "bar",
@@ -83,7 +83,7 @@ foo2:
 func TestCreateRequiredFilesProjectForUpsun(t *testing.T) {
 	projectDir := "./testdata/project"
 	slug := "slug"
-	services := []*CloudService{
+	services := []*Service{
 		{
 			Name:    "foo",
 			Type:    "bar",
