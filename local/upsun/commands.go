@@ -381,7 +381,7 @@ var Commands = []*console.Command{
 			{Name: "upsun:autoscaling", Hidden: true},
 			{Name: "autoscaling", Hidden: true},
 		},
-		Usage: "View the autoscaling configuration of apps and workers on an environment",
+		Usage: "View the autoscaling configuration of apps, workers, and services on an environment",
 		Flags: []console.Flag{
 			&console.StringFlag{Name: "columns", Aliases: []string{"c"}},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"}},
@@ -397,7 +397,7 @@ var Commands = []*console.Command{
 			{Name: "autoscaling:set", Hidden: true},
 			{Name: "upsun:autoscaling:set", Hidden: true},
 		},
-		Usage: "Set the autoscaling configuration of apps or workers in an environment",
+		Usage: "Set the autoscaling configuration of apps, workers, or services in an environment",
 		Flags: []console.Flag{
 			&console.StringFlag{Name: "cooldown-down"},
 			&console.StringFlag{Name: "cooldown-up"},
