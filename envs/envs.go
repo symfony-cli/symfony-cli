@@ -175,8 +175,8 @@ func extractRelationshipsEnvs(env Environment) Envs {
 							} else if strings.Contains(v.(string), ":") {
 								version := strings.SplitN(v.(string), ":", 2)[1]
 
-								// we actually provide mariadb not mysql
-								if isMySQL {
+								// add version suffix for MariaDB
+								if isMySQL && !strings.HasPrefix(v.(string), "oracle-mysql") {
 									minor := 0
 									if version == "10.2" {
 										minor = 7
