@@ -137,7 +137,7 @@ var availablePHPExts = map[string][]string{
 
 var availableServices = []*service{
 	{
-		Type: "",
+		Type: "activemq-artemis",
 		Versions: serviceVersions{
 			Deprecated: []string{},
 			Supported:  []string{"2"},
@@ -165,7 +165,7 @@ var availableServices = []*service{
 		},
 	},
 	{
-		Type: "",
+		Type: "elasticsearch-enterprise",
 		Versions: serviceVersions{
 			Deprecated: []string{},
 			Supported:  []string{"7.17", "8.5"},
