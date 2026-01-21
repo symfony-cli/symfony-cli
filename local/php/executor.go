@@ -630,4 +630,3 @@ func (e *Executor) phpiniForDir() (string, string) {
 	}
 	return "", ""
 }
-
