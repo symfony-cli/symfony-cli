@@ -207,6 +207,13 @@ var availableServices = []*service{
 		},
 	},
 	{
+		Type: "mercure",
+		Versions: serviceVersions{
+			Deprecated: []string{},
+			Supported:  []string{"0"},
+		},
+	},
+	{
 		Type: "mongodb",
 		Versions: serviceVersions{
 			Deprecated: []string{"3.0", "3.2", "3.4", "3.6"},
