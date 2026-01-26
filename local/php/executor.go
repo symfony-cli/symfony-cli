@@ -275,9 +275,9 @@ func (e *Executor) Config(loadDotEnv bool) error {
 		// see https://php.net/manual/en/configuration.file.php
 		// if PHP_INI_SCAN_DIR exists, just append our new directory
 		// if not, add the default one (empty string) and then our new directory
-		// Look for php.ini in the script dir and go up if needed (symfony php ./app/test.php should read php/ini in ./)
+		// Look for php.ini or .php.ini in the script dir and go up if needed (symfony php ./app/test.php should read php.ini in ./)
 		dirs := ""
-		if phpIniDir := e.phpiniDirForDir(); phpIniDir != "" {
+		if phpIniDir, _ := e.phpiniForDir(); phpIniDir != "" {
 			dirs += string(os.PathListSeparator) + phpIniDir
 		}
 		if e.iniDir != "" {
@@ -603,18 +603,24 @@ func detectScriptDir(args []string) string {
 func (e *Executor) PathsToWatch() []string {
 	var paths []string
 
-	if dir := e.phpiniDirForDir(); dir != "" {
-		paths = append(paths, filepath.Join(dir, "php.ini"))
+	if dir, file := e.phpiniForDir(); dir != "" {
+		paths = append(paths, filepath.Join(dir, file))
 	}
 
 	return paths
 }
 
-func (e *Executor) phpiniDirForDir() string {
+// phpiniForDir returns the directory and filename of the php.ini file found
+// It looks for both "php.ini" and ".php.ini" (hidden file) in the script directory
+// and walks up the directory tree until one is found
+func (e *Executor) phpiniForDir() (string, string) {
 	dir := e.scriptDir
+	phpIniFiles := []string{"php.ini", ".php.ini"}
 	for {
-		if _, err := os.Stat(filepath.Join(dir, "php.ini")); err == nil {
-			return dir
+		for _, file := range phpIniFiles {
+			if _, err := os.Stat(filepath.Join(dir, file)); err == nil {
+				return dir, file
+			}
 		}
 		upDir := filepath.Dir(dir)
 		if upDir == dir || upDir == "." {
@@ -622,5 +628,5 @@ func (e *Executor) phpiniDirForDir() string {
 		}
 		dir = upDir
 	}
-	return ""
+	return "", ""
 }
