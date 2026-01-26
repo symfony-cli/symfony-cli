@@ -137,17 +137,10 @@ var availablePHPExts = map[string][]string{
 
 var availableServices = []*service{
 	{
-		Type: "activemq-artemis",
-		Versions: serviceVersions{
-			Deprecated: []string{},
-			Supported:  []string{"2"},
-		},
-	},
-	{
 		Type: "chrome-headless",
 		Versions: serviceVersions{
-			Deprecated: []string{"73", "80", "81", "83", "84", "86", "91", "95"},
-			Supported:  []string{"113", "120"},
+			Deprecated: []string{"73", "80", "81", "83", "84", "86", "91", "95", "113"},
+			Supported:  []string{"120"},
 		},
 	},
 	{
@@ -160,15 +153,8 @@ var availableServices = []*service{
 	{
 		Type: "elasticsearch",
 		Versions: serviceVersions{
-			Deprecated: []string{"0.90", "1.4", "1.7", "2.4", "5.2", "5.4", "6.5", "6.8"},
-			Supported:  []string{"7.2", "7.5", "7.6", "7.7", "7.9", "7.10", "7.12"},
-		},
-	},
-	{
-		Type: "elasticsearch-enterprise",
-		Versions: serviceVersions{
-			Deprecated: []string{},
-			Supported:  []string{"7.17", "8.5"},
+			Deprecated: []string{"6.5", "6.8", "7.2", "7.5", "7.6", "7.7", "7.9"},
+			Supported:  []string{"7.10"},
 		},
 	},
 	{
@@ -181,29 +167,29 @@ var availableServices = []*service{
 	{
 		Type: "influxdb",
 		Versions: serviceVersions{
-			Deprecated: []string{"1.2", "1.3", "1.7", "2.0", "2.1", "2.2"},
-			Supported:  []string{"1.8", "2.3", "2.7"},
+			Deprecated: []string{"1.2", "1.3", "1.7", "1.8", "2.0", "2.1", "2.2"},
+			Supported:  []string{"2.3", "2.7"},
 		},
 	},
 	{
 		Type: "kafka",
 		Versions: serviceVersions{
-			Deprecated: []string{"2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7"},
-			Supported:  []string{"3.2", "3.4", "3.6", "3.7"},
+			Deprecated: []string{"2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "3.2", "3.4", "3.6"},
+			Supported:  []string{"3.7"},
 		},
 	},
 	{
 		Type: "mariadb",
 		Versions: serviceVersions{
-			Deprecated: []string{"5.5", "10.0", "10.1", "10.2", "10.3", "10.4", "10.5", "11.0", "11.2", "11.3"},
+			Deprecated: []string{"5.5", "10.0", "10.1", "10.2", "10.3", "10.4", "10.5", "11.0", "11.2"},
 			Supported:  []string{"10.6", "10.11", "11.4", "11.8"},
 		},
 	},
 	{
 		Type: "memcached",
 		Versions: serviceVersions{
-			Deprecated: []string{},
-			Supported:  []string{"1.4", "1.5", "1.6"},
+			Deprecated: []string{"1.4", "1.5"},
+			Supported:  []string{"1.6"},
 		},
 	},
 	{
@@ -223,14 +209,14 @@ var availableServices = []*service{
 	{
 		Type: "mongodb-enterprise",
 		Versions: serviceVersions{
-			Deprecated: []string{"4.0", "4.2"},
-			Supported:  []string{"4.4", "5.0", "6.0", "7.0"},
+			Deprecated: []string{"4.0", "4.2", "4.4", "5.0", "6.0"},
+			Supported:  []string{"7.0"},
 		},
 	},
 	{
 		Type: "mysql",
 		Versions: serviceVersions{
-			Deprecated: []string{"5.5", "10.0", "10.1", "10.2", "10.3", "10.4", "10.5", "11.0", "11.2", "11.3"},
+			Deprecated: []string{"5.5", "10.0", "10.1", "10.2", "10.3", "10.4", "10.5", "11.0", "11.2"},
 			Supported:  []string{"10.6", "10.11", "11.4", "11.8"},
 		},
 	},
@@ -244,7 +230,7 @@ var availableServices = []*service{
 	{
 		Type: "opensearch",
 		Versions: serviceVersions{
-			Deprecated: []string{"1", "1.1", "1.2"},
+			Deprecated: []string{"1.1", "1.2"},
 			Supported:  []string{"2", "3"},
 		},
 	},
@@ -258,28 +244,28 @@ var availableServices = []*service{
 	{
 		Type: "postgresql",
 		Versions: serviceVersions{
-			Deprecated: []string{"9.3", "9.5", "9.6", "10", "11"},
-			Supported:  []string{"12", "13", "14", "15", "16", "17", "18"},
+			Deprecated: []string{"9.3", "9.5", "9.6", "10", "11", "12", "13"},
+			Supported:  []string{"14", "15", "16", "17", "18"},
 		},
 	},
 	{
 		Type: "rabbitmq",
 		Versions: serviceVersions{
-			Deprecated: []string{"3.5", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11"},
-			Supported:  []string{"3.12", "3.13", "4.0", "4.1"},
+			Deprecated: []string{"3.5", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "4.0"},
+			Supported:  []string{"4.1"},
 		},
 	},
 	{
 		Type: "redis",
 		Versions: serviceVersions{
-			Deprecated: []string{"2.8", "3.0", "3.2", "4.0", "5.0", "6.0"},
-			Supported:  []string{"6.2", "7.0", "7.2", "8.0"},
+			Deprecated: []string{"5.0", "6.0", "6.2", "7.0"},
+			Supported:  []string{"7.2", "8.0"},
 		},
 	},
 	{
 		Type: "solr",
 		Versions: serviceVersions{
-			Deprecated: []string{"3.6", "4.10", "6.3", "6.6", "7.6", "7.7", "8.0", "8.11", "9.0", "9.7"},
+			Deprecated: []string{"3.6", "4.10", "6.3", "6.6", "7.6", "7.7", "8.0", "8.11", "9.0"},
 			Supported:  []string{"9.1", "9.2", "9.4", "9.6", "9.9"},
 		},
 	},
@@ -293,14 +279,14 @@ var availableServices = []*service{
 	{
 		Type: "varnish",
 		Versions: serviceVersions{
-			Deprecated: []string{"5.1", "5.2"},
-			Supported:  []string{"6.0", "6.3", "7.1", "7.2", "7.3", "7.6"},
+			Deprecated: []string{"7.1", "7.2", "7.3"},
+			Supported:  []string{"6.0", "7.6"},
 		},
 	},
 	{
 		Type: "vault-kms",
 		Versions: serviceVersions{
-			Deprecated: []string{"1.6", "1.8"},
+			Deprecated: []string{},
 			Supported:  []string{"1.12"},
 		},
 	},
