@@ -158,6 +158,13 @@ var availableServices = []*service{
 		},
 	},
 	{
+		Type: "elasticsearch-enterprise",
+		Versions: serviceVersions{
+			Deprecated: []string{},
+			Supported:  []string{"7.17", "8.5", "8.19"},
+		},
+	},
+	{
 		Type: "gotenberg",
 		Versions: serviceVersions{
 			Deprecated: []string{},
