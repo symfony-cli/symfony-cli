@@ -193,6 +193,13 @@ var availableServices = []*service{
 		},
 	},
 	{
+		Type: "mariadb-replica",
+		Versions: serviceVersions{
+			Deprecated: []string{},
+			Supported:  []string{"11.4"},
+		},
+	},
+	{
 		Type: "memcached",
 		Versions: serviceVersions{
 			Deprecated: []string{"1.4", "1.5"},
@@ -253,6 +260,13 @@ var availableServices = []*service{
 		Versions: serviceVersions{
 			Deprecated: []string{"9.3", "9.5", "9.6", "10", "11", "12", "13"},
 			Supported:  []string{"14", "15", "16", "17", "18"},
+		},
+	},
+	{
+		Type: "postgresql-replica",
+		Versions: serviceVersions{
+			Deprecated: []string{},
+			Supported:  []string{"15"},
 		},
 	},
 	{
