@@ -46,3 +46,16 @@ func (s *UtilsSuite) TestIsPHPScript(c *C) {
 		c.Assert(isPHPScript(filepath.Join(dir, validScripts)), Equals, true)
 	}
 }
+
+func (s *UtilsSuite) TestIsPHPScriptNixWrapper(c *C) {
+	dir, err := filepath.Abs("testdata/php_scripts")
+	c.Assert(err, IsNil)
+
+	// Test Nix wrapper with valid PHP script
+	c.Assert(isPHPScript(filepath.Join(dir, "nix-wrapper")), Equals, true,
+		Commentf("Nix wrapper with valid PHP wrapped file should be detected as PHP script"))
+
+	// Test Nix wrapper with invalid wrapped file
+	c.Assert(isPHPScript(filepath.Join(dir, "nix-wrapper-invalid")), Equals, false,
+		Commentf("Nix wrapper with invalid wrapped file should not be detected as PHP script"))
+}
