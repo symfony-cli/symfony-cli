@@ -24,6 +24,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/symfony-cli/console"
@@ -122,6 +123,14 @@ func main() {
 		Action: func(ctx *console.Context) error {
 			if ctx.Args().Len() == 0 {
 				return commands.WelcomeAction(ctx)
+			}
+			// Unknown command? fall back to "symfony console <cmd>" if a bin/console is found.
+			// e.g. "symfony debug:container" -> "symfony console debug:container"
+			cmdArgs := ctx.Args().Slice()
+			if executor, err := php.SymfonyConsoleExecutor(terminal.Logger, cmdArgs); err == nil {
+				terminal.Printfln("<info>Running \"symfony console %s\"</>", strings.Join(cmdArgs, " "))
+				executor.ExtraEnv = getCliExtraEnv()
+				os.Exit(executor.Execute(false))
 			}
 			return console.ShowAppHelpAction(ctx)
 		},
