@@ -47,6 +47,7 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 		&console.StringFlag{Name: "slug", DefaultValue: "app", Usage: "Project slug"},
 		&console.StringFlag{Name: "php", Usage: "PHP version to use"},
 		&console.BoolFlag{Name: "upsun", Usage: "Initialize Upsun"},
+		&console.BoolFlag{Name: "ddev", Usage: "Initialize DDEV"},
 		// FIXME: services should also be used to configure Docker? Instead of Flex?
 		// FIXME: services can also be guessed via the existing Docker Compose file?
 		&console.StringSliceFlag{Name: "service", Usage: "Configure some services", Hidden: true},
@@ -62,7 +63,7 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 			return err
 		}
 
-		minorPHPVersion, err := forcePHPVersion(c.String("php"), projectDir)
+		minorPHPVersion, err := forcePHPVersion(c.String("php"), projectDir, c.Bool("ddev"))
 		if err != nil {
 			return err
 		}
@@ -76,7 +77,7 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 			slug = "app"
 		}
 
-		cloudServices, err := parseCloudServices(projectDir, c.StringSlice("service"))
+		services, err := parseServices(projectDir, c.StringSlice("service"))
 		if err != nil {
 			return err
 		}
@@ -85,7 +86,14 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 		if c.Bool("upsun") {
 			product = upsun.Flex
 		}
-		createdFiles, err := createRequiredFilesProject(product, projectDir, slug, c.String("template"), minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
+
+		if c.Bool("ddev") {
+			if err := initDdev(c, minorPHPVersion, projectDir); err != nil {
+				return err
+			}
+		}
+
+		createdFiles, err := createRequiredFilesProject(product, projectDir, slug, c.String("template"), minorPHPVersion, services, c.Bool("dump"), c.Bool("force"))
 		if err != nil {
 			return err
 		}
