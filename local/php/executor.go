@@ -283,6 +283,17 @@ func (e *Executor) Config(loadDotEnv bool) error {
 		if e.iniDir != "" {
 			dirs += string(os.PathListSeparator) + e.iniDir
 		}
+
+		// Nix sets always a PHP_INI_SCAN_DIR, try to find it
+		if strings.HasPrefix(path, "/nix/store") {
+			// /nix/store/...-php-with-extensions-8.2.24/bin/php -> /nix/store/...-php-with-extensions-8.2.24/lib/php.ini
+			expectedAdditionalIniFile := filepath.Join(filepath.Dir(filepath.Dir(path)), "lib", "php.ini")
+
+			if _, err := os.Stat(expectedAdditionalIniFile); err == nil {
+				dirs += string(os.PathListSeparator) + filepath.Dir(expectedAdditionalIniFile)
+			}
+		}
+
 		if dirs != "" {
 			e.environ = append(e.environ, fmt.Sprintf("PHP_INI_SCAN_DIR=%s%s", os.Getenv("PHP_INI_SCAN_DIR"), dirs))
 		}
