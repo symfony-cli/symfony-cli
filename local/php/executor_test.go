@@ -257,6 +257,31 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 	c.Check(false, Equals, strings.Contains(output.String(), "DATABASE_URL=mysql://127.0.0.1"))
 	// Checks local properly feed Symfony with SYMFONY_DOTENV_VARS
 	c.Check(true, Equals, strings.Contains(output.String(), "SYMFONY_DOTENV_VARS=USER_DEFINED_ENVVAR"))
+
+	// When a variable is already set, the value should be kept
+	os.Setenv("USER_DEFINED_ENVVAR", "custom")
+	defer os.Unsetenv("USER_DEFINED_ENVVAR")
+
+	// Exception: Variables relating to the selected PHP version and INI scan directory are overridden
+	os.Setenv("PHP_INI_SCAN_DIR", "test")
+	defer os.Unsetenv("PHP_INI_SCAN_DIR")
+
+	os.Setenv("PHP_PATH", "test")
+	defer os.Unsetenv("PHP_PATH")
+
+	iniScanDir := filepath.Join(home, "project")
+	_, err = os.Create(filepath.Join(iniScanDir, "php.ini"))
+	c.Assert(err, IsNil)
+	defer os.Remove(filepath.Join(iniScanDir, "php.ini"))
+
+	output.Reset()
+	outCloser = testStdoutCapture(c, &output)
+	c.Assert((&Executor{BinName: "php", Args: []string{"php"}}).Execute(true), Equals, 0)
+	outCloser()
+
+	c.Check(true, Equals, strings.Contains(output.String(), "USER_DEFINED_ENVVAR=custom"))
+	c.Check(true, Equals, strings.Contains(output.String(), "PHP_INI_SCAN_DIR=test"+string(os.PathListSeparator)+iniScanDir))
+	c.Check(true, Equals, strings.Contains(output.String(), "PHP_PATH="+filepath.FromSlash("../bin/php")))
 }
 
 func (s *PHPSuite) TestDetectScript(c *C) {
