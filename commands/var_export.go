@@ -20,7 +20,6 @@
 package commands
 
 import (
-	"os"
 	"sort"
 
 	"github.com/pkg/errors"
@@ -42,14 +41,11 @@ var variableExportCmd = &console.Command{
 		{Name: "name", Optional: true, Description: "Print the value of this environment variable"},
 	},
 	Action: func(c *console.Context) error {
-		dir := c.String("dir")
-		if dir == "" {
-			var err error
-			if dir, err = os.Getwd(); err != nil {
-				return err
-			}
+		projectDir, err := getProjectDir(c.String("dir"))
+		if err != nil {
+			return err
 		}
-		env, err := envs.GetEnv(dir, c.Bool("debug"))
+		env, err := envs.GetEnv(projectDir, c.Bool("debug"))
 		if err != nil {
 			return err
 		}
