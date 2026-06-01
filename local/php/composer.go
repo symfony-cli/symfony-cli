@@ -31,6 +31,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kballard/go-shellquote"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/symfony-cli/symfony-cli/util"
@@ -74,8 +75,19 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, 
 	}
 
 	if composerPath := os.Getenv("SYMFONY_COMPOSER_PATH"); composerPath != "" {
-		debugLogger.Debug().Str("SYMFONY_COMPOSER_PATH", composerPath).Msg("SYMFONY_COMPOSER_PATH has been defined. User is taking control over Composer detection and execution.")
-		e.Args = append([]string{composerPath}, args...)
+		debugLogger.Debug().
+			Str("SYMFONY_COMPOSER_PATH", composerPath).
+			Msg("SYMFONY_COMPOSER_PATH has been defined. User is taking control over Composer detection and execution.")
+
+		parts, err := shellquote.Split(composerPath)
+		if err != nil || len(parts) == 0 {
+			return ComposerResult{
+				code:  1,
+				error: errors.Wrap(err, "invalid SYMFONY_COMPOSER_PATH"),
+			}
+		}
+
+		e.Args = append(parts, args...)
 	} else if path, err := e.findComposer(composerBin); err == nil && isPHPScript(path) {
 		e.Args = append([]string{"php", path}, args...)
 	} else {
