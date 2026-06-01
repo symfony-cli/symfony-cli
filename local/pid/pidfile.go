@@ -124,7 +124,7 @@ func (p *PidFile) WaitForExit() error {
 		return err
 	}
 
-	defer p.Remove()
+	defer os.Remove(p.PidFile())
 	ch := make(chan error)
 	go func() {
 		if process.Signal(syscall.Signal(0)) != nil {
@@ -341,7 +341,7 @@ func (p *PidFile) Stop() error {
 	if p.Pid == 0 {
 		return nil
 	}
-	defer p.Remove()
+	defer os.Remove(p.PidFile())
 	return kill(p.Pid)
 }
 
@@ -438,7 +438,7 @@ func doAll(dir string) []*PidFile {
 		}
 		pidFile.path = p
 		if !pidFile.IsRunning() {
-			pidFile.Remove()
+			os.Remove(p)
 			return nil
 		}
 		pidFiles = append(pidFiles, pidFile)
