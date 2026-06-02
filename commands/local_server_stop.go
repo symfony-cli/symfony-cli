@@ -21,8 +21,11 @@ package commands
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
+	"path/filepath"
 
+	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/pid"
 	"github.com/symfony-cli/terminal"
@@ -55,7 +58,7 @@ var localServerStopCmd = &console.Command{
 				dirs = append(dirs, dir)
 			}
 		} else {
-			projectDir, err := getProjectDir(c.String("dir"))
+			projectDir, err := getProjectDirAllowingMissing(c.String("dir"))
 			if err != nil {
 				return err
 			}
@@ -78,7 +81,7 @@ func stopProjects(dirs []string, allFlag bool) error {
 	}
 
 	for _, dir := range dirs {
-		projectDir, err := getProjectDir(dir)
+		projectDir, err := getProjectDirAllowingMissing(dir)
 		runningProcessesForProject := 0
 		if err != nil {
 			return err
@@ -144,4 +147,14 @@ func stopProjects(dirs []string, allFlag bool) error {
 	}
 
 	return nil
+}
+
+func getProjectDirAllowingMissing(dir string) (string, error) {
+	projectDir, err := getProjectDir(dir)
+	if err == nil || !errors.Is(err, fs.ErrNotExist) {
+		return projectDir, err
+	}
+
+	projectDir, err = filepath.Abs(dir)
+	return projectDir, errors.Wrap(err, "could not determine absolute path for project directory")
 }
