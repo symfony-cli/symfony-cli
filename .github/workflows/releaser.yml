@@ -13,8 +13,9 @@ jobs:
     lint:
         name: Lint
         runs-on: ubuntu-latest
-        # only for PRs and push on branches
-        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        # Only on pull requests: only-new-issues needs the PR base to diff
+        # against, and reports every pre-existing issue on push events.
+        if: ${{ github.event_name == 'pull_request' }}
         steps:
             - uses: actions/checkout@v7
             -
