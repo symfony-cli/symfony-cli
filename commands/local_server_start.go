@@ -442,6 +442,7 @@ func cleanupWebServerFiles(projectDir string, pidFile *pid.PidFile) error {
 	if err := pidFile.Remove(); err != nil {
 		return err
 	}
+	pidFile.RemoveWorkerLogs()
 	return nil
 }
 

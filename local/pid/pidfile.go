@@ -249,6 +249,19 @@ func (p *PidFile) CleanupDirectories() {
 	os.Remove(p.WorkerPidDir())
 }
 
+// RemoveWorkerLogs removes any leftover worker log files. Removal is best
+// effort as a log file may still be locked on Windows while a worker shuts
+// down; the directory itself is kept as it may be watched via inotify.
+func (p *PidFile) RemoveWorkerLogs() {
+	logs, err := filepath.Glob(filepath.Join(p.WorkerLogDir(), "*.log"))
+	if err != nil {
+		return
+	}
+	for _, log := range logs {
+		os.Remove(log)
+	}
+}
+
 func (p *PidFile) LogReader() (io.ReadCloser, error) {
 	logFile := p.LogFile()
 	if err := os.MkdirAll(filepath.Dir(logFile), 0755); err != nil {
