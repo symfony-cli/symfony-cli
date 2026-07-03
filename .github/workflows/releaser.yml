@@ -119,6 +119,7 @@ jobs:
                     path: dist/symfony-cli_linux_amd64.tar.gz
             -
                 name: Install Cloudsmith CLI
+                if: startsWith(github.ref, 'refs/tags/v')
                 run: pip install --upgrade cloudsmith-cli
             -
                 name: Cloudsmith Uploads
