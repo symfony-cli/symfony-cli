@@ -73,7 +73,7 @@ func NewRunner(pidFile *pid.PidFile, mode runnerMode) (*Runner, error) {
 	}
 	r.binary, err = exec.LookPath(pidFile.Binary())
 	if err != nil {
-		r.pidFile.Remove()
+		os.Remove(r.pidFile.PidFile())
 		return nil, errors.WithStack(err)
 	}
 

@@ -315,17 +315,6 @@ func AllWorkers(dir string) []*PidFile {
 	return doAll(filepath.Join(util.GetHomeDir(), "var", name(dir)))
 }
 
-// Remove a pidfile
-func (p *PidFile) Remove() error {
-	for _, file := range []string{p.LogFile(), p.PidFile()} {
-		if err := os.Remove(file); err != nil && !os.IsNotExist(err) {
-			return errors.WithStack(err)
-		}
-		// DO NOT remove empty dirs (as it makes inotify fail)
-	}
-	return nil
-}
-
 // Write writes a pidfile
 func (p *PidFile) Write(pid, port int, scheme string) error {
 	oldPid, err := Load(p.PidFile())
