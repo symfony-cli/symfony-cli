@@ -23,6 +23,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"golang.org/x/sys/windows"
 )
 
 func kill(pid int) error {
@@ -31,5 +32,26 @@ func kill(pid int) error {
 		return errors.WithStack(err)
 	}
 
-	return errors.WithStack(p.Kill())
+	// TerminateProcess fails on a process that already exited (for example
+	// with "Access is denied"), don't report an error in this case
+	if err := p.Kill(); err != nil && isRunning(pid) {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+// Windows keeps the process object (and thus its PID) alive as long as a
+// handle to it is open, so signal-based liveness checks report just-exited
+// processes as still running. Waiting on the process handle with a zero
+// timeout tells whether the process actually terminated.
+func isRunning(pid int) bool {
+	handle, err := windows.OpenProcess(windows.SYNCHRONIZE, false, uint32(pid))
+	if err != nil {
+		return false
+	}
+	defer func() { _ = windows.CloseHandle(handle) }()
+
+	event, err := windows.WaitForSingleObject(handle, 0)
+	return err == nil && event == uint32(windows.WAIT_TIMEOUT)
 }

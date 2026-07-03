@@ -127,7 +127,7 @@ func (p *PidFile) WaitForExit() error {
 	defer p.Remove()
 	ch := make(chan error)
 	go func() {
-		if process.Signal(syscall.Signal(0)) != nil {
+		if !p.IsRunning() {
 			ch <- nil
 			return
 		}
@@ -387,18 +387,7 @@ func (p *PidFile) IsRunning() bool {
 	if p.Pid == 0 {
 		return false
 	}
-	process, err := os.FindProcess(p.Pid)
-	if err != nil {
-		return false
-	}
-	err = process.Signal(syscall.Signal(0))
-	if err != nil && err.Error() == "no such process" {
-		return false
-	}
-	if err != nil && err.Error() == "os: process already finished" {
-		return false
-	}
-	return true
+	return isRunning(p.Pid)
 }
 
 func (p *PidFile) Name() string {
