@@ -262,12 +262,22 @@ func (r *Runner) Run() error {
 				if rmErr := os.Remove(r.pidFile.PidFile()); rmErr != nil && !os.IsNotExist(rmErr) {
 					logger.Warn().Msgf("could not remove stale pid file: %s", rmErr)
 				}
-				// In case of error we want to wait up-to 5 seconds before
-				// restarting the command, this avoids overloading the system with a
-				// failing command
+				// In case of error we want to wait before restarting the
+				// command, this avoids overloading the system with a failing
+				// command
 				if err != nil {
 					logger.Error().Msgf(`command exited: %s, waiting 5 seconds before restarting it`, err)
 					timer.Reset(5 * time.Second)
+					select {
+					case sig := <-sigChan:
+						timer.Stop()
+						logger.Info().Msgf("Signal \"%s\" received while waiting to restart, exiting\n", sig)
+						return nil
+					case <-restartChan:
+						timer.Stop()
+						logger.Debug().Msg("Received restart request while waiting to restart")
+					case <-timer.C:
+					}
 				} else {
 					logger.Error().Msg("command exited, restarting it immediately")
 				}
