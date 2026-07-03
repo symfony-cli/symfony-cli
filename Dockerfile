@@ -1,8 +1,10 @@
 FROM scratch as build
 
+ARG TARGETPLATFORM
+
 COPY --from=composer:latest /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-COPY symfony /usr/local/bin/
+COPY $TARGETPLATFORM/symfony /usr/local/bin/
 
 FROM scratch
 

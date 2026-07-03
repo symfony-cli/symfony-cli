@@ -133,57 +133,22 @@ nfpms:
     recommends:
     - git
 
-dockers:
-  - image_templates: [ "ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-amd64" ]
-    goarch: amd64
-    use: buildx
-    build_flag_templates:
+dockers_v2:
+  - images:
+      - ghcr.io/symfony-cli/{{ .ProjectName }}
+    tags:
+      - "{{ .Version }}"
+      - "v{{ .Major }}"
+      - "v{{ .Major }}.{{ .Minor }}"
+      - latest
+    platforms:
+      - linux/amd64
+      - linux/arm64
+      # ARMv6 is upwards compatible with ARMv7, and only ARMv6 binaries are built
+      - linux/arm/v6
+    labels:
+      org.opencontainers.image.source: https://github.com/symfony-cli/symfony-cli
+      org.opencontainers.image.created: "{{ .Date }}"
+      org.opencontainers.image.version: "{{ .Version }}"
+    flags:
       - "--pull"
-      - "--platform=linux/amd64"
-      - "--label=org.opencontainers.image.source=https://github.com/symfony-cli/symfony-cli"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-  - image_templates: [ "ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-arm64" ]
-    goarch: arm64
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--platform=linux/arm64"
-      - "--label=org.opencontainers.image.source=https://github.com/symfony-cli/symfony-cli"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-  - image_templates: [ "ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-arm32v6" ]
-    goarch: arm
-    goarm: '6'
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--platform=linux/arm/v6"
-      - "--label=org.opencontainers.image.source=https://github.com/symfony-cli/symfony-cli"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-  - image_templates: [ "ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-arm32v7" ]
-    goarch: arm
-    # ARMv6 is upwards compatible with ARMv7
-    goarm: '6'
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--platform=linux/arm/v7"
-      - "--label=org.opencontainers.image.source=https://github.com/symfony-cli/symfony-cli"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-
-docker_manifests:
-  - name_template: ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}
-    image_templates: &docker_images
-      - ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-amd64
-      - ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-arm64
-      - ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-arm32v6
-      - ghcr.io/symfony-cli/{{ .ProjectName }}:{{ .Version }}-arm32v7
-  - name_template: ghcr.io/symfony-cli/{{ .ProjectName }}:v{{ .Major }}
-    image_templates: *docker_images
-  - name_template: ghcr.io/symfony-cli/{{ .ProjectName }}:v{{ .Major }}.{{ .Minor }}
-    image_templates: *docker_images
-  - name_template: ghcr.io/symfony-cli/{{ .ProjectName }}:latest
-    image_templates: *docker_images
