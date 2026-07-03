@@ -22,7 +22,11 @@
 
 package pid
 
-import "syscall"
+import (
+	"errors"
+	"os"
+	"syscall"
+)
 
 func kill(pid int) error {
 	pgid, err := syscall.Getpgid(pid)
@@ -30,4 +34,16 @@ func kill(pid int) error {
 		return err
 	}
 	return syscall.Kill(-pgid, syscall.SIGTERM)
+}
+
+func isRunning(pid int) bool {
+	process, err := os.FindProcess(pid)
+	if err != nil {
+		return false
+	}
+	err = process.Signal(syscall.Signal(0))
+	if err == nil {
+		return true
+	}
+	return !errors.Is(err, syscall.ESRCH) && !errors.Is(err, os.ErrProcessDone)
 }
