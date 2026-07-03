@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/symfony-cli/console"
@@ -62,9 +63,11 @@ var localPhpListCmd = &console.Command{
 			currentPHPPath = v.PHPPath
 		}
 
-		table := tablewriter.NewWriter(terminal.Stdout)
-		table.SetAutoFormatHeaders(false)
-		table.SetHeader([]string{terminal.Format("<header>Version</>"), terminal.Format("<header>Directory</>"), terminal.Format("<header>PHP CLI</>"), terminal.Format("<header>PHP FPM</>"), terminal.Format("<header>PHP CGI</>"), terminal.Format("<header>Server</>"), terminal.Format("<header>System?</>")})
+		table := tablewriter.NewTable(terminal.Stdout,
+			tablewriter.WithSymbols(tw.NewSymbols(tw.StyleASCII)),
+			tablewriter.WithHeaderAutoFormat(tw.Off),
+		)
+		table.Header([]string{terminal.Format("<header>Version</>"), terminal.Format("<header>Directory</>"), terminal.Format("<header>PHP CLI</>"), terminal.Format("<header>PHP FPM</>"), terminal.Format("<header>PHP CGI</>"), terminal.Format("<header>Server</>"), terminal.Format("<header>System?</>")})
 
 		sep := string(os.PathSeparator)
 		for _, v := range phpStore.Versions() {

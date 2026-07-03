@@ -23,6 +23,7 @@ import (
 	"sort"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/pid"
@@ -42,9 +43,11 @@ var localServerListCmd = &console.Command{
 }
 
 func printConfiguredServers() error {
-	table := tablewriter.NewWriter(terminal.Stdout)
-	table.SetAutoFormatHeaders(false)
-	table.SetHeader([]string{terminal.Format("<header>Directory</>"), terminal.Format("<header>Port</>"), terminal.Format("<header>Domains</>")})
+	table := tablewriter.NewTable(terminal.Stdout,
+		tablewriter.WithSymbols(tw.NewSymbols(tw.StyleASCII)),
+		tablewriter.WithHeaderAutoFormat(tw.Off),
+	)
+	table.Header([]string{terminal.Format("<header>Directory</>"), terminal.Format("<header>Port</>"), terminal.Format("<header>Domains</>")})
 
 	proxyProjects, err := proxy.ToConfiguredProjects()
 	if err != nil {
