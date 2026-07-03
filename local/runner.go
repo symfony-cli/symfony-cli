@@ -256,6 +256,12 @@ func (r *Runner) Run() error {
 			// Command is set up to restart on exit (usually PHP builtin server)
 			if r.AlwaysRestartOnExit {
 				logger.Debug().Msg("Looping")
+				// Remove the stale PID file before restarting so that Write()
+				// does not see a recently-exited process as still running (a
+				// timing issue especially visible on Windows).
+				if rmErr := os.Remove(r.pidFile.PidFile()); rmErr != nil && !os.IsNotExist(rmErr) {
+					logger.Warn().Msgf("could not remove stale pid file: %s", rmErr)
+				}
 				// In case of error we want to wait up-to 5 seconds before
 				// restarting the command, this avoids overloading the system with a
 				// failing command
