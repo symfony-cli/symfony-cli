@@ -1,0 +1,27 @@
+---------------------------------------------------------------------------
+
+by fabpot at 2026-07-03T13:02:30Z
+
+Added two missing similar problems.
+
+---------------------------------------------------------------------------
+
+by upsun-dispatch[bot] at 2026-07-03T13:02:52Z
+
+**📋 PR Summary**
+
+This PR fixes a Windows file-lock error that occurs when starting the server in daemon mode. It adjusts PID file handling to use direct file removal in several code paths and makes small related changes in the proxy/server start commands and the runner.
+
+<details>
+<summary>Changes</summary>
+
+| Layer / File(s) | Summary |
+|---|---|
+| **Daemon start commands** | |
+| `commands/local_proxy_start.go` | Minor adjustment (1 line) to the proxy start flow related to daemon-mode startup handling. |
+| `commands/local_server_start.go` | Updates server start logic (+13/-4) to avoid the Windows file-lock error when launching in daemon mode. |
+| **PID file handling** | |
+| `local/pid/pidfile.go` | Switches several pid-cleanup paths to use os.Remove on the pid path instead of pidFile.Remove(), addressing file-lock behavior. |
+| `local/runner.go` | Small change (+5/-2) aligning the runner's pid removal with the new direct-removal approach. |
+
+</details>
