@@ -160,7 +160,7 @@ var localProxyStartCmd = &console.Command{
 			terminal.RemapOutput(lw, lw).SetDecorated(true)
 			reexec.NotifyForeground(reexec.UP)
 		} else {
-			defer pidFile.Remove()
+			defer os.Remove(pidFile.PidFile())
 		}
 
 		shutdownCh := make(chan bool, 1)

@@ -78,8 +78,13 @@ var localServerStartCmd = &console.Command{
 			ui.Warning("The local web server is already running")
 			return errors.WithStack(printWebServerStatus(projectDir))
 		}
-		if err := cleanupWebServerFiles(projectDir, pidFile); err != nil {
-			return err
+		// Only the parent cleans up stale files. The child skips this because
+		// the parent already ran cleanup and still holds the log file open;
+		// on Windows, deleting an open file is not allowed.
+		if !reexec.IsChild() {
+			if err := cleanupWebServerFiles(projectDir, pidFile); err != nil {
+				return err
+			}
 		}
 
 		homeDir := util.GetHomeDir()
@@ -434,9 +439,13 @@ func cleanupWebServerFiles(projectDir string, pidFile *pid.PidFile) error {
 	if err := g.Wait(); err != nil {
 		return err
 	}
-	if err := pidFile.Remove(); err != nil {
+	if err := os.Remove(pidFile.PidFile()); err != nil && !os.IsNotExist(err) {
 		return err
 	}
+	// best effort: a dying server may still hold the log open on Windows,
+	// and LogWriter() truncates it right after anyway
+	os.Remove(pidFile.LogFile())
+	pidFile.RemoveWorkerLogs()
 	return nil
 }
 
@@ -453,7 +462,7 @@ func waitForWorkers(projectDir string, pidFile *pid.PidFile) error {
 	if err := g.Wait(); err != nil {
 		return err
 	}
-	if err := pidFile.Remove(); err != nil {
+	if err := os.Remove(pidFile.PidFile()); err != nil && !os.IsNotExist(err) {
 		return err
 	}
 	return nil

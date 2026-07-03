@@ -124,7 +124,7 @@ func (p *PidFile) WaitForExit() error {
 		return err
 	}
 
-	defer p.Remove()
+	defer os.Remove(p.PidFile())
 	ch := make(chan error)
 	go func() {
 		if !p.IsRunning() {
@@ -249,6 +249,19 @@ func (p *PidFile) CleanupDirectories() {
 	os.Remove(p.WorkerPidDir())
 }
 
+// RemoveWorkerLogs removes any leftover worker log files. Removal is best
+// effort as a log file may still be locked on Windows while a worker shuts
+// down; the directory itself is kept as it may be watched via inotify.
+func (p *PidFile) RemoveWorkerLogs() {
+	logs, err := filepath.Glob(filepath.Join(p.WorkerLogDir(), "*.log"))
+	if err != nil {
+		return
+	}
+	for _, log := range logs {
+		os.Remove(log)
+	}
+}
+
 func (p *PidFile) LogReader() (io.ReadCloser, error) {
 	logFile := p.LogFile()
 	if err := os.MkdirAll(filepath.Dir(logFile), 0755); err != nil {
@@ -302,17 +315,6 @@ func AllWorkers(dir string) []*PidFile {
 	return doAll(filepath.Join(util.GetHomeDir(), "var", name(dir)))
 }
 
-// Remove a pidfile
-func (p *PidFile) Remove() error {
-	for _, file := range []string{p.LogFile(), p.PidFile()} {
-		if err := os.Remove(file); err != nil && !os.IsNotExist(err) {
-			return errors.WithStack(err)
-		}
-		// DO NOT remove empty dirs (as it makes inotify fail)
-	}
-	return nil
-}
-
 // Write writes a pidfile
 func (p *PidFile) Write(pid, port int, scheme string) error {
 	oldPid, err := Load(p.PidFile())
@@ -341,7 +343,7 @@ func (p *PidFile) Stop() error {
 	if p.Pid == 0 {
 		return nil
 	}
-	defer p.Remove()
+	defer os.Remove(p.PidFile())
 	return kill(p.Pid)
 }
 
@@ -427,7 +429,7 @@ func doAll(dir string) []*PidFile {
 		}
 		pidFile.path = p
 		if !pidFile.IsRunning() {
-			pidFile.Remove()
+			os.Remove(p)
 			return nil
 		}
 		pidFiles = append(pidFiles, pidFile)
