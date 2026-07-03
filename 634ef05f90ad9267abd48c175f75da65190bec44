@@ -1,0 +1,18 @@
+---------------------------------------------------------------------------
+
+by upsun-dispatch[bot] at 2026-07-03T12:53:03Z
+
+**📋 PR Summary**
+
+This PR modifies the local runner so that it waits (a 5-second delay) before restarting a command that has failed, replacing an immediate restart. It adds a new test file exercising the restart-with-delay behavior across multiple failing runs.
+
+<details>
+<summary>Changes</summary>
+
+| Layer / File(s) | Summary |
+|---|---|
+| **Runner — restart backoff** | |
+| `local/runner.go` | Introduces a delay before restarting a failing command by resetting a timer to 5 seconds and logging the wait, rather than restarting immediately. |
+| `local/runner_test.go` | Adds a new test that starts the runner in a background goroutine and verifies it waits before restarting a repeatedly failing command. |
+
+</details>
