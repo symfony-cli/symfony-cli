@@ -250,7 +250,10 @@ func (r *Runner) Run() error {
 				}
 
 				logger.Debug().Msg("Removing pid file")
-				return r.pidFile.Remove()
+				if err := os.Remove(r.pidFile.PidFile()); err != nil && !os.IsNotExist(err) {
+					return errors.WithStack(err)
+				}
+				return nil
 			}
 
 			// Command is set up to restart on exit (usually PHP builtin server)
