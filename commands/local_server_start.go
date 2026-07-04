@@ -439,14 +439,7 @@ func cleanupWebServerFiles(projectDir string, pidFile *pid.PidFile) error {
 	if err := g.Wait(); err != nil {
 		return err
 	}
-	if err := os.Remove(pidFile.PidFile()); err != nil && !os.IsNotExist(err) {
-		return err
-	}
-	// best effort: a dying server may still hold the log open on Windows,
-	// and LogWriter() truncates it right after anyway
-	os.Remove(pidFile.LogFile())
-	pidFile.RemoveWorkerLogs()
-	return nil
+	return pidFile.Remove()
 }
 
 func waitForWorkers(projectDir string, pidFile *pid.PidFile) error {
@@ -462,8 +455,5 @@ func waitForWorkers(projectDir string, pidFile *pid.PidFile) error {
 	if err := g.Wait(); err != nil {
 		return err
 	}
-	if err := os.Remove(pidFile.PidFile()); err != nil && !os.IsNotExist(err) {
-		return err
-	}
-	return nil
+	return pidFile.RemovePidFile()
 }
