@@ -1,0 +1,23 @@
+---------------------------------------------------------------------------
+
+by upsun-dispatch[bot] at 2026-07-04T08:04:34Z
+
+**📋 PR Summary**
+
+This PR refactors PID file removal by re-encapsulating the logic behind dedicated `RemovePidFile` and `Remove` methods in the `local/pid` package. Call sites in the proxy, server start commands, and runner are updated to use the new API, with new tests added for the pidfile behavior.
+
+<details>
+<summary>Changes</summary>
+
+| Layer / File(s) | Summary |
+|---|---|
+| **PID file encapsulation — pidfile API** | |
+| `local/pid/pidfile.go` | Adds `RemovePidFile`/`Remove` methods to encapsulate PID file removal logic (+27/-5). |
+| `local/pid/pidfile_test.go` | Adds tests covering the new PID file removal methods (+80/-0). |
+| **Call sites — command entrypoints** | |
+| `commands/local_proxy_start.go` | Updates proxy start to use the new removal method (+1/-1). |
+| `commands/local_server_start.go` | Simplifies server start by delegating removal to the new method (+2/-12). |
+| **Call sites — runner** | |
+| `local/runner.go` | Updates the runner to invoke the new removal API (+4/-4). |
+
+</details>
