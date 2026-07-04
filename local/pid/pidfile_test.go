@@ -73,6 +73,86 @@ func TestIsRunning(t *testing.T) {
 	}
 }
 
+func TestRemovePidFileKeepsLogFile(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("HOME", dir)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(dir, ".config"))
+	p := &PidFile{Dir: dir, path: filepath.Join(dir, "test.pid")}
+
+	if err := os.WriteFile(p.PidFile(), []byte("{}"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Dir(p.LogFile()), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(p.LogFile(), []byte("log"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := p.RemovePidFile(); err != nil {
+		t.Fatalf("RemovePidFile should succeed, got: %s", err)
+	}
+	if _, err := os.Stat(p.PidFile()); !os.IsNotExist(err) {
+		t.Error("the pid file should have been removed")
+	}
+	if _, err := os.Stat(p.LogFile()); err != nil {
+		t.Errorf("the log file should have been kept, got: %s", err)
+	}
+	// removing a missing pid file is not an error
+	if err := p.RemovePidFile(); err != nil {
+		t.Errorf("RemovePidFile on a missing file should succeed, got: %s", err)
+	}
+}
+
+func TestRemoveDeletesPidAndLogFiles(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("HOME", dir)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(dir, ".config"))
+	p := &PidFile{Dir: dir, path: filepath.Join(dir, "test.pid")}
+
+	if err := os.WriteFile(p.PidFile(), []byte("{}"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Dir(p.LogFile()), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(p.LogFile(), []byte("log"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := p.Remove(); err != nil {
+		t.Fatalf("Remove should succeed, got: %s", err)
+	}
+	if _, err := os.Stat(p.PidFile()); !os.IsNotExist(err) {
+		t.Error("the pid file should have been removed")
+	}
+	if _, err := os.Stat(p.LogFile()); !os.IsNotExist(err) {
+		t.Error("the log file should have been removed")
+	}
+}
+
+func TestRemoveDeletesLeftoverWorkerLogs(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("HOME", dir)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(dir, ".config"))
+	p := &PidFile{Dir: dir, Args: []string{"worker"}, path: filepath.Join(dir, "server.pid")}
+
+	if err := os.MkdirAll(p.WorkerLogDir(), 0755); err != nil {
+		t.Fatal(err)
+	}
+	workerLog := filepath.Join(p.WorkerLogDir(), "worker.log")
+	if err := os.WriteFile(workerLog, []byte("log"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := p.Remove(); err != nil {
+		t.Fatalf("Remove should succeed, got: %s", err)
+	}
+	if _, err := os.Stat(workerLog); !os.IsNotExist(err) {
+		t.Error("leftover worker log files should have been removed")
+	}
+}
+
 func TestWriteRefusesOnlyLiveProcesses(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "test.pid")
 	cmd, stdin := startHelperProcess(t)

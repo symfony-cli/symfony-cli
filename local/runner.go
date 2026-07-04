@@ -73,7 +73,7 @@ func NewRunner(pidFile *pid.PidFile, mode runnerMode) (*Runner, error) {
 	}
 	r.binary, err = exec.LookPath(pidFile.Binary())
 	if err != nil {
-		os.Remove(r.pidFile.PidFile())
+		r.pidFile.RemovePidFile()
 		return nil, errors.WithStack(err)
 	}
 
@@ -250,8 +250,8 @@ func (r *Runner) Run() error {
 				}
 
 				logger.Debug().Msg("Removing pid file")
-				if err := os.Remove(r.pidFile.PidFile()); err != nil && !os.IsNotExist(err) {
-					return errors.WithStack(err)
+				if err := r.pidFile.RemovePidFile(); err != nil {
+					return err
 				}
 				return nil
 			}
@@ -262,7 +262,7 @@ func (r *Runner) Run() error {
 				// Remove the stale PID file before restarting so that Write()
 				// does not see a recently-exited process as still running (a
 				// timing issue especially visible on Windows).
-				if rmErr := os.Remove(r.pidFile.PidFile()); rmErr != nil && !os.IsNotExist(rmErr) {
+				if rmErr := r.pidFile.RemovePidFile(); rmErr != nil {
 					logger.Warn().Msgf("could not remove stale pid file: %s", rmErr)
 				}
 				// In case of error we want to wait before restarting the

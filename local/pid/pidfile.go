@@ -124,7 +124,7 @@ func (p *PidFile) WaitForExit() error {
 		return err
 	}
 
-	defer os.Remove(p.PidFile())
+	defer p.RemovePidFile()
 	ch := make(chan error)
 	go func() {
 		if !p.IsRunning() {
@@ -249,10 +249,32 @@ func (p *PidFile) CleanupDirectories() {
 	os.Remove(p.WorkerPidDir())
 }
 
-// RemoveWorkerLogs removes any leftover worker log files. Removal is best
+// RemovePidFile removes the pid file. The associated log file is intentionally
+// left in place: on Windows the server may still hold it open, and it is
+// truncated on the next start anyway. A missing pid file is not an error.
+func (p *PidFile) RemovePidFile() error {
+	if err := os.Remove(p.path); err != nil && !os.IsNotExist(err) {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
+// Remove removes the pid file together with the server and worker log files.
+// Log removal is best effort: a dying server may still hold a log open on
+// Windows, and LogWriter() truncates it on the next start anyway.
+func (p *PidFile) Remove() error {
+	if err := p.RemovePidFile(); err != nil {
+		return err
+	}
+	os.Remove(p.LogFile())
+	p.removeWorkerLogs()
+	return nil
+}
+
+// removeWorkerLogs removes any leftover worker log files. Removal is best
 // effort as a log file may still be locked on Windows while a worker shuts
 // down; the directory itself is kept as it may be watched via inotify.
-func (p *PidFile) RemoveWorkerLogs() {
+func (p *PidFile) removeWorkerLogs() {
 	logs, err := filepath.Glob(filepath.Join(p.WorkerLogDir(), "*.log"))
 	if err != nil {
 		return
@@ -343,7 +365,7 @@ func (p *PidFile) Stop() error {
 	if p.Pid == 0 {
 		return nil
 	}
-	defer os.Remove(p.PidFile())
+	defer p.RemovePidFile()
 	return kill(p.Pid)
 }
 
@@ -429,7 +451,7 @@ func doAll(dir string) []*PidFile {
 		}
 		pidFile.path = p
 		if !pidFile.IsRunning() {
-			os.Remove(p)
+			pidFile.RemovePidFile()
 			return nil
 		}
 		pidFiles = append(pidFiles, pidFile)
