@@ -52,10 +52,11 @@ type Executor struct {
 	ExtraEnv   []string
 	Logger     zerolog.Logger
 
-	environ   []string
-	iniDir    string
-	scriptDir string
-	tempDir   string
+	environ    []string
+	phpEnviron []string
+	iniDir     string
+	scriptDir  string
+	tempDir    string
 }
 
 var execCommand = exec.Command
@@ -222,10 +223,10 @@ func (e *Executor) Config(loadDotEnv bool) error {
 			return err
 		}
 	}
-	e.environ = append(e.environ, fmt.Sprintf("PHP_BINARY=%s", v.PHPPath))
-	e.environ = append(e.environ, fmt.Sprintf("PHP_PATH=%s", v.PHPPath))
+	e.phpEnviron = append(e.phpEnviron, fmt.Sprintf("PHP_BINARY=%s", v.PHPPath))
+	e.phpEnviron = append(e.phpEnviron, fmt.Sprintf("PHP_PATH=%s", v.PHPPath))
 	// for pecl
-	e.environ = append(e.environ, fmt.Sprintf("PHP_PEAR_PHP_BIN=%s", v.PHPPath))
+	e.phpEnviron = append(e.phpEnviron, fmt.Sprintf("PHP_PEAR_PHP_BIN=%s", v.PHPPath))
 	// prepending the PHP directory in the PATH does not work well if the PHP binary is not named "php" (like php7.3 for instance)
 	// in that case, we create a temp directory with a symlink
 	// we also link php-config for pecl to pick up the right one (it is always looks for something called php-config)
@@ -284,7 +285,7 @@ func (e *Executor) Config(loadDotEnv bool) error {
 			dirs += string(os.PathListSeparator) + e.iniDir
 		}
 		if dirs != "" {
-			e.environ = append(e.environ, fmt.Sprintf("PHP_INI_SCAN_DIR=%s%s", os.Getenv("PHP_INI_SCAN_DIR"), dirs))
+			e.phpEnviron = append(e.phpEnviron, fmt.Sprintf("PHP_INI_SCAN_DIR=%s%s", os.Getenv("PHP_INI_SCAN_DIR"), dirs))
 		}
 	}
 
@@ -445,7 +446,9 @@ func (e *Executor) Execute(loadDotEnv bool) int {
 	}
 	defer e.CleanupTemporaryDirectories()
 	cmd := execCommand(e.Args[0], e.Args[1:]...)
-	environ := append(os.Environ(), e.environ...)
+	environ := append([]string(nil), e.environ...)
+	environ = append(environ, os.Environ()...)
+	environ = append(environ, e.phpEnviron...)
 	gpathname := "PATH"
 	if runtime.GOOS == "windows" {
 		gpathname = "Path"
