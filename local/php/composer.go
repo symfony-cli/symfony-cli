@@ -87,32 +87,12 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, 
 		} else {
 			// Found a file but it's not a valid composer
 			reason := fmt.Sprintf("Detected Composer file (%s) is not a valid PHAR or PHP script.", path)
-			fmt.Fprintln(logger, "  WARNING:", reason)
-			fmt.Fprintln(logger, "  Downloading Composer for you, but it is recommended to install Composer yourself, instructions available at https://getcomposer.org/download/")
-			binDir := filepath.Join(util.GetHomeDir(), "composer")
-			if path, err = downloadComposer(binDir, debugLogger); err != nil {
-				return ComposerResult{
-					code:  1,
-					error: errors.Wrap(err, "unable to find composer, get it at https://getcomposer.org/download/"),
-				}
-			}
-			e.Args = append([]string{"php", path}, args...)
-			fmt.Fprintf(logger, "  (running %s)\n\n", e.CommandLine())
-		}
-	} else {
-		// No composer found at all
-		reason := "No Composer installation found."
-		fmt.Fprintln(logger, "  WARNING:", reason)
-		fmt.Fprintln(logger, "  Downloading Composer for you, but it is recommended to install Composer yourself, instructions available at https://getcomposer.org/download/")
-		binDir := filepath.Join(util.GetHomeDir(), "composer")
-		if path, err = downloadComposer(binDir, debugLogger); err != nil {
-			return ComposerResult{
-				code:  1,
-				error: errors.Wrap(err, "unable to find composer, get it at https://getcomposer.org/download/"),
+			if err := downloadComposerFallback(e, args, reason, logger, debugLogger); err != nil {
+				return ComposerResult{code: 1, error: err}
 			}
 		}
-		e.Args = append([]string{"php", path}, args...)
-		fmt.Fprintf(logger, "  (running %s)\n\n", e.CommandLine())
+	} else if err := downloadComposerFallback(e, args, "No Composer installation found.", logger, debugLogger); err != nil {
+		return ComposerResult{code: 1, error: err}
 	}
 
 	ret := e.Execute(false)
@@ -123,6 +103,21 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, 
 		}
 	}
 	return ComposerResult{}
+}
+
+// downloadComposerFallback downloads a private Composer copy and points the executor at it. It is
+// used both when no Composer is found and when the detected one is not a valid PHAR or PHP script.
+func downloadComposerFallback(e *Executor, args []string, reason string, logger io.Writer, debugLogger zerolog.Logger) error {
+	fmt.Fprintln(logger, "  WARNING:", reason)
+	fmt.Fprintln(logger, "  Downloading Composer for you, but it is recommended to install Composer yourself, instructions available at https://getcomposer.org/download/")
+	binDir := filepath.Join(util.GetHomeDir(), "composer")
+	path, err := downloadComposer(binDir, debugLogger)
+	if err != nil {
+		return errors.Wrap(err, "unable to find composer, get it at https://getcomposer.org/download/")
+	}
+	e.Args = append([]string{"php", path}, args...)
+	fmt.Fprintf(logger, "  (running %s)\n\n", e.CommandLine())
+	return nil
 }
 
 func composerVersion() int {
