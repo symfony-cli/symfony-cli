@@ -62,7 +62,11 @@ func PieExecutor(dir string, args, env []string, stdout, stderr, logger io.Write
 	if piePath := os.Getenv("SYMFONY_PIE_PATH"); piePath != "" {
 		debugLogger.Debug().Str("SYMFONY_PIE_PATH", piePath).Msg("SYMFONY_PIE_PATH has been defined. User is taking control over PIE detection and execution.")
 		e.Args = append([]string{piePath}, args...)
-	} else if path, err := e.findPie(); err == nil && isPHPScript(path) {
+	} else if path, err := e.findPie(); err == nil && isNixWrapper(path) {
+		// Nix wrappers are executable binaries that wrap the PHP script
+		// Execute them directly, not with php
+		e.Args = append([]string{path}, args...)
+	} else if err == nil && isPHPScriptDirect(path) {
 		e.Args = append([]string{"php", path}, args...)
 	} else {
 		reason := "No PIE installation found."

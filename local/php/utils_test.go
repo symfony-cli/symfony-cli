@@ -30,13 +30,13 @@ type UtilsSuite struct{}
 
 var _ = Suite(&UtilsSuite{})
 
-func (s *UtilsSuite) TestIsPHPScript(c *C) {
+func (s *UtilsSuite) TestIsPHPScriptDirect(c *C) {
 	dir, err := filepath.Abs("testdata/php_scripts")
 	c.Assert(err, IsNil)
 
-	c.Assert(isPHPScript(""), Equals, false)
-	c.Assert(isPHPScript(filepath.Join(dir, "unknown")), Equals, false)
-	c.Assert(isPHPScript(filepath.Join(dir, "invalid")), Equals, false)
+	c.Assert(isPHPScriptDirect(""), Equals, false)
+	c.Assert(isPHPScriptDirect(filepath.Join(dir, "unknown")), Equals, false)
+	c.Assert(isPHPScriptDirect(filepath.Join(dir, "invalid")), Equals, false)
 
 	for _, validScripts := range []string{
 		"usual-one",
@@ -44,21 +44,21 @@ func (s *UtilsSuite) TestIsPHPScript(c *C) {
 		"custom-one",
 		"plain-one.php",
 	} {
-		c.Assert(isPHPScript(filepath.Join(dir, validScripts)), Equals, true)
+		c.Assert(isPHPScriptDirect(filepath.Join(dir, validScripts)), Equals, true)
 	}
 }
 
-func (s *UtilsSuite) TestIsPHPScriptNixWrapper(c *C) {
+func (s *UtilsSuite) TestIsNixWrapper(c *C) {
 	dir, err := filepath.Abs("testdata/php_scripts")
 	c.Assert(err, IsNil)
 
 	// Test Nix wrapper with valid PHP script
-	c.Assert(isPHPScript(filepath.Join(dir, "nix-wrapper")), Equals, true,
-		Commentf("Nix wrapper with valid PHP wrapped file should be detected as PHP script"))
+	c.Assert(isNixWrapper(filepath.Join(dir, "nix-wrapper")), Equals, true,
+		Commentf("Nix wrapper with valid PHP wrapped file should be detected as a Nix wrapper"))
 
 	// Test Nix wrapper with invalid wrapped file
-	c.Assert(isPHPScript(filepath.Join(dir, "nix-wrapper-invalid")), Equals, false,
-		Commentf("Nix wrapper with invalid wrapped file should not be detected as PHP script"))
+	c.Assert(isNixWrapper(filepath.Join(dir, "nix-wrapper-invalid")), Equals, false,
+		Commentf("Nix wrapper with invalid wrapped file should not be detected as a Nix wrapper"))
 }
 
 func (s *UtilsSuite) TestIsNixWrapperEdgeCases(c *C) {
@@ -73,7 +73,7 @@ func (s *UtilsSuite) TestIsNixWrapperEdgeCases(c *C) {
 		Commentf("Non-PHP file without a wrapped companion should not be detected as Nix wrapper"))
 }
 
-func (s *UtilsSuite) TestIsPHPScriptNixWrapperSymlink(c *C) {
+func (s *UtilsSuite) TestIsNixWrapperSymlink(c *C) {
 	dir, err := filepath.Abs("testdata/php_scripts")
 	c.Assert(err, IsNil)
 
@@ -86,6 +86,6 @@ func (s *UtilsSuite) TestIsPHPScriptNixWrapperSymlink(c *C) {
 
 	// The symlink's directory does NOT contain .nix-wrapper-wrapped,
 	// but the resolved target's directory does
-	c.Assert(isPHPScript(symlink), Equals, true,
-		Commentf("Nix wrapper accessed via symlink (like Nix profiles) should be detected as PHP script"))
+	c.Assert(isNixWrapper(symlink), Equals, true,
+		Commentf("Nix wrapper accessed via symlink (like Nix profiles) should be detected as a Nix wrapper"))
 }

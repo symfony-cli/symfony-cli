@@ -7,21 +7,6 @@ import (
 	"path/filepath"
 )
 
-// isPHPScript checks that the provided file is indeed a phar/PHP script (not a .bat file)
-// It also handles Nix wrappers that wrap the actual PHP script
-func isPHPScript(path string) bool {
-	if path == "" {
-		return false
-	}
-
-	if isPHPScriptDirect(path) {
-		return true
-	}
-
-	// Check for Nix-style wrappers (e.g., composer -> .composer-wrapped)
-	return isNixWrapper(path)
-}
-
 // isNixWrapper checks if the file is a Nix wrapper binary with a valid wrapped PHP script.
 // Nix wraps executables with a compiled binary that sets up the environment and calls the
 // actual script (stored as .<name>-wrapped in the same directory). Nix profiles expose these
