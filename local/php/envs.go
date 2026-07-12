@@ -30,20 +30,46 @@ import (
 	"github.com/symfony-cli/symfony-cli/envs"
 )
 
+func (p *Server) resolveScriptName(pathInfo string) (string, string) {
+
+	pathInfo = path.Clean(pathInfo)
+
+	if pos := strings.Index(strings.ToLower(pathInfo), ".php"); pos != -1 {
+		file := path.Clean(pathInfo[:pos+4])
+
+			if _, err := os.Stat(filepath.Join(p.documentRoot, file)); err == nil {
+				return file, pathInfo[pos+4:]
+			}
+
+	}
+
+	if len(pathInfo) <= 1 {
+		return p.passthru, pathInfo
+	}
+
+	paths := strings.Split(pathInfo, "/")
+
+	for n := len(paths); n > 0; n-- {
+		file := filepath.Clean(filepath.Join(paths[:n]...))
+		if _, err := os.Stat(filepath.Join(p.documentRoot, file)); err == nil {
+			serverPath := path.Join(paths[n:]...)
+			if serverPath == "" && pathInfo[len(pathInfo)-1:] != "/" {
+				return file, ""
+			}
+			return file, "/" + serverPath
+		}
+
+	}
+
+	return p.passthru, pathInfo
+}
+
 func (p *Server) generateEnv(req *http.Request) map[string]string {
-	scriptName := p.passthru
+	scriptName, pathInfo := p.resolveScriptName(req.URL.Path)
+
 	https := ""
 	if req.TLS != nil {
 		https = "On"
-	}
-
-	pathInfo := req.URL.Path
-	if pos := strings.Index(strings.ToLower(pathInfo), ".php"); pos != -1 {
-		file := path.Clean(pathInfo[:pos+4])
-		if _, err := os.Stat(filepath.Join(p.documentRoot, file)); err == nil {
-			scriptName = file
-			pathInfo = pathInfo[pos+4:]
-		}
 	}
 
 	remoteAddr := req.Header.Get("X-Client-IP")
