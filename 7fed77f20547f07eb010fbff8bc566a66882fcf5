@@ -1,0 +1,106 @@
+---------------------------------------------------------------------------
+
+by tucksaun at 2025-12-05T16:43:50Z
+
+Thank you for this PR.
+
+But does is **actually** work? I mean, the detected file is then run by passing it as a first argument to PHP, which would not work with a binary wrapper (at mentioned [in #424](https://github.com/symfony-cli/symfony-cli/issues/424#issuecomment-2676176682).
+
+---------------------------------------------------------------------------
+
+by spk at 2025-12-05T17:11:57Z
+
+> Thank you for this PR.
+>
+> But does is **actually** work? I mean, the detected file is then run by passing it as a first argument to PHP, which would not work with a binary wrapper (at mentioned [in #424](https://github.com/symfony-cli/symfony-cli/issues/424#issuecomment-2676176682).
+
+Thanks for the comments. After the last fix it works it you use the nix binary directly you will have the warning, even tho its a valid working composer installation. You can reproduce it by using the symphony cli from main and on a project run:
+
+```
+export PATH="/nix/store/vmckm13xcakaiznfzz5mfvlwzs5633ka-composer-2.8.12/bin:/usr/local/bin:/usr/bin:/bin"
+
+/tmp/symfony-cli-old composer install
+  WARNING: Detected Composer file (/nix/store/vmckm13xcakaiznfzz5mfvlwzs5633ka-composer-2.8.12/bin/composer) is not a valid PHAR or PHP script.
+  Downloading Composer for you, but it is recommended to install Composer yourself, instructions available at https://getcomposer.org/download/
+  (running php /home/spk/.config/symfony-cli/composer/composer.phar install)
+
+Installing dependencies from lock file (including require-dev)
+Verifying lock file contents can be installed on current platform.
+Nothing to install, update or remove
+Generating autoload files
+2 packages you are using are looking for funding.
+Use the `composer fund` command to find out more!
+```
+
+with this PR we run the binary directly when the wrapper is a valid php script and won't have the warning anymore.
+
+---------------------------------------------------------------------------
+
+by Kocal at 2026-07-04T08:29:44Z
+
+Hey, I recently opened https://github.com/symfony-cli/symfony-cli/pull/719 Fabien asked me to try this PR, but unfortunately I couldn't get it to work super easily.
+
+Maybe my setup is wrong (this is how [I setup PHP/Composer with Nix](https://github.com/Kocal/dotfiles/blob/main/nix/home/php.nix) on my machine), but checking out on your PR, `go build`, and running `./symfony-cli composer help` still output the composer's warning:
+```shell
+  WARNING: Detected Composer file (/etc/profiles/per-user/kocal/bin/composer) is not a valid PHAR or PHP script.
+  Downloading Composer for you, but it is recommended to install Composer yourself, instructions available at https://getcomposer.org/download/
+  (running php /Users/kocal/Library/Application Support/symfony-cli/composer/composer.phar help)
+
+Description:
+  Display help for a command
+
+(...)
+```
+
+Some informations:
+```shell
+➜ which composer
+/etc/profiles/per-user/kocal/bin/composer
+
+➜ echo $PATH
+/Users/kocal/.local/state/fnm_multishells/73430_1783153475369/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Users/kocal/.local/bin:/Users/kocal/.composer/vendor/bin:/Users/kocal/.nix-profile/bin:/etc/profiles/per-user/kocal/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Applications/Ghostty.app/Contents/MacOS
+```
+
+However, still with your patch, running `symfony-cli` with `/nix/store/lcppscx5lnkgjcm4iska2vc0z82vcvsk-composer-2.10.1/bin` appended to the `$PATH` work, the warning is not here anymore:
+```shell
+➜ PATH="/nix/store/lcppscx5lnkgjcm4iska2vc0z82vcvsk-composer-2.10.1/bin:$PATH" ./symfony-cli composer help
+Description:
+  Display help for a command
+
+(...)
+```
+
+If I checkout on `main`, re-run `go build`, and re-execute the previous command, the composer's warning is shown again:
+```shell
+➜ PATH="/nix/store/lcppscx5lnkgjcm4iska2vc0z82vcvsk-composer-2.10.1/bin:$PATH" ./symfony-cli composer help
+  WARNING: Detected Composer file (/nix/store/lcppscx5lnkgjcm4iska2vc0z82vcvsk-composer-2.10.1/bin/composer) is not a valid PHAR or PHP script.
+  Downloading Composer for you, but it is recommended to install Composer yourself, instructions available at https://getcomposer.org/download/
+  (running php /Users/kocal/Library/Application Support/symfony-cli/composer/composer.phar help)
+```
+
+To conclude, your PR works but it expect `/nix/store/lcppscx5lnkgjcm4iska2vc0z82vcvsk-composer-2.10.1/bin` to be present in the `$PATH`. Is it on purpose? Is it something common with Nix? (I'm asking because I'm still super new in the Nix ecosystem)
+
+Thank you!
+
+---------------------------------------------------------------------------
+
+by spk at 2026-07-07T08:09:40Z
+
+Thanks for testing this. You're right — the issue is that Nix profile paths (/etc/profiles/per-user/...) are symlinks pointing into the Nix store, and the current implementation looks for the `.composer-wrapped` companion file in the symlink's directory rather than resolving to the real path first. The fix is to use `filepath.EvalSymlinks` before checking for the wrapped file. I hadn't accounted for profile symlinks in this PR, only direct Nix store paths. I'll push a fix for this shortly.
+
+---------------------------------------------------------------------------
+
+by Kocal at 2026-07-11T06:49:32Z
+
+Thanks for providing a new patch, I can confirm `symfony composer` correctly works (no more `... is not a valid PHAR or PHP script` warning), without `/nix/store/lcppscx5lnkgjcm4iska2vc0z82vcvsk-composer-2.10.1/bin` in my `$PATH`:
+```shell
+~/workspace/symfony
+➜ echo $PATH
+/Users/kocal/.local/state/fnm_multishells/50260_1783752096600/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Users/kocal/go/bin:/Users/kocal/.local/share/pnpm:/Users/kocal/.local/bin:/Users/kocal/.composer/vendor/bin:/Users/kocal/.nix-profile/bin:/etc/profiles/per-user/kocal/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Applications/Ghostty.app/Contents/MacOS
+
+~/workspace/symfony
+➜ SYMFONY_CLI_PHP_PATH=/etc/profiles/per-user/kocal/bin/ symfony composer -V
+Composer version 2.10.1 2026-06-04 10:25:59
+PHP version 8.4.22 (/nix/store/4pvnbq2c6jh6wvkbdxvsxpy9hg938638-php-with-extensions-8.4.22/bin/php)
+Run the "diagnose" command to get more detailed diagnostics output.
+```
