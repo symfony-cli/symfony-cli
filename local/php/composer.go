@@ -76,16 +76,34 @@ func Composer(dir string, args, env []string, stdout, stderr, logger io.Writer, 
 	if composerPath := os.Getenv("SYMFONY_COMPOSER_PATH"); composerPath != "" {
 		debugLogger.Debug().Str("SYMFONY_COMPOSER_PATH", composerPath).Msg("SYMFONY_COMPOSER_PATH has been defined. User is taking control over Composer detection and execution.")
 		e.Args = append([]string{composerPath}, args...)
-	} else if path, err := e.findComposer(composerBin); err == nil && isPHPScript(path) {
-		e.Args = append([]string{"php", path}, args...)
-	} else {
-		reason := "No Composer installation found."
-		if path != "" {
-			reason = fmt.Sprintf("Detected Composer file (%s) is not a valid PHAR or PHP script.", path)
+	} else if path, err := e.findComposer(composerBin); err == nil {
+		if isNixWrapper(path) {
+			// Nix wrappers are executable binaries that wrap the PHP script
+			// Execute them directly, not with php
+			e.Args = append([]string{path}, args...)
+		} else if isPHPScriptDirect(path) {
+			// Regular PHP script or PHAR file
+			e.Args = append([]string{"php", path}, args...)
+		} else {
+			// Found a file but it's not a valid composer
+			reason := fmt.Sprintf("Detected Composer file (%s) is not a valid PHAR or PHP script.", path)
+			fmt.Fprintln(logger, "  WARNING:", reason)
+			fmt.Fprintln(logger, "  Downloading Composer for you, but it is recommended to install Composer yourself, instructions available at https://getcomposer.org/download/")
+			binDir := filepath.Join(util.GetHomeDir(), "composer")
+			if path, err = downloadComposer(binDir, debugLogger); err != nil {
+				return ComposerResult{
+					code:  1,
+					error: errors.Wrap(err, "unable to find composer, get it at https://getcomposer.org/download/"),
+				}
+			}
+			e.Args = append([]string{"php", path}, args...)
+			fmt.Fprintf(logger, "  (running %s)\n\n", e.CommandLine())
 		}
+	} else {
+		// No composer found at all
+		reason := "No Composer installation found."
 		fmt.Fprintln(logger, "  WARNING:", reason)
 		fmt.Fprintln(logger, "  Downloading Composer for you, but it is recommended to install Composer yourself, instructions available at https://getcomposer.org/download/")
-		// we don't store it under bin/ to avoid it being found by findComposer as we want to only use it as a fallback
 		binDir := filepath.Join(util.GetHomeDir(), "composer")
 		if path, err = downloadComposer(binDir, debugLogger); err != nil {
 			return ComposerResult{
