@@ -26,6 +26,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -100,6 +101,9 @@ func TestHelperProcess(t *testing.T) {
 		for _, v := range os.Environ() {
 			fmt.Println(v)
 		}
+		os.Exit(0)
+	case "echo-arg":
+		fmt.Print(os.Args[4])
 		os.Exit(0)
 	case "exit-code":
 		code, _ := strconv.Atoi(os.Args[4])
@@ -257,6 +261,56 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 	c.Check(false, Equals, strings.Contains(output.String(), "DATABASE_URL=mysql://127.0.0.1"))
 	// Checks local properly feed Symfony with SYMFONY_DOTENV_VARS
 	c.Check(true, Equals, strings.Contains(output.String(), "SYMFONY_DOTENV_VARS=USER_DEFINED_ENVVAR"))
+}
+
+func (s *ExecutorSuite) TestPhpIniScanDirKeepsSystemScanDir(c *C) {
+	defer restoreExecCommand()
+	// The executor first runs `php -r ...` to discover the scan directory the
+	// binary loads on its own; the actual run then dumps its environment.
+	execCommand = func(name string, arg ...string) *exec.Cmd {
+		helper := "dump-env"
+		var extra []string
+		if slices.Contains(arg, "-r") {
+			helper = "echo-arg"
+			extra = []string{"/opt/test/conf.d"}
+		}
+		cs := append([]string{"-test.run=TestHelperProcess", "--", helper}, extra...)
+		cmd := exec.Command(os.Args[0], cs...)
+		cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
+		cmd.Dir, _ = os.Getwd()
+		return cmd
+	}
+
+	home, err := filepath.Abs("testdata/executor")
+	c.Assert(err, IsNil)
+
+	homedir.Reset()
+	os.Setenv("HOME", home)
+	defer homedir.Reset()
+
+	oldwd, _ := os.Getwd()
+	defer os.Chdir(oldwd)
+	os.Chdir(filepath.Join(home, "project"))
+	defer cleanupExecutorTempFiles()
+
+	// A project-local php.ini is what triggers the PHP_INI_SCAN_DIR handling.
+	iniPath := filepath.Join(home, "project", "php.ini")
+	c.Assert(os.WriteFile(iniPath, []byte("memory_limit = 256M\n"), 0644), IsNil)
+	defer os.Remove(iniPath)
+
+	// A leftover value in the environment must not interfere with the assertion.
+	os.Unsetenv("PHP_INI_SCAN_DIR")
+
+	var output bytes.Buffer
+	outCloser := testStdoutCapture(c, &output)
+	c.Assert((&Executor{BinName: "php", Args: []string{"php"}}).Execute(true), Equals, 0)
+	outCloser()
+
+	sep := string(os.PathListSeparator)
+	// The scan directory discovered from the binary must be preserved and the
+	// project directory appended to it, not clobbered.
+	c.Check(strings.Contains(output.String(), "PHP_INI_SCAN_DIR=/opt/test/conf.d"+sep), Equals, true)
+	c.Check(strings.Contains(output.String(), "PHP_INI_SCAN_DIR="+sep), Equals, false)
 }
 
 func (s *PHPSuite) TestDetectScript(c *C) {

@@ -273,9 +273,8 @@ func (e *Executor) Config(loadDotEnv bool) error {
 	e.Paths = append([]string{filepath.Dir(path), phpDir}, e.Paths...)
 	if phpiniArgs {
 		// see https://php.net/manual/en/configuration.file.php
-		// if PHP_INI_SCAN_DIR exists, just append our new directory
-		// if not, add the default one (empty string) and then our new directory
-		// Look for php.ini in the script dir and go up if needed (symfony php ./app/test.php should read php/ini in ./)
+		// Load a project-local php.ini (found by walking up from the script dir)
+		// in addition to PHP's own configuration.
 		dirs := ""
 		if phpIniDir := e.phpiniDirForDir(); phpIniDir != "" {
 			dirs += string(os.PathListSeparator) + phpIniDir
@@ -284,7 +283,15 @@ func (e *Executor) Config(loadDotEnv bool) error {
 			dirs += string(os.PathListSeparator) + e.iniDir
 		}
 		if dirs != "" {
-			e.environ = append(e.environ, fmt.Sprintf("PHP_INI_SCAN_DIR=%s%s", os.Getenv("PHP_INI_SCAN_DIR"), dirs))
+			// Prepend PHP's own scan dir so its extensions (Xdebug, Blackfire...)
+			// keep loading. The empty-leading-element trick isn't enough: wrapper
+			// builds (Nix, ...) inject their scan dir at runtime and have no
+			// compile-time default, so it would resolve to nothing.
+			scanDir := os.Getenv("PHP_INI_SCAN_DIR")
+			if systemScanDir := e.phpSystemIniScanDir(v.PHPPath); systemScanDir != "" {
+				scanDir = systemScanDir
+			}
+			e.environ = append(e.environ, fmt.Sprintf("PHP_INI_SCAN_DIR=%s%s", scanDir, dirs))
 		}
 	}
 
@@ -623,4 +630,23 @@ func (e *Executor) phpiniDirForDir() string {
 		dir = upDir
 	}
 	return ""
+}
+
+// phpSystemIniScanDir returns the .ini scan directory the given PHP binary loads
+// on its own, including one injected at runtime by a wrapper (Nix, Homebrew...).
+// It runs the binary because that value isn't always known at compile time, and
+// returns "" when it can't be determined so callers can fall back to the default.
+func (e *Executor) phpSystemIniScanDir(phpPath string) string {
+	if phpPath == "" {
+		return ""
+	}
+	// getenv() catches a wrapper's runtime value; PHP_CONFIG_FILE_SCAN_DIR is the
+	// compile-time default used by regular builds.
+	cmd := execCommand(phpPath, "-r", `echo getenv("PHP_INI_SCAN_DIR") ?: PHP_CONFIG_FILE_SCAN_DIR;`)
+	out, err := cmd.Output()
+	if err != nil {
+		e.Logger.Debug().Err(err).Msg("unable to detect the PHP ini scan directory")
+		return ""
+	}
+	return strings.TrimSpace(string(out))
 }
