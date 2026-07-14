@@ -1,0 +1,13 @@
+---------------------------------------------------------------------------
+
+by ayyoub-afwallah at 2026-03-29T11:00:16Z
+
+Thanks for the feedback @tucksaun, you're right on all counts.
+
+Following your suggestion, I moved the fallback into the default action instead. Now if the app finds a matching command it runs it as usual, and only when nothing matches does it try to proxy to symfony console. Much cleaner.
+
+---------------------------------------------------------------------------
+
+by ayyoub-afwallah at 2026-07-01T12:20:23Z
+
+@tucksaun I think this one is ready! otherwise, is there anything i could do to push it forward?
