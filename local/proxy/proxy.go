@@ -280,7 +280,7 @@ func New(config *Config, ca *cert.CA, logger *log.Logger, debug bool) *Proxy {
 				html.WrapHTML("Proxy Error", html.CreateErrorTerminal(`# The "%s" hostname is not linked to a directory yet.
 # Link it via the following command:
 
-<code>symfony proxy:domain:attach %s --dir=/some/dir</code>`, hostName, hostNameWithoutTLD), ""))
+<span class="command">symfony proxy:domain:attach %s --dir=/some/dir</span>`, hostName, hostNameWithoutTLD), ""))
 		}
 
 		pid := pid.New(projectDir, nil)
@@ -293,7 +293,7 @@ func New(config *Config, ca *cert.CA, logger *log.Logger, debug bool) *Proxy {
 					html.CreateErrorTerminal(`# It looks like the web server associated with the "%s" hostname is not started yet.
 # Start it via the following command:
 
-$ symfony server:start --daemon --dir=%s`,
+<span class="command">symfony server:start --daemon --dir=%s</span>`,
 						hostName, projectDir)+
 						html.CreateAction("", "Retry"), ""),
 			)

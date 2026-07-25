@@ -186,6 +186,11 @@ a, a.link, a:visited, a:hover {
     width: 7px;
     height: 7px;
 }
+.terminal .command:before {
+	content: "$ ";
+	-webkit-user-select: none;
+	user-select: none;
+}
 .button {
 	font-family: monospace;
 	background-color: #42a7ff;
