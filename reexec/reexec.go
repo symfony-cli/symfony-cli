@@ -123,6 +123,7 @@ func Background(homeDir string) error {
 	}
 
 	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
 
 	go func() {
 		status := 0
@@ -142,6 +143,8 @@ func Background(homeDir string) error {
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan)
+
+	childAlive := false
 
 	for {
 		select {
@@ -163,13 +166,25 @@ func Background(homeDir string) error {
 			}
 
 			if event.Event() == notify.Write {
-				ticker.Stop()
+				childAlive = true
 			}
 		case status := <-statusCh:
 			return console.Exit("", status)
 		case <-ticker.C:
-			p.Kill()
-			return errors.New("reexec timed out")
+			// FS events can be coalesced or dropped under rapid
+			// write+remove sequences (e.g. by FSEvents on macOS), so poll
+			// the status file as a fallback: the child removes it once up.
+			if content, err := os.ReadFile(statusFile.Name()); os.IsNotExist(err) {
+				return nil
+			} else if err == nil && len(content) > 0 {
+				childAlive = true
+			}
+			if !childAlive {
+				if err := p.Kill(); err != nil {
+					return errors.Wrap(err, "reexec timed out and killing the child process failed")
+				}
+				return errors.New("reexec timed out")
+			}
 		}
 	}
 }
