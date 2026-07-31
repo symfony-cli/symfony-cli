@@ -20,9 +20,9 @@
 package projects
 
 type ConfiguredProject struct {
-	Port    int
-	Scheme  string
-	Domains []string
+	Port    int      `json:"port"`
+	Scheme  string   `json:"scheme"`
+	Domains []string `json:"domains"`
 }
 
 func GetConfiguredAndRunning(proxyProjects, runningProjects map[string]*ConfiguredProject) (map[string]*ConfiguredProject, error) {

@@ -22,6 +22,7 @@ package proxy
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"io"
 	"log"
 	"net/http"
@@ -37,6 +38,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/symfony-cli/cert"
 	"github.com/symfony-cli/symfony-cli/local/pid"
+	"github.com/symfony-cli/symfony-cli/local/projects"
 	. "gopkg.in/check.v1"
 )
 
@@ -93,6 +95,23 @@ func (s *ProxySuite) TestProxy(c *C) {
 		p.proxy.ServeHTTP(rr, req)
 		c.Assert(rr.Code, Equals, http.StatusOK)
 		c.Check(strings.Contains(rr.Body.String(), "symfony.wip"), Equals, true)
+	}
+
+	{
+		rr := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/index.json", nil)
+		req.Host = "localhost"
+		c.Assert(err, IsNil)
+		p.proxy.ServeHTTP(rr, req)
+		c.Assert(rr.Code, Equals, http.StatusOK)
+		c.Check(rr.Header().Get("Content-Type"), Equals, "application/json")
+
+		configuredProjects := map[string]*projects.ConfiguredProject{}
+		c.Assert(json.NewDecoder(rr.Body).Decode(&configuredProjects), IsNil)
+		c.Assert(configuredProjects["symfony_com"], DeepEquals, &projects.ConfiguredProject{
+			Scheme:  "https",
+			Domains: []string{"symfony.wip"},
+		})
 	}
 
 	// Test the proxy
