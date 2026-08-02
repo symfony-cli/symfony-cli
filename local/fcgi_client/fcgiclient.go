@@ -366,7 +366,15 @@ func (f *FCGIClient) Request(p map[string]string, req io.Reader) (resp *http.Res
 	resp.Header = http.Header(mimeHeader)
 	// TODO: fixTransferEncoding?
 	resp.TransferEncoding = resp.Header["Transfer-Encoding"]
-	resp.ContentLength, _ = strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
+	// A response without a Content-Length header has an unknown length, which
+	// net/http spells as -1. Leaving it at 0 makes httputil.ReverseProxy take a
+	// streamed response for a complete one: its flushInterval() only bypasses
+	// buffering for text/event-stream or for an unknown length, so any other
+	// streamed content type reaches the client in 4KB blocks instead.
+	resp.ContentLength = -1
+	if contentLength := resp.Header.Get("Content-Length"); contentLength != "" {
+		resp.ContentLength, _ = strconv.ParseInt(contentLength, 10, 64)
+	}
 
 	// status
 	err = errors.WithStack(extractStatus(resp))
