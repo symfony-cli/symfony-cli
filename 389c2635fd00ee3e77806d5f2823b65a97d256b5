@@ -1,0 +1,19 @@
+---------------------------------------------------------------------------
+
+by upsun-dispatch[bot] at 2026-08-03T09:04:02Z
+
+<!-- dispatch-summary -->
+**📋 PR Summary**
+
+This PR fixes FastCGI response streaming for content types other than `text/event-stream`. Previously `strconv.ParseInt("", ...)` failed silently and left `resp.ContentLength` at `0` when a response carried no `Content-Length` header, causing `httputil.ReverseProxy` to treat unknown-length streamed responses as complete and buffer them. The fix defaults `ContentLength` to `-1` (net/http's spelling of unknown length) and only parses the header when present, and adds a unit test covering both the unknown- and known-length cases.
+
+<details>
+<summary>Changes</summary>
+
+| Layer / File(s) | Summary |
+|---|---|
+| **fastcgi content-length** | |
+| `local/fcgi_client/fcgiclient.go` | Default `resp.ContentLength` to -1 (unknown length) and only parse the `Content-Length` header when it is present, so streamed responses of any content type bypass ReverseProxy buffering. |
+| `local/fcgi_client/fcgiclient_test.go` | New unit test constructing a FastCGI STDOUT record and asserting `ContentLength` is -1 when the header is absent and the parsed value when present. |
+
+</details>
