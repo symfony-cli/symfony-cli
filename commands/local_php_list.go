@@ -96,6 +96,7 @@ var localPhpListCmd = &console.Command{
 		terminal.Println("To control the version used in a directory, create a <comment>.php-version</> file that contains the version number (e.g. " + LatestPhpMajorVersion + " or " + LatestPhpMinorVersion + "),")
 		terminal.Println("or define <href=https://getcomposer.org/doc/06-config.md#platform>config.platform.php</> inside <comment>composer.json</>.")
 		terminal.Println("If you're using Platform.sh or Upsun, the version can also be specified in their configuration files.")
+		terminal.Printf("To select a specific PHP installation, set <comment>%s</> to its absolute PHP CLI path.\n", phpstore.PHPBinaryPathEnvVar)
 
 		return nil
 	},

@@ -27,7 +27,7 @@ require (
 	github.com/stoicperlman/fls v0.0.0-20171222144224-f073b7a01081
 	github.com/symfony-cli/cert v1.0.8
 	github.com/symfony-cli/console v1.2.4
-	github.com/symfony-cli/phpstore v1.0.20
+	github.com/symfony-cli/phpstore v1.0.21
 	github.com/symfony-cli/terminal v1.0.9
 	golang.org/x/sync v0.21.0
 	golang.org/x/sys v0.46.0
