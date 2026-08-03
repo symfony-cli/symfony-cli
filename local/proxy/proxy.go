@@ -22,6 +22,7 @@ package proxy
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -195,6 +196,9 @@ func New(config *Config, ca *cert.CA, logger *log.Logger, debug bool) *Proxy {
 		case "/":
 			p.serveIndex(w, r)
 			return
+		case "/index.json":
+			p.serveIndexJSON(w, r)
+			return
 		}
 		http.Error(w, "Not Found", 404)
 	})
@@ -342,27 +346,19 @@ function FindProxyForURL (url, host) {
 func (p *Proxy) serveIndex(w http.ResponseWriter, r *http.Request) {
 	content := ``
 
-	proxyProjects, err := ToConfiguredProjects()
-	if err != nil {
-		return
-	}
-	runningProjects, err := pid.ToConfiguredProjects(true)
-	if err != nil {
-		return
-	}
-	projects, err := projects.GetConfiguredAndRunning(proxyProjects, runningProjects)
+	configuredProjects, err := getConfiguredProjects()
 	if err != nil {
 		return
 	}
 	projectDirs := []string{}
-	for dir := range projects {
+	for dir := range configuredProjects {
 		projectDirs = append(projectDirs, dir)
 	}
 	sort.Strings(projectDirs)
 
 	content += "<table><tr><th>Directory<th>Port<th>Domains"
 	for _, dir := range projectDirs {
-		project := projects[dir]
+		project := configuredProjects[dir]
 		content += fmt.Sprintf("<tr><td>%s", dir)
 		if project.Port > 0 {
 			content += fmt.Sprintf(`<td><a href="http://127.0.0.1:%d/">%d</a>`, project.Port, project.Port)
@@ -380,4 +376,29 @@ func (p *Proxy) serveIndex(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.Write([]byte(html.WrapHTML("Proxy Index", html.CreateTerminal(content), "")))
+}
+
+func (p *Proxy) serveIndexJSON(w http.ResponseWriter, r *http.Request) {
+	configuredProjects, err := getConfiguredProjects()
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(configuredProjects); err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+func getConfiguredProjects() (map[string]*projects.ConfiguredProject, error) {
+	proxyProjects, err := ToConfiguredProjects()
+	if err != nil {
+		return nil, err
+	}
+	runningProjects, err := pid.ToConfiguredProjects(true)
+	if err != nil {
+		return nil, err
+	}
+	return projects.GetConfiguredAndRunning(proxyProjects, runningProjects)
 }
