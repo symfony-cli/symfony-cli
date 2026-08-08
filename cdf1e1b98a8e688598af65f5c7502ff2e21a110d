@@ -1,0 +1,54 @@
+---------------------------------------------------------------------------
+
+by tucksaun at 2026-08-07T16:55:28Z
+
+as far as I can tell, GO-2026-5932 is about `golang.org/x/crypto/openpgp` which I don't think we are using at the moment.
+
+regarding this precise bump looks good to me 👍
+
+---------------------------------------------------------------------------
+
+by tucksaun at 2026-08-07T16:57:13Z
+
+could you also check with `govulncheck` instead?
+
+---------------------------------------------------------------------------
+
+by mathieu-ducrot at 2026-08-07T17:27:05Z
+
+@tucksaun  I tested this with `govulncheck` as requested.
+
+  **Setup:** govulncheck v1.6.0, Go vuln DB from 2026-07-27. I ran `govulncheck ./...`
+  on `main` and on this branch to compare.
+
+  **Result:**
+
+  | | main (x/text v0.38.0) | this branch (v0.39.0) |
+  |---|---|---|
+  | Called vulnerabilities | 21, from 2 modules | 20, from 1 module |
+
+  The only difference is `GO-2026-5970` (infinite loop on invalid input in
+  golang.org/x/text, fixed in v0.39.0). It's gone on this branch, and nothing new
+  was introduced.
+
+  govulncheck also confirms the vulnerability was actually reachable in the code,
+  not just present in go.mod:
+
+      commands/local_server_ca_install.go:76:22: commands.init calls cert.CA.MakeCert,
+        which eventually calls norm.Form.Bytes
+      local/php/toolbar.go:149:198: php.Server.tweakToolbar calls cases.Caser.String,
+        which eventually calls norm.Form.Properties
+
+  **Two unrelated things the scan surfaced** (out of scope for this PR, just flagging):
+
+  1. **17 stdlib vulnerabilities** (crypto/tls, crypto/x509, archive/tar, os, net/url…),
+     fixed across go1.26.1 → go1.26.5. My local toolchain was go1.26.0, so this may
+     just be my machine — but since CI uses `go-version-file: 'go.mod'` (`go 1.26.0`),
+     it might be worth checking which patch release setup-go actually resolves to for
+     release builds. These are invisible to OSV/Dependabot since they aren't dependencies.
+
+  2. **3 vulnerabilities in `github.com/docker/docker@v28.5.2+incompatible`** with no
+     fixed version available. They look like false positives for us: they affect the
+     Moby daemon, while `envs/docker.go` only uses the client.
+
+  Happy to paste the full reports if useful.
