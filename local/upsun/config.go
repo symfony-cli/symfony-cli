@@ -139,21 +139,21 @@ var availableServices = []*service{
 	{
 		Type: "chrome-headless",
 		Versions: serviceVersions{
-			Deprecated: []string{"73", "80", "81", "83", "84", "86", "91", "95", "113"},
-			Supported:  []string{"120"},
+			Deprecated: []string{},
+			Supported:  []string{"113", "120"},
 		},
 	},
 	{
 		Type: "clickhouse",
 		Versions: serviceVersions{
-			Deprecated: []string{},
-			Supported:  []string{"23.8", "24.3", "25.3", "25.8"},
+			Deprecated: []string{"23.8", "24.3", "25.3"},
+			Supported:  []string{"25.8", "26.3"},
 		},
 	},
 	{
 		Type: "elasticsearch",
 		Versions: serviceVersions{
-			Deprecated: []string{"6.5", "6.8", "7.2", "7.5", "7.6", "7.7", "7.9"},
+			Deprecated: []string{},
 			Supported:  []string{"7.10"},
 		},
 	},
@@ -161,7 +161,7 @@ var availableServices = []*service{
 		Type: "elasticsearch-enterprise",
 		Versions: serviceVersions{
 			Deprecated: []string{},
-			Supported:  []string{"7.17", "8.5", "8.19"},
+			Supported:  []string{"8.19", "9.3"},
 		},
 	},
 	{
@@ -174,35 +174,28 @@ var availableServices = []*service{
 	{
 		Type: "influxdb",
 		Versions: serviceVersions{
-			Deprecated: []string{"1.2", "1.3", "1.7", "1.8", "2.0", "2.1", "2.2"},
-			Supported:  []string{"2.3", "2.7"},
+			Deprecated: []string{},
+			Supported:  []string{"2.3", "2.7", "3"},
 		},
 	},
 	{
 		Type: "kafka",
 		Versions: serviceVersions{
-			Deprecated: []string{"2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "3.2", "3.4", "3.6"},
-			Supported:  []string{"3.7"},
+			Deprecated: []string{},
+			Supported:  []string{"3.6", "3.7", "4.1", "4.3"},
 		},
 	},
 	{
 		Type: "mariadb",
 		Versions: serviceVersions{
-			Deprecated: []string{"5.5", "10.0", "10.1", "10.2", "10.3", "10.4", "10.5", "11.0", "11.2"},
-			Supported:  []string{"10.6", "10.11", "11.4", "11.8"},
-		},
-	},
-	{
-		Type: "mariadb-replica",
-		Versions: serviceVersions{
 			Deprecated: []string{},
-			Supported:  []string{"11.4"},
+			Supported:  []string{"11.4", "11.8", "12.3"},
 		},
 	},
 	{
 		Type: "memcached",
 		Versions: serviceVersions{
-			Deprecated: []string{"1.4", "1.5"},
+			Deprecated: []string{},
 			Supported:  []string{"1.6"},
 		},
 	},
@@ -216,22 +209,22 @@ var availableServices = []*service{
 	{
 		Type: "mongodb",
 		Versions: serviceVersions{
-			Deprecated: []string{"3.0", "3.2", "3.4", "3.6"},
+			Deprecated: []string{},
 			Supported:  []string{"4.0"},
 		},
 	},
 	{
 		Type: "mongodb-enterprise",
 		Versions: serviceVersions{
-			Deprecated: []string{"4.0", "4.2", "4.4", "5.0", "6.0"},
+			Deprecated: []string{},
 			Supported:  []string{"7.0"},
 		},
 	},
 	{
 		Type: "mysql",
 		Versions: serviceVersions{
-			Deprecated: []string{"5.5", "10.0", "10.1", "10.2", "10.3", "10.4", "10.5", "11.0", "11.2"},
-			Supported:  []string{"10.6", "10.11", "11.4", "11.8"},
+			Deprecated: []string{},
+			Supported:  []string{"11.4", "11.8", "12.3"},
 		},
 	},
 	{
@@ -244,64 +237,57 @@ var availableServices = []*service{
 	{
 		Type: "opensearch",
 		Versions: serviceVersions{
-			Deprecated: []string{"1.1", "1.2"},
-			Supported:  []string{"2", "3"},
+			Deprecated: []string{"2"},
+			Supported:  []string{"3"},
 		},
 	},
 	{
 		Type: "oracle-mysql",
 		Versions: serviceVersions{
-			Deprecated: []string{"5.7"},
-			Supported:  []string{"8.0", "8.4"},
+			Deprecated: []string{},
+			Supported:  []string{"8.4"},
 		},
 	},
 	{
 		Type: "postgresql",
 		Versions: serviceVersions{
-			Deprecated: []string{"9.3", "9.5", "9.6", "10", "11", "12", "13"},
-			Supported:  []string{"14", "15", "16", "17", "18"},
-		},
-	},
-	{
-		Type: "postgresql-replica",
-		Versions: serviceVersions{
 			Deprecated: []string{},
-			Supported:  []string{"15"},
+			Supported:  []string{"14", "15", "16", "17", "18"},
 		},
 	},
 	{
 		Type: "rabbitmq",
 		Versions: serviceVersions{
-			Deprecated: []string{"3.5", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "4.0"},
-			Supported:  []string{"4.1"},
+			Deprecated: []string{},
+			Supported:  []string{"4.3"},
 		},
 	},
 	{
 		Type: "redis",
 		Versions: serviceVersions{
-			Deprecated: []string{"5.0", "6.0", "6.2", "7.0"},
-			Supported:  []string{"7.2", "8.0"},
+			Deprecated: []string{"6.2"},
+			Supported:  []string{"7.2", "8.0", "8.8"},
 		},
 	},
 	{
 		Type: "solr",
 		Versions: serviceVersions{
-			Deprecated: []string{"3.6", "4.10", "6.3", "6.6", "7.6", "7.7", "8.0", "8.11", "9.0"},
-			Supported:  []string{"9.1", "9.2", "9.4", "9.6", "9.9"},
+			Deprecated: []string{},
+			Supported:  []string{"9.1", "9.2", "9.4", "9.6", "9.9", "10.0"},
 		},
 	},
 	{
 		Type: "valkey",
 		Versions: serviceVersions{
 			Deprecated: []string{},
-			Supported:  []string{"8.0", "8.1"},
+			Supported:  []string{"8.0", "8.1", "9.0"},
 		},
 	},
 	{
 		Type: "varnish",
 		Versions: serviceVersions{
-			Deprecated: []string{"7.1", "7.2", "7.3"},
-			Supported:  []string{"6.0", "7.6"},
+			Deprecated: []string{},
+			Supported:  []string{"6.0", "9.0"},
 		},
 	},
 	{
