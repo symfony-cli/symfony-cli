@@ -20,18 +20,18 @@
 package project
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/symfony-cli/console"
+	"github.com/symfony-cli/terminal"
 	"gopkg.in/yaml.v2"
 )
 
 const (
-	ConfigFilePrefix = ".symfony.local"
-
 	DockerComposeWorkerKey = "docker_compose"
 )
 
@@ -76,18 +76,33 @@ func NewConfigFromDirectory(logger zerolog.Logger, homeDir, projectDir string) (
 		}),
 	}
 
-	// first consider project configuration files in this specific order
-	for _, suffix := range []string{".dist.yaml", ".yaml", ".override.yaml"} {
-		fileConfig, err := newConfigFromFile(filepath.Join(projectDir, ConfigFilePrefix+suffix))
-		if errors.Is(err, os.ErrNotExist) {
-			continue
-		} else if err != nil {
-			return nil, err
-		} else if fileConfig == nil {
-			continue
+	// Only one nomenclature can be used at a time
+	for _, prefix := range []string{".symfony.cli", ".symfony.local"} {
+		found := false
+
+		// first consider project configuration files in this specific order
+		for _, suffix := range []string{".dist.yaml", ".yaml", ".override.yaml"} {
+			fileConfig, err := newConfigFromFile(filepath.Join(projectDir, prefix+suffix))
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			} else if err != nil {
+				return nil, err
+			} else if fileConfig == nil {
+				continue
+			}
+
+			if prefix == ".symfony.local" {
+				terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin).Warning(fmt.Sprintf(`The "%s" configuration file have been deprecated since v5.17.0,
+please use "%s" instead.`, prefix+suffix, ".symfony.cli"+suffix))
+			}
+
+			config.mergeWithFileConfig(*fileConfig)
+			found = true
 		}
 
-		config.mergeWithFileConfig(*fileConfig)
+		if found {
+			break
+		}
 	}
 
 	for k, v := range config.Workers {
