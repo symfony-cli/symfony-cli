@@ -30,6 +30,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -424,6 +425,23 @@ func TestManagerRejectsWrongEmbeddedVersionAndMalformedArchives(t *testing.T) {
 	}
 }
 
+func TestExtractTarGzRejectsOverflowingExpandedSize(t *testing.T) {
+	directory := t.TempDir()
+	archivePath := filepath.Join(directory, "archive.tar.gz")
+	if err := os.WriteFile(archivePath, overflowingTarGz(t), 0600); err != nil {
+		t.Fatal(err)
+	}
+	destination := filepath.Join(directory, "extracted")
+
+	err := extractTarGz(archivePath, destination)
+	if err == nil || !strings.Contains(err.Error(), "archive expands beyond the allowed size") {
+		t.Fatalf("expected expanded size rejection, got %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(destination, "huge")); !os.IsNotExist(err) {
+		t.Fatalf("oversized archive entry was created: %v", err)
+	}
+}
+
 func TestManagerInstallsWindowsZipArchive(t *testing.T) {
 	archive := zipArchive(t, map[string]archiveFile{
 		"tool-v1.2.0/tool.exe": {contents: "Acme Tool 1.2.0\n", mode: 0644},
@@ -659,6 +677,27 @@ func tarGz(t *testing.T, files map[string]archiveFile) []byte {
 		}
 	}
 	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := compressed.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	return archive.Bytes()
+}
+
+func overflowingTarGz(t *testing.T) []byte {
+	t.Helper()
+	var archive bytes.Buffer
+	compressed := gzip.NewWriter(&archive)
+	writer := tar.NewWriter(compressed)
+	if err := writer.WriteHeader(&tar.Header{Name: "small", Mode: 0600, Size: 1, Typeflag: tar.TypeReg}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.WriteString(writer, "x"); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.WriteHeader(&tar.Header{Name: "huge", Mode: 0600, Size: math.MaxInt64, Typeflag: tar.TypeReg}); err != nil {
 		t.Fatal(err)
 	}
 	if err := compressed.Close(); err != nil {

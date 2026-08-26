@@ -96,7 +96,7 @@ func extractTarGz(archivePath, destination string) error {
 				return fmt.Errorf("unable to create archive directory: %w", err)
 			}
 		case tar.TypeReg:
-			if header.Size < 0 || extractedSize+header.Size > maximumExtractedSize {
+			if header.Size < 0 || header.Size > maximumExtractedSize-extractedSize {
 				return errors.New("archive expands beyond the allowed size")
 			}
 			extractedSize += header.Size
@@ -140,7 +140,7 @@ func extractZip(archivePath, destination string) error {
 		if !mode.IsRegular() {
 			return fmt.Errorf("archive contains unsupported entry %q", file.Name)
 		}
-		if extractedSize+file.UncompressedSize64 > maximumExtractedSize {
+		if file.UncompressedSize64 > maximumExtractedSize-extractedSize {
 			return errors.New("archive expands beyond the allowed size")
 		}
 		extractedSize += file.UncompressedSize64
