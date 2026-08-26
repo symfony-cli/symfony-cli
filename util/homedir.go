@@ -60,7 +60,7 @@ func GetHomeDir() string {
 		if _, err := os.Stat(legacyPath); !errors.Is(err, fs.ErrNotExist) {
 			terminal.Logger.Warn().Str("directory", legacyPath).Err(err).Msg("Legacy configuration directory detected")
 			legacyPathWarning.Do(func() {
-				terminal.SymfonyStyle(terminal.Stdout, terminal.Stdin).Warning(fmt.Sprintf(
+				terminal.SymfonyStyle(terminal.NewBufferedConsoleOutput(terminal.Stderr, terminal.Stderr), terminal.Stdin).Warning(fmt.Sprintf(
 					`The configuration location for the Symfony CLI has changed in v5.17.0.
 
 Your configuration is still stored in the legacy directory.

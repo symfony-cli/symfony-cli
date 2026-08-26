@@ -8,6 +8,7 @@ on your local machine. It provides:
 * The best way to [create new Symfony applications][2];
 * A powerful [local web server][3] to develop your projects with support for [TLS certificates][4];
 * A tool to [check for security vulnerabilities][5];
+* Managed [Symfony-specific diagnostics][12] for local development and CI;
 * Seamless integration with [Upsun (formerly Platform.sh)][6].
 
 Installation
@@ -61,3 +62,4 @@ assets and packages, and they're making it happen!
 [9]: https://www.sigstore.dev/
 [10]: https://github.com/sigstore/cosign/blob/main/KEYLESS.md
 [11]: https://symfony.com/security
+[12]: https://github.com/symfony/language-tools/blob/main/docs/features/headless-diagnostics.rst
