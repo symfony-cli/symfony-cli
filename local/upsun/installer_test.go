@@ -27,11 +27,12 @@ import (
 
 func TestManagedToolDefinitionsPreserveUpsunReleaseContracts(t *testing.T) {
 	tests := []struct {
-		name          string
-		product       CloudProduct
-		definition    string
-		versionPrefix string
-		assets        []string
+		name                  string
+		product               CloudProduct
+		definition            string
+		versionPrefix         string
+		legacyVersionPrefixes []string
+		assets                []string
 	}{
 		{
 			name:          "Flex",
@@ -47,10 +48,11 @@ func TestManagedToolDefinitionsPreserveUpsunReleaseContracts(t *testing.T) {
 			},
 		},
 		{
-			name:          "Fixed",
-			product:       Fixed,
-			definition:    "Upsun Fixed CLI",
-			versionPrefix: "Upsun CLI (Platform.sh compatibility) ",
+			name:                  "Fixed",
+			product:               Fixed,
+			definition:            "Upsun Fixed CLI",
+			versionPrefix:         "Upsun CLI (Platform.sh compatibility) ",
+			legacyVersionPrefixes: []string{"Platform.sh CLI "},
 			assets: []string{
 				"platform_{version}_linux_amd64.tar.gz",
 				"platform_{version}_linux_arm64.tar.gz",
@@ -65,6 +67,9 @@ func TestManagedToolDefinitionsPreserveUpsunReleaseContracts(t *testing.T) {
 			definition := toolDefinition("/home/user", test.product)
 			if definition.Name != test.definition || definition.VersionPrefix != test.versionPrefix || definition.ChecksumsAsset != "checksums.txt" {
 				t.Fatalf("unexpected definition %#v", definition)
+			}
+			if !slices.Equal(definition.LegacyVersionPrefixes, test.legacyVersionPrefixes) {
+				t.Fatalf("unexpected legacy version prefixes %#v", definition.LegacyVersionPrefixes)
 			}
 			if definition.InstallRoot != filepath.Join("/home/user", test.product.CLIConfigPath, "tools", test.product.BinName) {
 				t.Fatalf("unexpected install root %q", definition.InstallRoot)

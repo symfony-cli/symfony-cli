@@ -500,10 +500,11 @@ func TestManagerReusesLegacyExecutableWhenReleaseServiceIsOffline(t *testing.T) 
 	now := time.Date(2026, time.August, 26, 12, 0, 0, 0, time.UTC)
 	manager, definition, _ := testManager(t, fixture, now)
 	legacy := filepath.Join(t.TempDir(), "tool")
-	if err := os.WriteFile(legacy, []byte("Acme Tool 1.1.0\n"), 0755); err != nil {
+	if err := os.WriteFile(legacy, []byte("Legacy Acme Tool 1.1.0 (wrapped legacy tool 1.0.0)\n"), 0755); err != nil {
 		t.Fatal(err)
 	}
 	definition.LegacyExecutables = []string{legacy}
+	definition.LegacyVersionPrefixes = []string{"Legacy Acme Tool "}
 
 	installation, err := manager.Resolve(context.Background(), definition)
 	if err != nil {

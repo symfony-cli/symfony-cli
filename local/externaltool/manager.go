@@ -54,14 +54,15 @@ type Package struct {
 }
 
 type Definition struct {
-	Name              string
-	Repository        string
-	ChecksumsAsset    string
-	MinimumVersion    string
-	VersionPrefix     string
-	InstallRoot       string
-	LegacyExecutables []string
-	Packages          []Package
+	Name                  string
+	Repository            string
+	ChecksumsAsset        string
+	MinimumVersion        string
+	VersionPrefix         string
+	InstallRoot           string
+	LegacyExecutables     []string
+	LegacyVersionPrefixes []string
+	Packages              []Package
 }
 
 type Installation struct {
@@ -327,8 +328,10 @@ func (m *Manager) installed(ctx context.Context, definition Definition, pkg Pack
 			return Installation{}, false
 		}
 		executable = state.LegacyExecutable
-	}
-	if err := m.verifyVersion(ctx, executable, definition.VersionPrefix, installedVersion); err != nil {
+		if err := m.verifyLegacyVersion(ctx, executable, definition, installedVersion); err != nil {
+			return Installation{}, false
+		}
+	} else if err := m.verifyVersion(ctx, executable, definition.VersionPrefix, installedVersion); err != nil {
 		return Installation{}, false
 	}
 
@@ -337,11 +340,7 @@ func (m *Manager) installed(ctx context.Context, definition Definition, pkg Pack
 
 func (m *Manager) legacy(ctx context.Context, definition Definition, minimumVersion *version.Version) (Installation, bool) {
 	for _, executable := range definition.LegacyExecutables {
-		output, err := m.VersionRunner.Output(ctx, executable, "--version")
-		if err != nil {
-			continue
-		}
-		legacyVersion, err := parseVersionOutput(output, definition.VersionPrefix)
+		legacyVersion, err := m.legacyVersion(ctx, executable, definition)
 		if err != nil || legacyVersion.LessThan(minimumVersion) {
 			continue
 		}
@@ -622,6 +621,30 @@ func (m *Manager) verifyVersion(ctx context.Context, executable, prefix string, 
 	return nil
 }
 
+func (m *Manager) verifyLegacyVersion(ctx context.Context, executable string, definition Definition, expected *version.Version) error {
+	actual, err := m.legacyVersion(ctx, executable, definition)
+	if err != nil {
+		return err
+	}
+	if !actual.Equal(expected) {
+		return fmt.Errorf("reported version %s instead of %s", actual, expected)
+	}
+
+	return nil
+}
+
+func (m *Manager) legacyVersion(ctx context.Context, executable string, definition Definition) (*version.Version, error) {
+	output, err := m.VersionRunner.Output(ctx, executable, "--version")
+	if err != nil {
+		return nil, err
+	}
+	prefixes := make([]string, 1, len(definition.LegacyVersionPrefixes)+1)
+	prefixes[0] = definition.VersionPrefix
+	prefixes = append(prefixes, definition.LegacyVersionPrefixes...)
+
+	return parseLegacyVersionOutput(output, prefixes)
+}
+
 func parseVersionOutput(output []byte, prefix string) (*version.Version, error) {
 	value := strings.TrimSpace(string(output))
 	if !strings.HasPrefix(value, prefix) {
@@ -633,6 +656,23 @@ func parseVersionOutput(output []byte, prefix string) (*version.Version, error) 
 	}
 
 	return normalizedVersion(value)
+}
+
+func parseLegacyVersionOutput(output []byte, prefixes []string) (*version.Version, error) {
+	value := strings.TrimSpace(string(output))
+	for _, prefix := range prefixes {
+		if prefix == "" || !strings.HasPrefix(value, prefix) {
+			continue
+		}
+		fields := strings.Fields(strings.TrimPrefix(value, prefix))
+		if len(fields) == 0 {
+			break
+		}
+
+		return normalizedVersion(fields[0])
+	}
+
+	return nil, errors.New("version output is invalid")
 }
 
 func normalizedVersion(value string) (*version.Version, error) {

@@ -45,20 +45,23 @@ func toolDefinition(home string, product CloudProduct) externaltool.Definition {
 		name = "Platform.sh/Upsun"
 	}
 	versionPrefix := "Upsun CLI (Platform.sh compatibility) "
+	legacyVersionPrefixes := []string{"Platform.sh CLI "}
 	if product == Flex {
 		assetPrefix = "upsun"
 		versionPrefix = "Upsun CLI "
+		legacyVersionPrefixes = nil
 	}
 	legacyExecutable := filepath.Join(home, product.BinaryPath())
 
 	return externaltool.Definition{
-		Name:              name + " CLI",
-		Repository:        "platformsh/cli",
-		ChecksumsAsset:    "checksums.txt",
-		MinimumVersion:    "0.0.0",
-		VersionPrefix:     versionPrefix,
-		InstallRoot:       filepath.Join(home, product.CLIConfigPath, "tools", product.BinName),
-		LegacyExecutables: []string{legacyExecutable, legacyExecutable + ".exe"},
+		Name:                  name + " CLI",
+		Repository:            "platformsh/cli",
+		ChecksumsAsset:        "checksums.txt",
+		MinimumVersion:        "0.0.0",
+		VersionPrefix:         versionPrefix,
+		InstallRoot:           filepath.Join(home, product.CLIConfigPath, "tools", product.BinName),
+		LegacyExecutables:     []string{legacyExecutable, legacyExecutable + ".exe"},
+		LegacyVersionPrefixes: legacyVersionPrefixes,
 		Packages: []externaltool.Package{
 			{OS: "linux", Arch: "amd64", Asset: assetPrefix + "_{version}_linux_amd64.tar.gz", Executable: product.BinName},
 			{OS: "linux", Arch: "arm64", Asset: assetPrefix + "_{version}_linux_arm64.tar.gz", Executable: product.BinName},
