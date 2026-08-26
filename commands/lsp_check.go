@@ -21,6 +21,7 @@ package commands
 
 import (
 	"os"
+	"strings"
 
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/local/lsp"
@@ -59,7 +60,7 @@ func newLspCheckCommand(run func([]string) (int, error)) *console.Command {
 
 func lspArguments(c *console.Context) []string {
 	for index, argument := range os.Args[1:] {
-		if argument == c.Command.UserName {
+		if strings.EqualFold(argument, c.Command.UserName) {
 			return os.Args[index+2:]
 		}
 	}

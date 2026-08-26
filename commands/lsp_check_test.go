@@ -29,14 +29,18 @@ import (
 )
 
 func TestLspCheckPassesEveryArgumentThrough(t *testing.T) {
-	tests := map[string][]string{
-		"options paths and delimiter": {"--format=json", "src", "--", "-literal"},
-		"checker help":                {"--help"},
+	tests := map[string]struct {
+		command  string
+		expected []string
+	}{
+		"options paths and delimiter": {command: "lsp:check", expected: []string{"--format=json", "src", "--", "-literal"}},
+		"checker help":                {command: "lsp:check", expected: []string{"--help"}},
+		"case-insensitive command":    {command: "LSP:CHECK", expected: []string{"--", "-literal"}},
 	}
-	for name, expected := range tests {
+	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			originalArguments := os.Args
-			os.Args = append([]string{"symfony", "lsp:check"}, expected...)
+			os.Args = append([]string{"symfony", test.command}, test.expected...)
 			defer func() { os.Args = originalArguments }()
 
 			var arguments []string
@@ -55,7 +59,7 @@ func TestLspCheckPassesEveryArgumentThrough(t *testing.T) {
 			if err := app.Run(os.Args); err != nil {
 				t.Fatal(err)
 			}
-			if !slices.Equal(arguments, expected) {
+			if !slices.Equal(arguments, test.expected) {
 				t.Fatalf("unexpected delegated arguments %#v", arguments)
 			}
 		})
