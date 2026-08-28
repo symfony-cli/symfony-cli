@@ -58,7 +58,6 @@ type releaseFixture struct {
 	server       *httptest.Server
 	version      string
 	assetName    string
-	checksumName string
 	archive      []byte
 	checksum     string
 	archiveDelay time.Duration
@@ -67,13 +66,12 @@ type releaseFixture struct {
 	archiveCalls int
 }
 
-func newReleaseFixture(t *testing.T, version, assetName, checksumName string, archive []byte) *releaseFixture {
+func newReleaseFixture(t *testing.T, version, assetName string, archive []byte) *releaseFixture {
 	t.Helper()
 	fixture := &releaseFixture{
-		version:      version,
-		assetName:    assetName,
-		checksumName: checksumName,
-		archive:      archive,
+		version:   version,
+		assetName: assetName,
+		archive:   archive,
 	}
 	fixture.checksum = checksum(archive)
 	fixture.server = httptest.NewServer(http.HandlerFunc(fixture.handle))
@@ -96,7 +94,7 @@ func (f *releaseFixture) handle(response http.ResponseWriter, request *http.Requ
 			TagName: f.version,
 			Assets: []releaseAsset{
 				{Name: f.assetName, URL: f.server.URL + "/archive"},
-				{Name: f.checksumName, URL: f.server.URL + "/checksums"},
+				{Name: "SHA256SUMS", URL: f.server.URL + "/checksums"},
 			},
 		})
 	case "/checksums":
@@ -119,20 +117,86 @@ func (f *releaseFixture) counts() (int, int) {
 	return f.releaseCalls, f.archiveCalls
 }
 
+func (f *releaseFixture) publish(version string, archive []byte) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.version = version
+	f.assetName = fmt.Sprintf("tool-v%s-linux-x64.tar.gz", version)
+	f.archive = archive
+	f.checksum = checksum(archive)
+}
+
+func (f *releaseFixture) setChecksum(value string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.checksum = value
+}
+
+func (f *releaseFixture) setOffline() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.failRelease = true
+}
+
+func (f *releaseFixture) setArchiveDelay(delay time.Duration) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.archiveDelay = delay
+}
+
+func TestManagerRejectsInvalidDefinitions(t *testing.T) {
+	manager := NewManager()
+	manager.RuntimeOS = "linux"
+	manager.RuntimeArch = "amd64"
+	valid := testDefinition(t)
+
+	invalidRepository := valid
+	invalidRepository.Repository = "../tool"
+	invalidVersion := valid
+	invalidVersion.MinimumVersion = "invalid"
+	definitions := map[string]struct {
+		definition Definition
+		message    string
+	}{
+		"incomplete":         {definition: Definition{}, message: "definition is incomplete"},
+		"invalid repository": {definition: invalidRepository, message: "repository is invalid"},
+		"invalid version":    {definition: invalidVersion, message: "minimum version is invalid"},
+	}
+	for name, test := range definitions {
+		t.Run(name, func(t *testing.T) {
+			if _, err := manager.validateDefinition(test.definition); err == nil || !strings.Contains(err.Error(), test.message) {
+				t.Fatalf("expected %q error, got %v", test.message, err)
+			}
+		})
+	}
+
+	packages := map[string]Package{
+		"unsafe executable":   {OS: "linux", Arch: "amd64", Asset: "tool.tar.gz", Executable: "../tool"},
+		"unsafe archive root": {OS: "linux", Arch: "amd64", Asset: "tool.tar.gz", ArchiveRoot: "../root", Executable: "tool"},
+		"unsupported archive": {OS: "linux", Arch: "amd64", Asset: "tool.bin", Executable: "tool"},
+	}
+	for name, pkg := range packages {
+		t.Run(name, func(t *testing.T) {
+			definition := valid
+			definition.Packages = []Package{pkg}
+			if _, err := manager.packageFor(definition); err == nil {
+				t.Fatal("expected package validation failure")
+			}
+		})
+	}
+}
+
 func TestManagerInstallsCompleteDistributionAndReusesIt(t *testing.T) {
 	archive := tarGz(t, map[string]archiveFile{
 		"tool-v1.2.0/tool":    {contents: "Acme Tool 1.2.0\n", mode: 0755},
 		"tool-v1.2.0/LICENSE": {contents: "license", mode: 0644},
 		"README":              {contents: "release notes", mode: 0644},
 	})
-	fixture := newReleaseFixture(t, "v1.2.0", "tool-v1.2.0-linux-x64.tar.gz", "SHA256SUMS", archive)
+	fixture := newReleaseFixture(t, "v1.2.0", "tool-v1.2.0-linux-x64.tar.gz", archive)
 	now := time.Date(2026, time.August, 26, 12, 0, 0, 0, time.UTC)
 	manager, definition, stderr := testManager(t, fixture, now)
 
-	first, err := manager.Resolve(context.Background(), definition)
-	if err != nil {
-		t.Fatal(err)
-	}
+	first := resolveTool(t, manager, definition)
 	if first.Version != "1.2.0" {
 		t.Fatalf("unexpected version %q", first.Version)
 	}
@@ -159,10 +223,7 @@ func TestManagerInstallsCompleteDistributionAndReusesIt(t *testing.T) {
 	}
 
 	manager.Now = func() time.Time { return now.Add(time.Hour) }
-	second, err := manager.Resolve(context.Background(), definition)
-	if err != nil {
-		t.Fatal(err)
-	}
+	second := resolveTool(t, manager, definition)
 	if second != first {
 		t.Fatalf("installation changed between cached runs: %#v != %#v", second, first)
 	}
@@ -178,48 +239,29 @@ func TestManagerInstallsCompleteDistributionAndReusesIt(t *testing.T) {
 }
 
 func TestManagerChecksAtMostOnceEveryTwentyFourHoursAndFallsBackOffline(t *testing.T) {
-	archive := tarGz(t, map[string]archiveFile{
-		"tool-v1.2.0/tool": {contents: "Acme Tool 1.2.0\n", mode: 0755},
-	})
-	fixture := newReleaseFixture(t, "1.2.0", "tool-v1.2.0-linux-x64.tar.gz", "SHA256SUMS", archive)
+	fixture := newToolFixture(t, "1.2.0")
 	now := time.Date(2026, time.August, 26, 12, 0, 0, 0, time.UTC)
 	manager, definition, _ := testManager(t, fixture, now)
-	installed, err := manager.Resolve(context.Background(), definition)
-	if err != nil {
-		t.Fatal(err)
-	}
+	installed := resolveTool(t, manager, definition)
 
-	fixture.mu.Lock()
-	fixture.failRelease = true
-	fixture.mu.Unlock()
+	fixture.setOffline()
 	manager.Now = func() time.Time { return now.Add(25 * time.Hour) }
-	fallback, err := manager.Resolve(context.Background(), definition)
-	if err != nil {
-		t.Fatal(err)
-	}
+	fallback := resolveTool(t, manager, definition)
 	if fallback != installed {
 		t.Fatalf("offline fallback changed the installation: %#v != %#v", fallback, installed)
 	}
 	manager.Now = func() time.Time { return now.Add(26 * time.Hour) }
-	if _, err := manager.Resolve(context.Background(), definition); err != nil {
-		t.Fatal(err)
-	}
+	resolveTool(t, manager, definition)
 	if releaseCalls, archiveCalls := fixture.counts(); releaseCalls != 2 || archiveCalls != 1 {
 		t.Fatalf("unexpected downloads after offline fallback: releases=%d archives=%d", releaseCalls, archiveCalls)
 	}
 }
 
 func TestManagerReusesManagedInstallationWhenLockCannotBeAcquired(t *testing.T) {
-	archive := tarGz(t, map[string]archiveFile{
-		"tool-v1.2.0/tool": {contents: "Acme Tool 1.2.0\n", mode: 0755},
-	})
-	fixture := newReleaseFixture(t, "1.2.0", "tool-v1.2.0-linux-x64.tar.gz", "SHA256SUMS", archive)
+	fixture := newToolFixture(t, "1.2.0")
 	now := time.Date(2026, time.August, 26, 12, 0, 0, 0, time.UTC)
 	manager, definition, stderr := testManager(t, fixture, now)
-	installed, err := manager.Resolve(context.Background(), definition)
-	if err != nil {
-		t.Fatal(err)
-	}
+	installed := resolveTool(t, manager, definition)
 	lockPath := filepath.Join(definition.InstallRoot, "install.lock")
 	if err := os.Remove(lockPath); err != nil {
 		t.Fatal(err)
@@ -228,10 +270,7 @@ func TestManagerReusesManagedInstallationWhenLockCannotBeAcquired(t *testing.T) 
 		t.Fatal(err)
 	}
 
-	fallback, err := manager.Resolve(context.Background(), definition)
-	if err != nil {
-		t.Fatal(err)
-	}
+	fallback := resolveTool(t, manager, definition)
 	if fallback != installed {
 		t.Fatalf("lock failure did not reuse the managed installation: %#v != %#v", fallback, installed)
 	}
@@ -240,165 +279,98 @@ func TestManagerReusesManagedInstallationWhenLockCannotBeAcquired(t *testing.T) 
 	}
 }
 
-func TestManagerDoesNotTrustInvalidUpdateTimestamps(t *testing.T) {
-	tests := map[string]func(time.Time) int64{
-		"future":   func(now time.Time) int64 { return now.Add(365 * 24 * time.Hour).Unix() },
-		"negative": func(time.Time) int64 { return -1 },
+func TestManagerDoesNotTrustFutureUpdateTimestamps(t *testing.T) {
+	fixture := newToolFixture(t, "1.2.0")
+	now := time.Date(2026, time.August, 26, 12, 0, 0, 0, time.UTC)
+	manager, definition, _ := testManager(t, fixture, now)
+	installed := resolveTool(t, manager, definition)
+	statePath := filepath.Join(definition.InstallRoot, "state.json")
+	state := loadState(statePath)
+	if state == nil {
+		t.Fatal("installation state was not created")
 	}
-	for name, checkedAt := range tests {
-		t.Run(name, func(t *testing.T) {
-			archive := tarGz(t, map[string]archiveFile{
-				"tool-v1.2.0/tool": {contents: "Acme Tool 1.2.0\n", mode: 0755},
-			})
-			fixture := newReleaseFixture(t, "1.2.0", "tool-v1.2.0-linux-x64.tar.gz", "SHA256SUMS", archive)
-			now := time.Date(2026, time.August, 26, 12, 0, 0, 0, time.UTC)
-			manager, definition, _ := testManager(t, fixture, now)
-			installed, err := manager.Resolve(context.Background(), definition)
-			if err != nil {
-				t.Fatal(err)
-			}
-			statePath := filepath.Join(definition.InstallRoot, "state.json")
-			state := loadState(statePath)
-			if state == nil {
-				t.Fatal("installation state was not created")
-			}
-			state.CheckedAt = checkedAt(now)
-			if err := storeState(statePath, state); err != nil {
-				t.Fatal(err)
-			}
-			fixture.mu.Lock()
-			fixture.failRelease = true
-			fixture.mu.Unlock()
-			manager.Now = func() time.Time { return now.Add(time.Hour) }
+	state.CheckedAt = now.Add(365 * 24 * time.Hour).Unix()
+	if err := storeState(statePath, state); err != nil {
+		t.Fatal(err)
+	}
+	fixture.setOffline()
+	manager.Now = func() time.Time { return now.Add(time.Hour) }
 
-			fallback, err := manager.Resolve(context.Background(), definition)
+	fallback := resolveTool(t, manager, definition)
+	if fallback != installed {
+		t.Fatalf("future timestamp discarded the working installation: %#v != %#v", fallback, installed)
+	}
+	if releaseCalls, _ := fixture.counts(); releaseCalls != 2 {
+		t.Fatalf("future timestamp suppressed the update check: %d", releaseCalls)
+	}
+}
+
+func TestManagerPreservesWorkingInstallationAfterFailedUpdate(t *testing.T) {
+	tests := map[string]struct {
+		archive  func(*testing.T) []byte
+		checksum string
+		message  string
+	}{
+		"checksum mismatch": {archive: func(t *testing.T) []byte { return toolArchive(t, "1.3.0") }, checksum: "not-a-checksum", message: "checksum mismatch"},
+		"corrupted archive": {archive: func(*testing.T) []byte { return []byte("interrupted archive") }, message: "unable to extract"},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			fixture := newToolFixture(t, "1.2.0")
+			now := time.Date(2026, time.August, 26, 12, 0, 0, 0, time.UTC)
+			manager, definition, stderr := testManager(t, fixture, now)
+			installed := resolveTool(t, manager, definition)
+
+			fixture.publish("1.3.0", test.archive(t))
+			if test.checksum != "" {
+				fixture.setChecksum(test.checksum)
+			}
+			manager.Now = func() time.Time { return now.Add(25 * time.Hour) }
+
+			fallback := resolveTool(t, manager, definition)
+			if fallback != installed {
+				t.Fatalf("failed update changed the installation: %#v != %#v", fallback, installed)
+			}
+			if !strings.Contains(stderr.String(), test.message) {
+				t.Fatalf("update failure was not reported: %q", stderr.String())
+			}
+			if output, err := os.ReadFile(installed.Executable); err != nil || string(output) != "Acme Tool 1.2.0\n" {
+				t.Fatalf("working installation was not preserved: output=%q err=%v", output, err)
+			}
+			state := loadState(filepath.Join(definition.InstallRoot, "state.json"))
+			if state == nil || state.Version != "1.2.0" {
+				t.Fatalf("unexpected active state %#v", state)
+			}
+			downloads, err := filepath.Glob(filepath.Join(definition.InstallRoot, ".download-*"))
 			if err != nil {
 				t.Fatal(err)
 			}
-			if fallback != installed {
-				t.Fatalf("invalid timestamp discarded the working installation: %#v != %#v", fallback, installed)
-			}
-			if releaseCalls, _ := fixture.counts(); releaseCalls != 2 {
-				t.Fatalf("invalid timestamp did not trigger an update check: %d", releaseCalls)
+			if len(downloads) != 0 {
+				t.Fatalf("temporary downloads were not removed: %#v", downloads)
 			}
 		})
 	}
 }
 
-func TestManagerPreservesWorkingInstallationAfterChecksumFailure(t *testing.T) {
-	initialArchive := tarGz(t, map[string]archiveFile{
-		"tool-v1.2.0/tool": {contents: "Acme Tool 1.2.0\n", mode: 0755},
-	})
-	fixture := newReleaseFixture(t, "1.2.0", "tool-v1.2.0-linux-x64.tar.gz", "SHA256SUMS", initialArchive)
-	now := time.Date(2026, time.August, 26, 12, 0, 0, 0, time.UTC)
-	manager, definition, stderr := testManager(t, fixture, now)
-	installed, err := manager.Resolve(context.Background(), definition)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	fixture.mu.Lock()
-	fixture.version = "1.3.0"
-	fixture.assetName = "tool-v1.3.0-linux-x64.tar.gz"
-	fixture.archive = tarGz(t, map[string]archiveFile{
-		"tool-v1.3.0/tool": {contents: "Acme Tool 1.3.0\n", mode: 0755},
-	})
-	fixture.checksum = "not-a-checksum"
-	fixture.mu.Unlock()
-	manager.Now = func() time.Time { return now.Add(25 * time.Hour) }
-
-	fallback, err := manager.Resolve(context.Background(), definition)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if fallback != installed {
-		t.Fatalf("checksum failure did not reuse the working installation: %#v != %#v", fallback, installed)
-	}
-	if !strings.Contains(stderr.String(), "checksum mismatch") {
-		t.Fatalf("checksum failure was not reported: %q", stderr.String())
-	}
-	if output, err := os.ReadFile(installed.Executable); err != nil || string(output) != "Acme Tool 1.2.0\n" {
-		t.Fatalf("working installation was not preserved: output=%q err=%v", output, err)
-	}
-	state := loadState(filepath.Join(definition.InstallRoot, "state.json"))
-	if state == nil || state.Version != "1.2.0" {
-		t.Fatalf("unexpected active state %#v", state)
-	}
-}
-
-func TestManagerPreservesWorkingInstallationAfterInterruptedArchive(t *testing.T) {
-	initialArchive := tarGz(t, map[string]archiveFile{
-		"tool-v1.2.0/tool": {contents: "Acme Tool 1.2.0\n", mode: 0755},
-	})
-	fixture := newReleaseFixture(t, "1.2.0", "tool-v1.2.0-linux-x64.tar.gz", "SHA256SUMS", initialArchive)
-	now := time.Date(2026, time.August, 26, 12, 0, 0, 0, time.UTC)
-	manager, definition, stderr := testManager(t, fixture, now)
-	installed, err := manager.Resolve(context.Background(), definition)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	fixture.mu.Lock()
-	fixture.version = "1.3.0"
-	fixture.assetName = "tool-v1.3.0-linux-x64.tar.gz"
-	fixture.archive = []byte("interrupted archive")
-	fixture.checksum = checksum(fixture.archive)
-	fixture.mu.Unlock()
-	manager.Now = func() time.Time { return now.Add(25 * time.Hour) }
-
-	fallback, err := manager.Resolve(context.Background(), definition)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if fallback != installed {
-		t.Fatalf("interrupted archive did not reuse the working installation: %#v != %#v", fallback, installed)
-	}
-	if !strings.Contains(stderr.String(), "unable to extract") {
-		t.Fatalf("extraction failure was not reported: %q", stderr.String())
-	}
-	if output, err := os.ReadFile(installed.Executable); err != nil || string(output) != "Acme Tool 1.2.0\n" {
-		t.Fatalf("working installation was not preserved: output=%q err=%v", output, err)
-	}
-	state := loadState(filepath.Join(definition.InstallRoot, "state.json"))
-	if state == nil || state.Version != "1.2.0" {
-		t.Fatalf("unexpected active state %#v", state)
-	}
-}
-
 func TestManagerPrunesInactiveVersionsAfterGracePeriod(t *testing.T) {
-	initialArchive := tarGz(t, map[string]archiveFile{
-		"tool-v1.2.0/tool": {contents: "Acme Tool 1.2.0\n", mode: 0755},
-	})
-	fixture := newReleaseFixture(t, "1.2.0", "tool-v1.2.0-linux-x64.tar.gz", "SHA256SUMS", initialArchive)
+	fixture := newToolFixture(t, "1.2.0")
 	now := time.Date(2026, time.August, 26, 12, 0, 0, 0, time.UTC)
 	manager, definition, _ := testManager(t, fixture, now)
-	initial, err := manager.Resolve(context.Background(), definition)
-	if err != nil {
-		t.Fatal(err)
-	}
+	initial := resolveTool(t, manager, definition)
 	initialDirectory := filepath.Dir(initial.Executable)
 
-	fixture.mu.Lock()
-	fixture.version = "1.3.0"
-	fixture.assetName = "tool-v1.3.0-linux-x64.tar.gz"
-	fixture.archive = tarGz(t, map[string]archiveFile{
-		"tool-v1.3.0/tool": {contents: "Acme Tool 1.3.0\n", mode: 0755},
-	})
-	fixture.checksum = checksum(fixture.archive)
-	fixture.mu.Unlock()
+	fixture.publish("1.3.0", toolArchive(t, "1.3.0"))
 	manager.Now = func() time.Time { return now.Add(25 * time.Hour) }
-	updated, err := manager.Resolve(context.Background(), definition)
-	if err != nil {
-		t.Fatal(err)
+	updated := resolveTool(t, manager, definition)
+	if updated.Version != "1.3.0" {
+		t.Fatalf("unexpected updated version %q", updated.Version)
 	}
 	if _, err := os.Stat(initialDirectory); err != nil {
 		t.Fatalf("previous version was removed before the grace period: %v", err)
 	}
 
 	manager.Now = func() time.Time { return now.Add(74 * time.Hour) }
-	if _, err := manager.Resolve(context.Background(), definition); err != nil {
-		t.Fatal(err)
-	}
+	resolveTool(t, manager, definition)
 	if _, err := os.Stat(initialDirectory); !os.IsNotExist(err) {
 		t.Fatalf("inactive version was not pruned: %v", err)
 	}
@@ -407,19 +379,10 @@ func TestManagerPrunesInactiveVersionsAfterGracePeriod(t *testing.T) {
 	}
 }
 
-func TestManagerRejectsWrongEmbeddedVersionAndMalformedArchives(t *testing.T) {
+func TestManagerRejectsInvalidInstallations(t *testing.T) {
 	tests := map[string][]byte{
 		"wrong version": tarGz(t, map[string]archiveFile{
 			"tool-v1.2.0/tool": {contents: "Acme Tool 1.1.0\n", mode: 0755},
-		}),
-		"unsafe path": tarGz(t, map[string]archiveFile{
-			"../tool": {contents: "Acme Tool 1.2.0\n", mode: 0755},
-		}),
-		"Windows traversal": tarGz(t, map[string]archiveFile{
-			"..\\tool": {contents: "Acme Tool 1.2.0\n", mode: 0755},
-		}),
-		"Windows drive": tarGz(t, map[string]archiveFile{
-			"C:/tool": {contents: "Acme Tool 1.2.0\n", mode: 0755},
 		}),
 		"unexpected layout": tarGz(t, map[string]archiveFile{
 			"other/tool": {contents: "Acme Tool 1.2.0\n", mode: 0755},
@@ -427,13 +390,40 @@ func TestManagerRejectsWrongEmbeddedVersionAndMalformedArchives(t *testing.T) {
 	}
 	for name, archive := range tests {
 		t.Run(name, func(t *testing.T) {
-			fixture := newReleaseFixture(t, "1.2.0", "tool-v1.2.0-linux-x64.tar.gz", "SHA256SUMS", archive)
+			fixture := newReleaseFixture(t, "1.2.0", "tool-v1.2.0-linux-x64.tar.gz", archive)
 			manager, definition, _ := testManager(t, fixture, time.Now())
 			if _, err := manager.Resolve(context.Background(), definition); err == nil {
 				t.Fatal("expected installation failure")
 			}
 			if _, err := os.Stat(filepath.Join(definition.InstallRoot, "state.json")); !os.IsNotExist(err) {
 				t.Fatalf("failed installation created an active state: %v", err)
+			}
+		})
+	}
+}
+
+func TestExtractTarGzRejectsUnsafePaths(t *testing.T) {
+	tests := map[string]string{
+		"parent directory":  "../tool",
+		"Windows traversal": "..\\tool",
+		"Windows drive":     "C:/tool",
+	}
+	for name, entry := range tests {
+		t.Run(name, func(t *testing.T) {
+			directory := t.TempDir()
+			archivePath := filepath.Join(directory, "archive.tar.gz")
+			if err := os.WriteFile(archivePath, tarGz(t, map[string]archiveFile{
+				entry: {contents: "contents", mode: 0600},
+			}), 0600); err != nil {
+				t.Fatal(err)
+			}
+
+			err := extractTarGz(archivePath, filepath.Join(directory, "extracted"))
+			if err == nil || !strings.Contains(err.Error(), "unsafe path") {
+				t.Fatalf("expected unsafe path rejection, got %v", err)
+			}
+			if _, err := os.Stat(filepath.Join(directory, "tool")); !os.IsNotExist(err) {
+				t.Fatalf("archive escaped the extraction directory: %v", err)
 			}
 		})
 	}
@@ -476,111 +466,116 @@ func TestExtractTarGzIgnoresGlobalPAXHeaders(t *testing.T) {
 	}
 }
 
-func TestManagerInstallsWindowsZipArchive(t *testing.T) {
-	archive := zipArchive(t, map[string]archiveFile{
-		"tool-v1.2.0/tool.exe": {contents: "Acme Tool 1.2.0\n", mode: 0644},
-		"tool-v1.2.0/NOTICE":   {contents: "notice", mode: 0644},
-	})
-	fixture := newReleaseFixture(t, "1.2.0", "tool-v1.2.0-windows-x64.zip", "SHA256SUMS", archive)
-	manager, definition, _ := testManager(t, fixture, time.Now())
-	manager.RuntimeOS = "windows"
-	manager.RuntimeArch = "amd64"
-	definition.Packages = append(definition.Packages, Package{
-		OS: "windows", Arch: "amd64", Asset: "tool-v{version}-windows-x64.zip", ArchiveRoot: "tool-v{version}", Executable: "tool.exe",
-	})
+func TestManagerInstallsZipAndFlatArchives(t *testing.T) {
+	tests := map[string]struct {
+		runtimeOS string
+		asset     string
+		archive   []byte
+		pkg       Package
+		retained  string
+	}{
+		"zip": {
+			runtimeOS: "windows",
+			asset:     "tool-v1.2.0-windows-x64.zip",
+			archive: zipArchive(t, map[string]archiveFile{
+				"tool-v1.2.0/tool.exe": {contents: "Acme Tool 1.2.0\n", mode: 0644},
+				"tool-v1.2.0/NOTICE":   {contents: "notice", mode: 0644},
+			}),
+			pkg:      Package{OS: "windows", Arch: "amd64", Asset: "tool-v{version}-windows-x64.zip", ArchiveRoot: "tool-v{version}", Executable: "tool.exe"},
+			retained: "NOTICE",
+		},
+		"flat tarball": {
+			runtimeOS: "linux",
+			asset:     "tool-v1.2.0-linux-x64.tar.gz",
+			archive: tarGz(t, map[string]archiveFile{
+				"tool":   {contents: "Acme Tool 1.2.0\n", mode: 0755},
+				"NOTICE": {contents: "notice", mode: 0644},
+			}),
+			pkg:      Package{OS: "linux", Arch: "amd64", Asset: "tool-v{version}-linux-x64.tar.gz", Executable: "tool"},
+			retained: "NOTICE",
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			fixture := newReleaseFixture(t, "1.2.0", test.asset, test.archive)
+			manager, definition, _ := testManager(t, fixture, time.Now())
+			manager.RuntimeOS = test.runtimeOS
+			definition.Packages = []Package{test.pkg}
 
-	installation, err := manager.Resolve(context.Background(), definition)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if filepath.Base(installation.Executable) != "tool.exe" {
-		t.Fatalf("unexpected executable %q", installation.Executable)
-	}
-	if _, err := os.Stat(filepath.Join(filepath.Dir(installation.Executable), "NOTICE")); err != nil {
-		t.Fatalf("zip distribution was not retained: %v", err)
+			installation := resolveTool(t, manager, definition)
+			if filepath.Base(installation.Executable) != test.pkg.Executable {
+				t.Fatalf("unexpected executable %q", installation.Executable)
+			}
+			if _, err := os.Stat(filepath.Join(filepath.Dir(installation.Executable), test.retained)); err != nil {
+				t.Fatalf("distribution file was not retained: %v", err)
+			}
+		})
 	}
 }
 
 func TestManagerUsesASeparateArchiveDownloadTimeout(t *testing.T) {
-	archive := tarGz(t, map[string]archiveFile{
-		"tool-v1.2.0/tool": {contents: "Acme Tool 1.2.0\n", mode: 0755},
-	})
-	fixture := newReleaseFixture(t, "1.2.0", "tool-v1.2.0-linux-x64.tar.gz", "SHA256SUMS", archive)
-	fixture.archiveDelay = 750 * time.Millisecond
+	fixture := newToolFixture(t, "1.2.0")
+	fixture.setArchiveDelay(150 * time.Millisecond)
 	manager, definition, _ := testManager(t, fixture, time.Now())
-	manager.MetadataTimeout = 500 * time.Millisecond
-	manager.ArchiveTimeout = 2 * time.Second
+	manager.MetadataTimeout = 50 * time.Millisecond
+	manager.ArchiveTimeout = 5 * time.Second
 
-	if _, err := manager.Resolve(context.Background(), definition); err != nil {
-		t.Fatal(err)
+	installation := resolveTool(t, manager, definition)
+	if installation.Version != "1.2.0" {
+		t.Fatalf("unexpected version %q", installation.Version)
 	}
 }
 
-func TestManagerRejectsUnsupportedPlatformsAndStaleReleases(t *testing.T) {
-	archive := tarGz(t, map[string]archiveFile{
-		"tool-v1.0.0/tool": {contents: "Acme Tool 1.0.0\n", mode: 0755},
-	})
-	fixture := newReleaseFixture(t, "1.0.0", "tool-v1.0.0-linux-x64.tar.gz", "SHA256SUMS", archive)
+func TestManagerFallsBackToLegacyOnUnsupportedPlatform(t *testing.T) {
+	fixture := newToolFixture(t, "1.0.0")
 	manager, definition, _ := testManager(t, fixture, time.Now())
-
 	manager.RuntimeArch = "386"
+
 	if _, err := manager.Resolve(context.Background(), definition); err == nil || !strings.Contains(err.Error(), "unavailable on linux/386") {
 		t.Fatalf("expected unsupported platform failure, got %v", err)
 	}
-	legacy := filepath.Join(t.TempDir(), "tool")
-	if err := os.WriteFile(legacy, []byte("Acme Tool 1.0.0\n"), 0755); err != nil {
-		t.Fatal(err)
-	}
+	legacy := legacyExecutable(t, "Acme Tool 1.0.0\n")
 	definition.LegacyExecutables = []string{legacy}
-	installation, err := manager.Resolve(context.Background(), definition)
-	if err != nil {
-		t.Fatal(err)
-	}
+	installation := resolveTool(t, manager, definition)
 	if installation.Executable != legacy {
 		t.Fatalf("unsupported platform did not reuse the legacy executable: %#v", installation)
 	}
-	manager.RuntimeArch = "amd64"
+}
+
+func TestManagerRejectsReleasesBelowTheMinimumVersion(t *testing.T) {
+	fixture := newToolFixture(t, "1.0.0")
+	manager, definition, _ := testManager(t, fixture, time.Now())
 	definition.MinimumVersion = "1.1.0"
+
 	if _, err := manager.Resolve(context.Background(), definition); err == nil || !strings.Contains(err.Error(), "version 1.1.0 or newer is required") {
 		t.Fatalf("expected minimum version failure, got %v", err)
 	}
 }
 
 func TestManagerReusesLegacyExecutableWhenReleaseServiceIsOffline(t *testing.T) {
-	fixture := newReleaseFixture(t, "1.2.0", "tool-v1.2.0-linux-x64.tar.gz", "SHA256SUMS", nil)
-	fixture.failRelease = true
+	fixture := newToolFixture(t, "1.2.0")
+	fixture.setOffline()
 	now := time.Date(2026, time.August, 26, 12, 0, 0, 0, time.UTC)
 	manager, definition, _ := testManager(t, fixture, now)
-	legacy := filepath.Join(t.TempDir(), "tool")
-	if err := os.WriteFile(legacy, []byte("Legacy Acme Tool 1.1.0 (wrapped legacy tool 1.0.0)\n"), 0755); err != nil {
-		t.Fatal(err)
-	}
+	legacy := legacyExecutable(t, "Legacy Acme Tool 1.1.0 (wrapped legacy tool 1.0.0)\n")
 	definition.LegacyExecutables = []string{legacy}
 	definition.LegacyVersionPrefixes = []string{"Legacy Acme Tool "}
 
-	installation, err := manager.Resolve(context.Background(), definition)
-	if err != nil {
-		t.Fatal(err)
-	}
+	installation := resolveTool(t, manager, definition)
 	if installation.Executable != legacy || installation.Version != "1.1.0" {
 		t.Fatalf("unexpected legacy installation %#v", installation)
 	}
 	manager.Now = func() time.Time { return now.Add(time.Hour) }
-	if _, err := manager.Resolve(context.Background(), definition); err != nil {
-		t.Fatal(err)
-	}
+	resolveTool(t, manager, definition)
 	if releaseCalls, archiveCalls := fixture.counts(); releaseCalls != 1 || archiveCalls != 0 {
 		t.Fatalf("legacy offline fallback checked too often: releases=%d archives=%d", releaseCalls, archiveCalls)
 	}
 }
 
 func TestManagerReusesLegacyExecutableWhenCacheCannotBeCreated(t *testing.T) {
-	fixture := newReleaseFixture(t, "1.2.0", "tool-v1.2.0-linux-x64.tar.gz", "SHA256SUMS", nil)
+	fixture := newToolFixture(t, "1.2.0")
 	manager, definition, stderr := testManager(t, fixture, time.Now())
-	legacy := filepath.Join(t.TempDir(), "tool")
-	if err := os.WriteFile(legacy, []byte("Acme Tool 1.1.0\n"), 0755); err != nil {
-		t.Fatal(err)
-	}
+	legacy := legacyExecutable(t, "Acme Tool 1.1.0\n")
 	definition.LegacyExecutables = []string{legacy}
 	if err := os.MkdirAll(filepath.Dir(definition.InstallRoot), 0755); err != nil {
 		t.Fatal(err)
@@ -589,10 +584,7 @@ func TestManagerReusesLegacyExecutableWhenCacheCannotBeCreated(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	installation, err := manager.Resolve(context.Background(), definition)
-	if err != nil {
-		t.Fatal(err)
-	}
+	installation := resolveTool(t, manager, definition)
 	if installation.Executable != legacy {
 		t.Fatalf("cache failure did not reuse the legacy executable: %#v", installation)
 	}
@@ -602,21 +594,12 @@ func TestManagerReusesLegacyExecutableWhenCacheCannotBeCreated(t *testing.T) {
 }
 
 func TestManagerMigratesCurrentLegacyExecutableToManagedDistribution(t *testing.T) {
-	archive := tarGz(t, map[string]archiveFile{
-		"tool-v1.2.0/tool": {contents: "Acme Tool 1.2.0\n", mode: 0755},
-	})
-	fixture := newReleaseFixture(t, "1.2.0", "tool-v1.2.0-linux-x64.tar.gz", "SHA256SUMS", archive)
+	fixture := newToolFixture(t, "1.2.0")
 	manager, definition, _ := testManager(t, fixture, time.Now())
-	legacy := filepath.Join(t.TempDir(), "tool")
-	if err := os.WriteFile(legacy, []byte("Acme Tool 1.2.0\n"), 0755); err != nil {
-		t.Fatal(err)
-	}
+	legacy := legacyExecutable(t, "Acme Tool 1.2.0\n")
 	definition.LegacyExecutables = []string{legacy}
 
-	installation, err := manager.Resolve(context.Background(), definition)
-	if err != nil {
-		t.Fatal(err)
-	}
+	installation := resolveTool(t, manager, definition)
 	if installation.Executable == legacy || installation.Version != "1.2.0" {
 		t.Fatalf("legacy executable was not migrated: %#v", installation)
 	}
@@ -626,10 +609,7 @@ func TestManagerMigratesCurrentLegacyExecutableToManagedDistribution(t *testing.
 }
 
 func TestManagerSerializesConcurrentFirstInstall(t *testing.T) {
-	archive := tarGz(t, map[string]archiveFile{
-		"tool-v1.2.0/tool": {contents: "Acme Tool 1.2.0\n", mode: 0755},
-	})
-	fixture := newReleaseFixture(t, "1.2.0", "tool-v1.2.0-linux-x64.tar.gz", "SHA256SUMS", archive)
+	fixture := newToolFixture(t, "1.2.0")
 	manager, definition, _ := testManager(t, fixture, time.Now())
 
 	results := make(chan Installation, 2)
@@ -665,6 +645,40 @@ func TestManagerSerializesConcurrentFirstInstall(t *testing.T) {
 	}
 }
 
+func legacyExecutable(t *testing.T, versionOutput string) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "tool")
+	if err := os.WriteFile(path, []byte(versionOutput), 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	return path
+}
+
+func resolveTool(t *testing.T, manager *Manager, definition Definition) Installation {
+	t.Helper()
+	installation, err := manager.Resolve(t.Context(), definition)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return installation
+}
+
+func newToolFixture(t *testing.T, version string) *releaseFixture {
+	t.Helper()
+
+	return newReleaseFixture(t, version, fmt.Sprintf("tool-v%s-linux-x64.tar.gz", version), toolArchive(t, version))
+}
+
+func toolArchive(t *testing.T, version string) []byte {
+	t.Helper()
+
+	return tarGz(t, map[string]archiveFile{
+		fmt.Sprintf("tool-v%s/tool", version): {contents: fmt.Sprintf("Acme Tool %s\n", version), mode: 0755},
+	})
+}
+
 func testManager(t *testing.T, fixture *releaseFixture, now time.Time) (*Manager, Definition, *bytes.Buffer) {
 	t.Helper()
 	stderr := &bytes.Buffer{}
@@ -677,7 +691,14 @@ func testManager(t *testing.T, fixture *releaseFixture, now time.Time) (*Manager
 	manager.RuntimeOS = "linux"
 	manager.RuntimeArch = "amd64"
 	manager.VersionRunner = fileVersionRunner{}
-	definition := Definition{
+
+	return manager, testDefinition(t), stderr
+}
+
+func testDefinition(t *testing.T) Definition {
+	t.Helper()
+
+	return Definition{
 		Name:           "Acme Tool",
 		Repository:     "acme/tool",
 		ChecksumsAsset: "SHA256SUMS",
@@ -688,8 +709,6 @@ func testManager(t *testing.T, fixture *releaseFixture, now time.Time) (*Manager
 			{OS: "linux", Arch: "amd64", Asset: "tool-v{version}-linux-x64.tar.gz", ArchiveRoot: "tool-v{version}", Executable: "tool"},
 		},
 	}
-
-	return manager, definition, stderr
 }
 
 type archiveFile struct {

@@ -35,12 +35,9 @@ import (
 type fakeResolver struct {
 	installation externaltool.Installation
 	err          error
-	definition   externaltool.Definition
 }
 
-func (r *fakeResolver) Resolve(_ context.Context, definition externaltool.Definition) (externaltool.Installation, error) {
-	r.definition = definition
-
+func (r *fakeResolver) Resolve(context.Context, externaltool.Definition) (externaltool.Installation, error) {
 	return r.installation, r.err
 }
 
