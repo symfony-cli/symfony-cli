@@ -61,7 +61,6 @@ func extractTarGz(archivePath, destination string) error {
 	defer compressed.Close()
 
 	reader := tar.NewReader(compressed)
-	seen := map[string]bool{}
 	var extractedSize int64
 	files := 0
 	for {
@@ -72,31 +71,25 @@ func extractTarGz(archivePath, destination string) error {
 		if err != nil {
 			return fmt.Errorf("unable to read archive: %w", err)
 		}
-		if header == nil {
+		if header.Typeflag == tar.TypeXGlobalHeader {
 			continue
 		}
 		path, err := archivePathname(destination, header.Name)
 		if err != nil {
 			return err
 		}
-		if seen[path] {
-			return fmt.Errorf("archive contains duplicate path %q", header.Name)
-		}
-		seen[path] = true
 		files++
 		if files > maximumArchiveFiles {
 			return errors.New("archive contains too many files")
 		}
 
 		switch header.Typeflag {
-		case tar.TypeXHeader, tar.TypeXGlobalHeader:
-			continue
 		case tar.TypeDir:
 			if err := os.MkdirAll(path, os.FileMode(header.Mode)&0777); err != nil {
 				return fmt.Errorf("unable to create archive directory: %w", err)
 			}
 		case tar.TypeReg:
-			if header.Size < 0 || header.Size > maximumExtractedSize-extractedSize {
+			if header.Size > maximumExtractedSize-extractedSize {
 				return errors.New("archive expands beyond the allowed size")
 			}
 			extractedSize += header.Size
@@ -119,17 +112,12 @@ func extractZip(archivePath, destination string) error {
 		return errors.New("archive contains too many files")
 	}
 
-	seen := map[string]bool{}
 	var extractedSize uint64
 	for _, file := range reader.File {
 		path, err := archivePathname(destination, file.Name)
 		if err != nil {
 			return err
 		}
-		if seen[path] {
-			return fmt.Errorf("archive contains duplicate path %q", file.Name)
-		}
-		seen[path] = true
 		mode := file.Mode()
 		if mode.IsDir() {
 			if err := os.MkdirAll(path, mode.Perm()); err != nil {
@@ -162,13 +150,7 @@ func archivePathname(root, name string) (string, error) {
 	if !safeRelativePath(name) {
 		return "", fmt.Errorf("archive contains unsafe path %q", name)
 	}
-	path := filepath.Join(root, filepath.FromSlash(strings.ReplaceAll(name, "\\", "/")))
-	relative, err := filepath.Rel(root, path)
-	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
-		return "", fmt.Errorf("archive contains unsafe path %q", name)
-	}
-
-	return path, nil
+	return filepath.Join(root, filepath.FromSlash(strings.ReplaceAll(name, "\\", "/"))), nil
 }
 
 func safeRelativePath(value string) bool {
@@ -189,15 +171,11 @@ func writeArchiveFile(path string, mode os.FileMode, source io.Reader, size int6
 	if err != nil {
 		return fmt.Errorf("unable to create archive file: %w", err)
 	}
-	written, copyErr := io.CopyN(file, source, size)
+	_, copyErr := io.CopyN(file, source, size)
 	closeErr := file.Close()
 	if copyErr != nil {
 		return fmt.Errorf("unable to extract archive file: %w", copyErr)
 	}
-	if written != size {
-		return errors.New("archive entry is truncated")
-	}
-
 	if closeErr != nil {
 		return fmt.Errorf("unable to close archive file: %w", closeErr)
 	}

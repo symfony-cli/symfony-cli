@@ -123,6 +123,7 @@ func TestManagerInstallsCompleteDistributionAndReusesIt(t *testing.T) {
 	archive := tarGz(t, map[string]archiveFile{
 		"tool-v1.2.0/tool":    {contents: "Acme Tool 1.2.0\n", mode: 0755},
 		"tool-v1.2.0/LICENSE": {contents: "license", mode: 0644},
+		"README":              {contents: "release notes", mode: 0644},
 	})
 	fixture := newReleaseFixture(t, "v1.2.0", "tool-v1.2.0-linux-x64.tar.gz", "SHA256SUMS", archive)
 	now := time.Date(2026, time.August, 26, 12, 0, 0, 0, time.UTC)
@@ -239,35 +240,48 @@ func TestManagerReusesManagedInstallationWhenLockCannotBeAcquired(t *testing.T) 
 	}
 }
 
-func TestManagerDoesNotTrustFutureUpdateTimestamps(t *testing.T) {
-	archive := tarGz(t, map[string]archiveFile{
-		"tool-v1.2.0/tool": {contents: "Acme Tool 1.2.0\n", mode: 0755},
-	})
-	fixture := newReleaseFixture(t, "1.2.0", "tool-v1.2.0-linux-x64.tar.gz", "SHA256SUMS", archive)
-	now := time.Date(2026, time.August, 26, 12, 0, 0, 0, time.UTC)
-	manager, definition, _ := testManager(t, fixture, now)
-	if _, err := manager.Resolve(context.Background(), definition); err != nil {
-		t.Fatal(err)
+func TestManagerDoesNotTrustInvalidUpdateTimestamps(t *testing.T) {
+	tests := map[string]func(time.Time) int64{
+		"future":   func(now time.Time) int64 { return now.Add(365 * 24 * time.Hour).Unix() },
+		"negative": func(time.Time) int64 { return -1 },
 	}
-	statePath := filepath.Join(definition.InstallRoot, "state.json")
-	state := loadState(statePath)
-	if state == nil {
-		t.Fatal("installation state was not created")
-	}
-	state.CheckedAt = now.Add(365 * 24 * time.Hour).Unix()
-	if err := storeState(statePath, state); err != nil {
-		t.Fatal(err)
-	}
-	fixture.mu.Lock()
-	fixture.failRelease = true
-	fixture.mu.Unlock()
-	manager.Now = func() time.Time { return now.Add(time.Hour) }
+	for name, checkedAt := range tests {
+		t.Run(name, func(t *testing.T) {
+			archive := tarGz(t, map[string]archiveFile{
+				"tool-v1.2.0/tool": {contents: "Acme Tool 1.2.0\n", mode: 0755},
+			})
+			fixture := newReleaseFixture(t, "1.2.0", "tool-v1.2.0-linux-x64.tar.gz", "SHA256SUMS", archive)
+			now := time.Date(2026, time.August, 26, 12, 0, 0, 0, time.UTC)
+			manager, definition, _ := testManager(t, fixture, now)
+			installed, err := manager.Resolve(context.Background(), definition)
+			if err != nil {
+				t.Fatal(err)
+			}
+			statePath := filepath.Join(definition.InstallRoot, "state.json")
+			state := loadState(statePath)
+			if state == nil {
+				t.Fatal("installation state was not created")
+			}
+			state.CheckedAt = checkedAt(now)
+			if err := storeState(statePath, state); err != nil {
+				t.Fatal(err)
+			}
+			fixture.mu.Lock()
+			fixture.failRelease = true
+			fixture.mu.Unlock()
+			manager.Now = func() time.Time { return now.Add(time.Hour) }
 
-	if _, err := manager.Resolve(context.Background(), definition); err != nil {
-		t.Fatal(err)
-	}
-	if releaseCalls, _ := fixture.counts(); releaseCalls != 2 {
-		t.Fatalf("future timestamp suppressed the update check: %d", releaseCalls)
+			fallback, err := manager.Resolve(context.Background(), definition)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if fallback != installed {
+				t.Fatalf("invalid timestamp discarded the working installation: %#v != %#v", fallback, installed)
+			}
+			if releaseCalls, _ := fixture.counts(); releaseCalls != 2 {
+				t.Fatalf("invalid timestamp did not trigger an update check: %d", releaseCalls)
+			}
+		})
 	}
 }
 
@@ -289,7 +303,7 @@ func TestManagerPreservesWorkingInstallationAfterChecksumFailure(t *testing.T) {
 	fixture.archive = tarGz(t, map[string]archiveFile{
 		"tool-v1.3.0/tool": {contents: "Acme Tool 1.3.0\n", mode: 0755},
 	})
-	fixture.checksum = strings.Repeat("0", sha256.Size*2)
+	fixture.checksum = "not-a-checksum"
 	fixture.mu.Unlock()
 	manager.Now = func() time.Time { return now.Add(25 * time.Hour) }
 
@@ -439,6 +453,26 @@ func TestExtractTarGzRejectsOverflowingExpandedSize(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(destination, "huge")); !os.IsNotExist(err) {
 		t.Fatalf("oversized archive entry was created: %v", err)
+	}
+}
+
+func TestExtractTarGzIgnoresGlobalPAXHeaders(t *testing.T) {
+	directory := t.TempDir()
+	archivePath := filepath.Join(directory, "archive.tar.gz")
+	if err := os.WriteFile(archivePath, tarGzWithGlobalPAXHeader(t), 0600); err != nil {
+		t.Fatal(err)
+	}
+	destination := filepath.Join(directory, "extracted")
+
+	if err := extractTarGz(archivePath, destination); err != nil {
+		t.Fatal(err)
+	}
+	contents, err := os.ReadFile(filepath.Join(destination, "tool"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(contents) != "contents" {
+		t.Fatalf("unexpected extracted contents %q", contents)
 	}
 }
 
@@ -675,6 +709,34 @@ func tarGz(t *testing.T, files map[string]archiveFile) []byte {
 		if _, err := io.WriteString(writer, file.contents); err != nil {
 			t.Fatal(err)
 		}
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := compressed.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	return archive.Bytes()
+}
+
+func tarGzWithGlobalPAXHeader(t *testing.T) []byte {
+	t.Helper()
+	var archive bytes.Buffer
+	compressed := gzip.NewWriter(&archive)
+	writer := tar.NewWriter(compressed)
+	if err := writer.WriteHeader(&tar.Header{
+		Name:       "/GlobalHead.1234.1",
+		Typeflag:   tar.TypeXGlobalHeader,
+		PAXRecords: map[string]string{"comment": "release metadata"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.WriteHeader(&tar.Header{Name: "tool", Mode: 0600, Size: int64(len("contents")), Typeflag: tar.TypeReg}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.WriteString(writer, "contents"); err != nil {
+		t.Fatal(err)
 	}
 	if err := writer.Close(); err != nil {
 		t.Fatal(err)

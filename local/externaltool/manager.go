@@ -95,10 +95,8 @@ type releaseAsset struct {
 }
 
 type release struct {
-	TagName    string         `json:"tag_name"`
-	Draft      bool           `json:"draft"`
-	Prerelease bool           `json:"prerelease"`
-	Assets     []releaseAsset `json:"assets"`
+	TagName string         `json:"tag_name"`
+	Assets  []releaseAsset `json:"assets"`
 }
 
 type installationState struct {
@@ -361,8 +359,8 @@ func (m *Manager) latestRelease(ctx context.Context, repository string) (*releas
 	if err := json.Unmarshal(contents, &latest); err != nil {
 		return nil, fmt.Errorf("invalid release metadata: %w", err)
 	}
-	if latest.Draft || latest.Prerelease || latest.TagName == "" {
-		return nil, errors.New("release metadata does not describe a stable release")
+	if latest.TagName == "" {
+		return nil, errors.New("release metadata does not describe a release")
 	}
 
 	return &latest, nil
@@ -562,12 +560,11 @@ func (m *Manager) install(ctx context.Context, definition Definition, pkg Packag
 	}
 	distribution := temporary
 	if pkg.ArchiveRoot != "" {
-		root := expandVersion(pkg.ArchiveRoot, releaseVersion)
-		entries, err := os.ReadDir(temporary)
-		if err != nil || len(entries) != 1 || entries[0].Name() != root || !entries[0].IsDir() {
+		distribution = filepath.Join(temporary, expandVersion(pkg.ArchiveRoot, releaseVersion))
+		info, err := os.Stat(distribution)
+		if err != nil || !info.IsDir() {
 			return Installation{}, fmt.Errorf("the %s archive has an unexpected layout", definition.Name)
 		}
-		distribution = filepath.Join(temporary, root)
 	}
 	executable := filepath.Join(distribution, pkg.Executable)
 	info, err := os.Stat(executable)
@@ -715,12 +712,6 @@ func checksumFor(contents []byte, filename string) (string, error) {
 		if len(fields) != 2 || fields[1] != filename {
 			continue
 		}
-		if len(fields[0]) != sha256.Size*2 {
-			return "", fmt.Errorf("invalid checksum for %s", filename)
-		}
-		if _, err := hex.DecodeString(fields[0]); err != nil {
-			return "", fmt.Errorf("invalid checksum for %s", filename)
-		}
 		if checksum != "" {
 			return "", fmt.Errorf("duplicate checksum for %s", filename)
 		}
@@ -739,7 +730,7 @@ func loadState(path string) *installationState {
 		return nil
 	}
 	var state installationState
-	if err := json.Unmarshal(contents, &state); err != nil || state.Version == "" || state.CheckedAt < 0 {
+	if err := json.Unmarshal(contents, &state); err != nil || state.Version == "" {
 		return nil
 	}
 
