@@ -3,29 +3,46 @@ package main
 import (
 	"os"
 	"slices"
+	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v2"
 )
 
-func TestReleaseWorkflowUsesDockerContainerBuildx(t *testing.T) {
-	contents, err := os.ReadFile(".github/workflows/releaser.yml")
+type releaseWorkflow struct {
+	Jobs map[string]releaseWorkflowJob `yaml:"jobs"`
+}
+
+type releaseWorkflowJob struct {
+	Steps []releaseWorkflowStep `yaml:"steps"`
+}
+
+type releaseWorkflowStep struct {
+	Name string            `yaml:"name"`
+	Uses string            `yaml:"uses"`
+	Run  string            `yaml:"run"`
+	With map[string]string `yaml:"with"`
+	Env  map[string]string `yaml:"env"`
+}
+
+func readReleaseWorkflow(t *testing.T, path string) releaseWorkflow {
+	t.Helper()
+
+	contents, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var workflow struct {
-		Jobs map[string]struct {
-			Steps []struct {
-				Uses string            `yaml:"uses"`
-				With map[string]string `yaml:"with"`
-			} `yaml:"steps"`
-		} `yaml:"jobs"`
-	}
+	var workflow releaseWorkflow
 	if err := yaml.Unmarshal(contents, &workflow); err != nil {
 		t.Fatal(err)
 	}
 
+	return workflow
+}
+
+func TestReleaseWorkflowUsesDockerContainerBuildx(t *testing.T) {
+	workflow := readReleaseWorkflow(t, ".github/workflows/releaser.yml")
 	releaser, ok := workflow.Jobs["releaser"]
 	if !ok {
 		t.Fatal("releaser job not found")
@@ -61,6 +78,94 @@ func TestReleaseWorkflowUsesDockerContainerBuildx(t *testing.T) {
 	}
 	if qemuStep >= buildxStep || buildxStep >= goReleaserStep {
 		t.Errorf("unexpected release setup order: QEMU=%d, Docker Buildx=%d, GoReleaser=%d", qemuStep, buildxStep, goReleaserStep)
+	}
+}
+
+func TestReleaseWorkflowChecksCredentialsBeforePublishing(t *testing.T) {
+	workflow := readReleaseWorkflow(t, ".github/workflows/releaser.yml")
+	releaser, ok := workflow.Jobs["releaser"]
+	if !ok {
+		t.Fatal("releaser job not found")
+	}
+
+	credentialStep := -1
+	goReleaserStep := -1
+	for index, step := range releaser.Steps {
+		switch step.Name {
+		case "Check release credentials":
+			credentialStep = index
+			if step.Env["GH_TOKEN"] != "${{ secrets.GH_PAT }}" {
+				t.Errorf("unexpected Homebrew token %q", step.Env["GH_TOKEN"])
+			}
+			if step.Env["CLOUDSMITH_API_KEY"] != "${{ secrets.CLOUDSMITH_API_KEY }}" {
+				t.Errorf("unexpected Cloudsmith token %q", step.Env["CLOUDSMITH_API_KEY"])
+			}
+			if !strings.Contains(step.Run, "permissions.push") || !strings.Contains(step.Run, "cloudsmith whoami") {
+				t.Errorf("credential checks are incomplete: %q", step.Run)
+			}
+		case "Run GoReleaser":
+			goReleaserStep = index
+		}
+	}
+
+	if credentialStep == -1 {
+		t.Error("release credential check not found")
+	}
+	if goReleaserStep == -1 {
+		t.Error("GoReleaser release step not found")
+	}
+	if credentialStep >= goReleaserStep {
+		t.Errorf("release credentials are checked after publishing: credentials=%d, GoReleaser=%d", credentialStep, goReleaserStep)
+	}
+}
+
+func TestCloudsmithRecoveryWorkflowUsesPublishedPackages(t *testing.T) {
+	const path = ".github/workflows/cloudsmith_recovery.yml"
+
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(contents), "workflow_dispatch:") {
+		t.Error("workflow dispatch trigger not found")
+	}
+
+	workflow := readReleaseWorkflow(t, path)
+	publish, ok := workflow.Jobs["publish"]
+	if !ok {
+		t.Fatal("publish job not found")
+	}
+
+	downloadStep := -1
+	credentialStep := -1
+	uploadStep := -1
+	for index, step := range publish.Steps {
+		switch step.Name {
+		case "Download release packages":
+			downloadStep = index
+			if !strings.Contains(step.Run, "gh release download") {
+				t.Errorf("release download command not found: %q", step.Run)
+			}
+		case "Check Cloudsmith credentials":
+			credentialStep = index
+			if step.Env["CLOUDSMITH_API_KEY"] != "${{ secrets.CLOUDSMITH_API_KEY }}" {
+				t.Errorf("unexpected Cloudsmith token %q", step.Env["CLOUDSMITH_API_KEY"])
+			}
+		case "Upload packages":
+			uploadStep = index
+			for _, format := range []string{"push deb", "push rpm", "push alpine"} {
+				if !strings.Contains(step.Run, format) {
+					t.Errorf("Cloudsmith %s command not found", format)
+				}
+			}
+		}
+	}
+
+	if downloadStep == -1 || credentialStep == -1 || uploadStep == -1 {
+		t.Fatalf("incomplete recovery workflow: download=%d, credentials=%d, upload=%d", downloadStep, credentialStep, uploadStep)
+	}
+	if downloadStep >= credentialStep || credentialStep >= uploadStep {
+		t.Errorf("unexpected recovery order: download=%d, credentials=%d, upload=%d", downloadStep, credentialStep, uploadStep)
 	}
 }
 

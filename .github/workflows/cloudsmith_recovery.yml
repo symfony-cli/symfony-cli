@@ -1,0 +1,52 @@
+name: Recover Cloudsmith Packages
+
+on:
+    workflow_dispatch:
+        inputs:
+            version:
+                description: Release version without the v prefix
+                required: true
+                type: string
+
+permissions:
+    contents: read
+
+jobs:
+    publish:
+        name: Publish
+        runs-on: ubuntu-latest
+        steps:
+            -
+                name: Download release packages
+                env:
+                    GH_TOKEN: ${{ github.token }}
+                    VERSION: ${{ inputs.version }}
+                run: |
+                    if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                        echo "Invalid version: $VERSION"
+                        exit 1
+                    fi
+                    mkdir dist
+                    gh release download "v${VERSION}" --repo "$GITHUB_REPOSITORY" --pattern '*.deb' --pattern '*.rpm' --pattern '*.apk' --dir dist
+            -
+                name: Install Cloudsmith CLI
+                run: pip install --upgrade cloudsmith-cli
+            -
+                name: Check Cloudsmith credentials
+                env:
+                    CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+                run: cloudsmith whoami > /dev/null
+            -
+                name: Upload packages
+                env:
+                    CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+                run: |
+                    for filename in dist/*.deb; do
+                        cloudsmith push deb symfony/stable/any-distro/any-version "$filename"
+                    done
+                    for filename in dist/*.rpm; do
+                        cloudsmith push rpm symfony/stable/any-distro/any-version "$filename"
+                    done
+                    for filename in dist/*.apk; do
+                        cloudsmith push alpine symfony/stable/alpine/any-version "$filename"
+                    done
