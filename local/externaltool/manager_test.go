@@ -446,6 +446,23 @@ func TestExtractTarGzRejectsOverflowingExpandedSize(t *testing.T) {
 	}
 }
 
+func TestExtractZipRejectsOverflowingExpandedSize(t *testing.T) {
+	directory := t.TempDir()
+	archivePath := filepath.Join(directory, "archive.zip")
+	if err := os.WriteFile(archivePath, overflowingZip(t), 0600); err != nil {
+		t.Fatal(err)
+	}
+	destination := filepath.Join(directory, "extracted")
+
+	err := extractZip(archivePath, destination)
+	if err == nil || !strings.Contains(err.Error(), "archive expands beyond the allowed size") {
+		t.Fatalf("expected expanded size rejection, got %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(destination, "huge")); !os.IsNotExist(err) {
+		t.Fatalf("oversized archive entry was created: %v", err)
+	}
+}
+
 func TestExtractTarGzIgnoresGlobalPAXHeaders(t *testing.T) {
 	directory := t.TempDir()
 	archivePath := filepath.Join(directory, "archive.tar.gz")
@@ -782,6 +799,29 @@ func overflowingTarGz(t *testing.T) []byte {
 		t.Fatal(err)
 	}
 	if err := compressed.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	return archive.Bytes()
+}
+
+func overflowingZip(t *testing.T) []byte {
+	t.Helper()
+	var archive bytes.Buffer
+	writer := zip.NewWriter(&archive)
+	small, err := writer.Create("small")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.WriteString(small, "x"); err != nil {
+		t.Fatal(err)
+	}
+	header := &zip.FileHeader{Name: "huge", Method: zip.Store, UncompressedSize64: math.MaxUint64}
+	header.SetMode(0600)
+	if _, err := writer.CreateRaw(header); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Close(); err != nil {
 		t.Fatal(err)
 	}
 
