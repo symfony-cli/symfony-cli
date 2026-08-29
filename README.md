@@ -19,22 +19,20 @@ Read the installation instructions on [symfony.com][7].
 Signature Verification
 ----------------------
 
-Symfony binaries are signed using [cosign][8], which is part of [sigstore][9].
-Signatures can be verified as follows (OS and architecture omitted for clarity):
+Symfony release artifacts are signed using [cosign][8], which is part of
+[sigstore][9]. Download an artifact and its matching Sigstore bundle, then
+verify it as follows:
 
 ```console
-$ COSIGN_EXPERIMENTAL=1 cosign verify-blob --signature symfony-cli.sig symfony-cli
-tlog entry verified with uuid: "2b7ca2bfb7ee09114a15d60761c2a0a8c97f07cc20c02e635a92ba137a08a6de" index: 1261963
+$ cosign verify-blob \
+    --bundle symfony-cli_linux_amd64.tar.gz.sigstore.json \
+    --certificate-identity-regexp='^https://github\.com/symfony-cli/symfony-cli/\.github/workflows/releaser\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$' \
+    --certificate-oidc-issuer='https://token.actions.githubusercontent.com' \
+    symfony-cli_linux_amd64.tar.gz
 Verified OK
 ```
 
-The above uses the (currently experimental) [keyless signing][10] method.
-Alternatively, one can verify the signature by also providing the certificate:
-
-```console
-$ cosign verify-blob --cert symfony-cli.pem --signature symfony-cli.sig symfony-cli
-Verified OK
-```
+The signatures use Sigstore's [keyless signing][10] method.
 
 Security Issues
 ---------------
@@ -60,6 +58,6 @@ assets and packages, and they're making it happen!
 [7]: https://symfony.com/download
 [8]: https://github.com/SigStore/cosign
 [9]: https://www.sigstore.dev/
-[10]: https://github.com/sigstore/cosign/blob/main/KEYLESS.md
+[10]: https://docs.sigstore.dev/cosign/signing/signing_with_blobs/
 [11]: https://symfony.com/security
 [12]: https://github.com/symfony/language-tools/blob/main/docs/features/headless-diagnostics.rst
