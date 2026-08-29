@@ -20,218 +20,54 @@
 package upsun
 
 import (
-	"archive/tar"
-	"compress/gzip"
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
-	"os"
+	"context"
 	"path/filepath"
-	"strings"
-	"time"
 
-	"github.com/blackfireio/osinfo"
-	"github.com/pkg/errors"
-	"github.com/schollz/progressbar/v3"
+	"github.com/symfony-cli/symfony-cli/local/externaltool"
 	"github.com/symfony-cli/terminal"
 )
 
-type githubAsset struct {
-	Name    string
-	URL     string `json:"browser_download_url"`
-	version string
-}
-
-type versionCheck struct {
-	CurrentVersion string
-	Timestamp      int64
-}
-
-// Install installs or updates the Platform.sh CLI tool.
 func Install(home string, product CloudProduct) (string, error) {
-	binPath := filepath.Join(home, product.BinaryPath())
-	versionCheckPath := binPath + ".json"
-
-	// do we already have the binary?
-	binExists := false
-	if _, err := os.Stat(binPath); err == nil {
-		binExists = true
-		versionCheck := loadVersionCheck(versionCheckPath)
-		if versionCheck == nil {
-			// we need to download the bin again as we don't have the version info anymore, so it will never be updated!
-			goto download
-		}
-		// have we checked recently for a new version?
-		if versionCheck.Timestamp > time.Now().Add(-24*time.Hour).Unix() {
-			return binPath, nil
-		}
-		// don't check for the next 24 hours
-		versionCheck.store(versionCheckPath)
-		if asset, err := getLatestVersion(product); err == nil {
-			// no new version
-			if asset.version == string(versionCheck.CurrentVersion) {
-				return binPath, nil
-			}
-		}
-	}
-
-download:
-	asset, err := getLatestVersion(product)
+	manager := externaltool.NewManager()
+	manager.Stderr = terminal.Stderr
+	installation, err := manager.Resolve(context.Background(), toolDefinition(home, product))
 	if err != nil {
-		if binExists {
-			// unable to get the latest version, but we already have a bin, use it
-			return binPath, nil
-		}
-		return "", err
-	}
-	if err := downloadAndExtract(asset, product, binPath); err != nil {
 		return "", err
 	}
 
-	versionCheck := versionCheck{CurrentVersion: asset.version}
-	if err := versionCheck.store(versionCheckPath); err != nil {
-		return "", err
-	}
-	return binPath, nil
+	return installation.Executable, nil
 }
 
-func getLatestVersion(product CloudProduct) (*githubAsset, error) {
-	spinner := terminal.NewSpinner(terminal.Stderr)
-	spinner.Start()
-	defer spinner.Stop()
+func toolDefinition(home string, product CloudProduct) externaltool.Definition {
+	assetPrefix := "platform"
+	name := product.Name
+	if name == "" {
+		name = "Platform.sh/Upsun"
+	}
+	versionPrefix := "Upsun CLI (Platform.sh compatibility) "
+	legacyVersionPrefixes := []string{"Platform.sh CLI "}
+	if product == Flex {
+		assetPrefix = "upsun"
+		versionPrefix = "Upsun CLI "
+		legacyVersionPrefixes = nil
+	}
+	legacyExecutable := filepath.Join(home, product.BinaryPath())
 
-	resp, err := http.Get("https://api.github.com/repos/platformsh/cli/releases/latest")
-	if err != nil {
-		return nil, err
+	return externaltool.Definition{
+		Name:                  name + " CLI",
+		Repository:            "platformsh/cli",
+		ChecksumsAsset:        "checksums.txt",
+		MinimumVersion:        "0.0.0",
+		VersionPrefix:         versionPrefix,
+		InstallRoot:           filepath.Join(home, product.CLIConfigPath, "tools", product.BinName),
+		LegacyExecutables:     []string{legacyExecutable, legacyExecutable + ".exe"},
+		LegacyVersionPrefixes: legacyVersionPrefixes,
+		Packages: []externaltool.Package{
+			{OS: "linux", Arch: "amd64", Asset: assetPrefix + "_{version}_linux_amd64.tar.gz", Executable: product.BinName},
+			{OS: "linux", Arch: "arm64", Asset: assetPrefix + "_{version}_linux_arm64.tar.gz", Executable: product.BinName},
+			{OS: "darwin", Arch: "amd64", Asset: assetPrefix + "_{version}_darwin_all.tar.gz", Executable: product.BinName},
+			{OS: "darwin", Arch: "arm64", Asset: assetPrefix + "_{version}_darwin_all.tar.gz", Executable: product.BinName},
+			{OS: "windows", Arch: "amd64", Asset: assetPrefix + "_{version}_windows_amd64.zip", Executable: product.BinName + ".exe"},
+		},
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
-		return nil, errors.New(http.StatusText(resp.StatusCode))
-	}
-	manifestBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	var manifest struct {
-		Name   string
-		Assets []*githubAsset
-	}
-	if err := json.Unmarshal(manifestBody, &manifest); err != nil {
-		return nil, err
-	}
-
-	info, err := osinfo.GetOSInfo()
-	if err != nil {
-		return nil, err
-	}
-
-	var asset *githubAsset
-	for _, a := range manifest.Assets {
-		if !strings.HasSuffix(a.Name, ".gz") && !strings.HasSuffix(a.Name, ".zip") {
-			continue
-		}
-		if !strings.Contains(a.Name, product.BinName) {
-			continue
-		}
-		if (strings.Contains(a.Name, info.Architecture) && strings.Contains(a.Name, info.Family)) ||
-			(strings.Contains(a.Name, "all") && info.Family == "darwin") {
-			asset = a
-			break
-		}
-	}
-	if asset == nil {
-		return nil, errors.New(fmt.Sprintf("unable to find a suitable %s CLI tool for your machine (%s/%s)", product, info.Family, info.Architecture))
-	}
-	asset.version = manifest.Name
-
-	return asset, nil
-}
-
-func downloadAndExtract(asset *githubAsset, product CloudProduct, binPath string) error {
-	resp, err := http.Get(asset.URL)
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
-		return errors.New(http.StatusText(resp.StatusCode))
-	}
-
-	pr, pw := io.Pipe()
-	errs := make(chan error, 1)
-	go func() {
-		bar := progressbar.DefaultBytes(resp.ContentLength, fmt.Sprintf("Downloading %s CLI version %s", product, asset.version))
-		if _, err := io.Copy(io.MultiWriter(pw, bar), resp.Body); err != nil {
-			errs <- err
-		}
-		_ = bar.Close()
-		errs <- pw.Close()
-	}()
-
-	gzr, err := gzip.NewReader(pr)
-	if err != nil {
-		return err
-	}
-	defer gzr.Close()
-
-	tr := tar.NewReader(gzr)
-	for {
-		select {
-		case err := <-errs:
-			return err
-		default:
-			header, err := tr.Next()
-			switch {
-			case err == io.EOF:
-				return nil
-			case err != nil:
-				return err
-			case header == nil:
-				continue
-			default:
-				if header.Typeflag != tar.TypeReg {
-					continue
-				}
-				if header.Name != product.BinName {
-					continue
-				}
-				if _, err := os.Stat(filepath.Dir(binPath)); os.IsNotExist(err) {
-					if err := os.MkdirAll(filepath.Dir(binPath), 0755); err != nil {
-						return err
-					}
-				}
-				out, err := os.OpenFile(binPath, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
-				if err != nil {
-					return err
-				}
-				if _, err := io.Copy(out, tr); err != nil {
-					out.Close()
-					return err
-				}
-				return out.Close()
-			}
-		}
-	}
-}
-
-func loadVersionCheck(path string) *versionCheck {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil
-	}
-	var versionCheck versionCheck
-	if err := json.Unmarshal(data, &versionCheck); err != nil {
-		_ = os.Remove(path)
-		return nil
-	}
-	return &versionCheck
-}
-
-func (versionCheck *versionCheck) store(path string) error {
-	versionCheck.Timestamp = time.Now().Unix()
-	data, err := json.Marshal(versionCheck)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(path, data, 0644)
 }

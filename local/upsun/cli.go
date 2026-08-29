@@ -46,7 +46,7 @@ type CLI struct {
 	Commands []*console.Command
 	Hooks    map[string]console.BeforeFunc
 
-	path string
+	paths map[string]string
 }
 
 func Get() (*CLI, error) {
@@ -63,6 +63,7 @@ func Get() (*CLI, error) {
 func newCLI() (*CLI, error) {
 	p := &CLI{
 		Hooks: map[string]console.BeforeFunc{},
+		paths: map[string]string{},
 	}
 	for _, command := range Commands {
 		command.Action = p.proxyPSHCmd(strings.TrimPrefix(command.Category+":"+command.Name, "cloud:"))
@@ -89,24 +90,27 @@ func (p *CLI) AddBeforeHook(name string, f console.BeforeFunc) {
 	}
 }
 
-func (p *CLI) getPath(product CloudProduct) string {
-	if p.path != "" {
-		return p.path
+func (p *CLI) getPath(product CloudProduct) (string, error) {
+	if path := p.paths[product.BinName]; path != "" {
+		return path, nil
 	}
 
 	home, err := homedir.Dir()
 	if err != nil {
-		panic("unable to get home directory")
+		return "", errors.Wrap(err, "unable to get home directory")
 	}
 
 	// the Platform.sh CLI is always available on the containers thanks to the configurator
-	p.path = filepath.Join(home, product.BinaryPath())
+	path := filepath.Join(home, product.BinaryPath())
 	if !util.InCloud() {
-		if cloudPath, err := Install(home, product); err == nil {
-			p.path = cloudPath
+		path, err = Install(home, product)
+		if err != nil {
+			return "", err
 		}
 	}
-	return p.path
+	p.paths[product.BinName] = path
+
+	return path, nil
 }
 
 func (p *CLI) PSHMainCommands() []*console.Command {
@@ -146,12 +150,17 @@ func (p *CLI) proxyPSHCmd(commandName string) console.ActionFunc {
 					break
 				}
 			}
-			return p.executor(product, args).Run()
+			cmd, err := p.executor(product, args)
+			if err != nil {
+				return err
+			}
+
+			return cmd.Run()
 		}
 	}(commandName)
 }
 
-func (p *CLI) executor(product CloudProduct, args []string) *exec.Cmd {
+func (p *CLI) executor(product CloudProduct, args []string) (*exec.Cmd, error) {
 	prefix := product.CLIPrefix
 
 	env := []string{
@@ -164,18 +173,28 @@ func (p *CLI) executor(product CloudProduct, args []string) *exec.Cmd {
 		env = append(env, fmt.Sprintf("%sUPDATES_CHECK=0", prefix))
 	}
 	args[0] = strings.TrimPrefix(strings.TrimPrefix(args[0], "upsun:"), "cloud:")
-	cmd := exec.Command(p.getPath(product), args...)
+	path, err := p.getPath(product)
+	if err != nil {
+		return nil, err
+	}
+	cmd := exec.Command(path, args...)
 	cmd.Env = append(os.Environ(), env...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
-	return cmd
+
+	return cmd, nil
 }
 
 func (p *CLI) RunInteractive(logger zerolog.Logger, projectDir string, args []string, debug bool, stdin io.Reader) (bytes.Buffer, bool) {
 	var buf bytes.Buffer
 	product := GuessProductFromCommandName(args[0])
-	cmd := p.executor(product, args)
+	cmd, err := p.executor(product, args)
+	if err != nil {
+		logger.Error().Err(err).Msgf("Unable to setup %s CLI", product)
+		fmt.Fprintln(&buf, err)
+		return buf, false
+	}
 	if projectDir != "" {
 		cmd.Dir = projectDir
 	}
@@ -203,8 +222,12 @@ func (p *CLI) WrapHelpPrinter() func(w io.Writer, templ string, data interface{}
 		case *console.Command:
 			if strings.HasPrefix(cmd.Category, "cloud") && cmd.FullName() != "cloud:deploy" {
 				product := GuessProductFromCommandName(cmd.UserName)
-				cmd := p.executor(product, []string{cmd.FullName(), "--help"})
-				cmd.Run()
+				proxied, err := p.executor(product, []string{cmd.FullName(), "--help"})
+				if err != nil {
+					fmt.Fprintln(os.Stderr, err)
+					return
+				}
+				_ = proxied.Run()
 			} else {
 				currentHelpPrinter(w, templ, data)
 			}

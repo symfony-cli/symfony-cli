@@ -70,6 +70,8 @@ func CommonCommands() []*console.Command {
 		localProxyStopCmd,
 		localRequirementsCheckCmd,
 		localRunCmd,
+		lspCacheDirCmd,
+		lspCheckCmd,
 		localServerCAInstallCmd,
 		localServerCAUninstallCmd,
 		localServerListCmd,
