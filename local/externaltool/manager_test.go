@@ -532,9 +532,9 @@ func TestManagerInstallsZipAndFlatArchives(t *testing.T) {
 
 func TestManagerUsesASeparateArchiveDownloadTimeout(t *testing.T) {
 	fixture := newToolFixture(t, "1.2.0")
-	fixture.setArchiveDelay(150 * time.Millisecond)
+	fixture.setArchiveDelay(500 * time.Millisecond)
 	manager, definition, _ := testManager(t, fixture, time.Now())
-	manager.MetadataTimeout = 50 * time.Millisecond
+	manager.MetadataTimeout = 250 * time.Millisecond
 	manager.ArchiveTimeout = 5 * time.Second
 
 	installation := resolveTool(t, manager, definition)
