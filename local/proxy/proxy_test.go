@@ -60,7 +60,7 @@ func (s *ProxySuite) TestProxy(c *C) {
 		},
 		TLD:  "wip",
 		path: "testdata/.symfony5/proxy.json",
-	}, ca, log.New(zerolog.New(os.Stderr), "", 0), true)
+	}, ca, log.New(zerolog.New(os.Stderr), "", 0), true, "test-version<&")
 	c.Assert(os.MkdirAll("testdata/.symfony5", 0755), IsNil)
 	err = p.Save()
 	c.Assert(err, IsNil)
@@ -94,6 +94,8 @@ func (s *ProxySuite) TestProxy(c *C) {
 		c.Assert(err, IsNil)
 		p.proxy.ServeHTTP(rr, req)
 		c.Assert(rr.Code, Equals, http.StatusOK)
+		c.Check(strings.Contains(rr.Body.String(), "Symfony CLI test-version&lt;&amp;"), Equals, true)
+		c.Check(strings.Contains(rr.Body.String(), "test-version<&"), Equals, false)
 		c.Check(strings.Contains(rr.Body.String(), "symfony.wip"), Equals, true)
 	}
 

@@ -24,6 +24,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	stdhtml "html"
 	"io"
 	"log"
 	"net"
@@ -43,7 +44,8 @@ import (
 
 type Proxy struct {
 	*Config
-	proxy *goproxy.ProxyHttpServer
+	proxy      *goproxy.ProxyHttpServer
+	appVersion string
 }
 
 func tlsToLocalWebServer(proxy *goproxy.ProxyHttpServer, tlsConfig *tls.Config, localPort int) *goproxy.ConnectAction {
@@ -144,13 +146,14 @@ func tlsToLocalWebServer(proxy *goproxy.ProxyHttpServer, tlsConfig *tls.Config, 
 	}
 }
 
-func New(config *Config, ca *cert.CA, logger *log.Logger, debug bool) *Proxy {
+func New(config *Config, ca *cert.CA, logger *log.Logger, debug bool, appVersion string) *Proxy {
 	proxy := goproxy.NewProxyHttpServer()
 	proxy.Verbose = debug
 	proxy.Logger = logger
 	p := &Proxy{
-		Config: config,
-		proxy:  proxy,
+		Config:     config,
+		proxy:      proxy,
+		appVersion: appVersion,
 	}
 
 	var proxyTLSConfig *tls.Config
@@ -344,7 +347,7 @@ function FindProxyForURL (url, host) {
 }
 
 func (p *Proxy) serveIndex(w http.ResponseWriter, r *http.Request) {
-	content := ``
+	content := fmt.Sprintf("<p>Symfony CLI %s</p>", stdhtml.EscapeString(p.appVersion))
 
 	configuredProjects, err := getConfiguredProjects()
 	if err != nil {
