@@ -138,6 +138,36 @@ func (s *ScenvSuite) TestDockerDatabaseURLs(c *C) {
 	c.Assert(rels["POSTGRESQL_URL"], Equals, "postgres://main:main@127.0.0.1:63574/main?sslmode=disable&charset=utf8&serverVersion=13.13")
 }
 
+func (s *ScenvSuite) TestDockerMailCatcherURLs(c *C) {
+	env := fakeEnv{
+		Rels: map[string][]map[string]interface{}{
+			"mailer": {
+				map[string]interface{}{
+					"host":   "127.0.0.1",
+					"ip":     "127.0.0.1",
+					"port":   "32768",
+					"rel":    "mailer",
+					"scheme": "smtp",
+				},
+			},
+			"mailer-web": {
+				map[string]interface{}{
+					"host":   "127.0.0.1",
+					"ip":     "127.0.0.1",
+					"port":   "32769",
+					"rel":    "mailer",
+					"scheme": "http",
+				},
+			},
+		},
+	}
+
+	rels := extractRelationshipsEnvs(env)
+	c.Assert(rels["MAILER_CATCHER"], Equals, "1")
+	c.Assert(rels["MAILER_DSN"], Equals, "smtp://127.0.0.1:32768")
+	c.Assert(rels["MAILER_WEB_URL"], Equals, "http://127.0.0.1:32769")
+}
+
 func (s *ScenvSuite) TestCloudTunnelDatabaseURLs(c *C) {
 	env := fakeEnv{
 		Rels: map[string][]map[string]interface{}{

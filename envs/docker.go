@@ -253,6 +253,27 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container con
 				return rels
 			}
 		}
+	} else if p.PrivatePort == 3535 {
+		// recommended image: mailtrap/mailtrap-local
+		for _, pw := range exposedPorts {
+			if pw.PrivatePort == 3550 {
+				rels["-web"] = map[string]interface{}{
+					"host":   host,
+					"ip":     host,
+					"port":   formatDockerPort(pw.PublicPort),
+					"rel":    "mailer",
+					"scheme": "http",
+				}
+				rels[""] = map[string]interface{}{
+					"host":   host,
+					"ip":     host,
+					"port":   formatDockerPort(p.PublicPort),
+					"rel":    "mailer",
+					"scheme": "smtp",
+				}
+				return rels
+			}
+		}
 	} else if p.PrivatePort == 8707 || p.PrivatePort == 8307 {
 		// Blackfire
 		rels[""] = map[string]interface{}{
