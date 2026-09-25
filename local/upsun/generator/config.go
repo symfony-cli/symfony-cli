@@ -110,12 +110,25 @@ func generateConfig() {
 }
 
 func parseServices() (string, error) {
-	resp, err := http.Get("https://raw.githubusercontent.com/platformsh/platformsh-docs/master/shared/data/registry.json")
+	resp, err := http.Get("https://meta.upsun.com/image")
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
-	var services map[string]*service
+
+	// Define the new structure for the upsun meta image API
+	type upsunVersion struct {
+		Name  string `json:"name"`
+		Upsun struct {
+			Status string `json:"status"`
+		} `json:"upsun"`
+	}
+	type upsunService struct {
+		Type     string         `json:"type"`
+		Runtime  bool           `json:"runtime"`
+		Versions []upsunVersion `json:"versions"`
+	}
+	var services map[string]*upsunService
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
@@ -132,15 +145,24 @@ func parseServices() (string, error) {
 	for _, name := range serviceNames {
 		s := services[name]
 		if !s.Runtime {
-			deprecatedVersions, err := sortVersions(s.Versions.Deprecated)
+			var deprecatedVersions, supportedVersions []string
+			for _, v := range s.Versions {
+				switch v.Upsun.Status {
+				case "retired":
+					deprecatedVersions = append(deprecatedVersions, v.Name)
+				case "supported", "deprecated":
+					supportedVersions = append(supportedVersions, v.Name)
+				}
+			}
+			var err error
+			deprecatedVersions, err = sortVersions(deprecatedVersions)
 			if err != nil {
 				return "", err
 			}
-			supportedVersions, err := sortVersions(s.Versions.Supported)
+			supportedVersions, err = sortVersions(supportedVersions)
 			if err != nil {
 				return "", err
 			}
-
 			servicesAsString += "\t{\n"
 			servicesAsString += fmt.Sprintf("\t\tType: \"%s\",\n", s.Type)
 			servicesAsString += "\t\tVersions: serviceVersions{\n"
@@ -162,7 +184,7 @@ func parseServices() (string, error) {
 }
 
 func parsePHPExtensions() (string, error) {
-	resp, err := http.Get("https://raw.githubusercontent.com/platformsh/platformsh-docs/master/shared/data/php_extensions.yaml")
+	resp, err := http.Get("https://meta.upsun.com/extension/php")
 	if err != nil {
 		return "", err
 	}
