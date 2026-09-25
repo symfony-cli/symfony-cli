@@ -446,6 +446,15 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container con
 			"scheme": "kafka",
 		}
 		return rels
+	} else if p.PrivatePort == 11300 {
+		rels[""] = map[string]interface{}{
+			"host":   host,
+			"ip":     host,
+			"port":   formatDockerPort(p.PublicPort),
+			"rel":    "beanstalkd",
+			"scheme": "beanstalkd",
+		}
+		return rels
 	} else if p.PrivatePort == 80 && strings.Contains(container.Image, "dunglas/mercure") {
 		// for podman the image name is docker.io/dunglas/mercure:latest
 		rels[""] = map[string]interface{}{

@@ -306,6 +306,15 @@ func extractRelationshipsEnvs(env Environment) Envs {
 				if v, ok := endpoint["ip"]; ok && v != nil {
 					values[fmt.Sprintf("%sIP", prefix)] = v.(string)
 				}
+			} else if scheme == "beanstalkd" {
+				values[fmt.Sprintf("%sURL", prefix)] = formatServer(endpoint)
+				values[fmt.Sprintf("%sDSN", prefix)] = formatServer(endpoint)
+				values[fmt.Sprintf("%sSCHEME", prefix)] = endpoint["scheme"].(string)
+				values[fmt.Sprintf("%sHOST", prefix)] = endpoint["host"].(string)
+				values[fmt.Sprintf("%sPORT", prefix)] = formatInt(endpoint["port"])
+				if v, ok := endpoint["ip"]; ok && v != nil {
+					values[fmt.Sprintf("%sIP", prefix)] = v.(string)
+				}
 			} else if scheme == "tcp" {
 				values[fmt.Sprintf("%sURL", prefix)] = formatServer(endpoint)
 				if v, ok := endpoint["ip"]; ok && v != nil {

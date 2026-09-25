@@ -99,6 +99,31 @@ func (s *ScenvSuite) TestElasticsearchURLEndsWithTrailingSlash(c *C) {
 	c.Assert(rels["ELASTICSEARCH_URL"], Equals, "http://localhost:9200")
 }
 
+func (s *ScenvSuite) TestBeanstalkdURLs(c *C) {
+	env := fakeEnv{
+		Rels: map[string][]map[string]interface{}{
+			"beanstalkd": {
+				map[string]interface{}{
+					"host":   "127.0.0.1",
+					"ip":     "127.0.0.1",
+					"port":   "56615",
+					"rel":    "beanstalkd",
+					"scheme": "beanstalkd",
+				},
+			},
+		},
+	}
+
+	c.Assert(extractRelationshipsEnvs(env), DeepEquals, Envs{
+		"BEANSTALKD_URL":    "beanstalkd://127.0.0.1:56615",
+		"BEANSTALKD_DSN":    "beanstalkd://127.0.0.1:56615",
+		"BEANSTALKD_SCHEME": "beanstalkd",
+		"BEANSTALKD_HOST":   "127.0.0.1",
+		"BEANSTALKD_PORT":   "56615",
+		"BEANSTALKD_IP":     "127.0.0.1",
+	})
+}
+
 func (s *ScenvSuite) TestDockerDatabaseURLs(c *C) {
 	env := fakeEnv{
 		Rels: map[string][]map[string]interface{}{
