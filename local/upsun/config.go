@@ -146,8 +146,8 @@ var availableServices = []*service{
 	{
 		Type: "clickhouse",
 		Versions: serviceVersions{
-			Deprecated: []string{"23.8", "24.3", "25.3"},
-			Supported:  []string{"25.8", "26.3"},
+			Deprecated: []string{"23.8", "24.3", "25.3", "25.8"},
+			Supported:  []string{"26.3", "26.8"},
 		},
 	},
 	{
@@ -189,7 +189,7 @@ var availableServices = []*service{
 		Type: "mariadb",
 		Versions: serviceVersions{
 			Deprecated: []string{},
-			Supported:  []string{"11.4", "11.8", "12.3"},
+			Supported:  []string{"10.11", "11.4", "11.8", "12.3"},
 		},
 	},
 	{
@@ -224,7 +224,7 @@ var availableServices = []*service{
 		Type: "mysql",
 		Versions: serviceVersions{
 			Deprecated: []string{},
-			Supported:  []string{"11.4", "11.8", "12.3"},
+			Supported:  []string{"10.11", "11.4", "11.8", "12.3"},
 		},
 	},
 	{
