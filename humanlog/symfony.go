@@ -53,6 +53,8 @@ func convertSymfonyLog(in []byte) (*line, error) {
 				if err != nil {
 					return nil, errors.WithStack(err)
 				}
+				// display the date in the local timezone like other log lines
+				line.time = line.time.Local()
 			}
 		} else if i == 2 {
 			line.source = string(m)
