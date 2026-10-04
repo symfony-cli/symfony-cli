@@ -144,7 +144,7 @@ func tlsToLocalWebServer(proxy *goproxy.ProxyHttpServer, tlsConfig *tls.Config, 
 	}
 }
 
-func New(config *Config, ca *cert.CA, logger *log.Logger, debug bool) *Proxy {
+func New(config *Config, ca *cert.CA, logger *log.Logger, debug bool, appVersion string) *Proxy {
 	proxy := goproxy.NewProxyHttpServer()
 	proxy.Verbose = debug
 	proxy.Logger = logger
@@ -183,6 +183,7 @@ func New(config *Config, ca *cert.CA, logger *log.Logger, debug bool) *Proxy {
 		goproxy.HTTPMitmConnect.TLSConfig = goproxy.MitmConnect.TLSConfig
 	}
 	proxy.NonproxyHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Server", "symfony-cli/"+appVersion)
 		if r.Host == "" {
 			fmt.Fprintln(w, "Cannot handle requests without a Host header, e.g. HTTP 1.0")
 			return
