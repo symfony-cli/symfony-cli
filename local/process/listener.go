@@ -22,6 +22,7 @@ package process
 import (
 	"fmt"
 	"net"
+	"strconv"
 
 	"github.com/pkg/errors"
 )
@@ -44,7 +45,7 @@ func CreateListener(listenIp string, port, preferredPort int) (net.Listener, int
 		if err == nil {
 			ln.Close()
 			// but then, we want to listen to as many local IP's as possible
-			ln, err = net.Listen("tcp", fmt.Sprintf("%s:%d", listenIp, tryPort))
+			ln, err = net.Listen("tcp", net.JoinHostPort(listenIp, strconv.Itoa(tryPort)))
 			if err == nil {
 				break
 			}

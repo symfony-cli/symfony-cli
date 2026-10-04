@@ -24,11 +24,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"syscall"
 
@@ -280,7 +282,7 @@ var localServerStartCmd = &console.Command{
 		if p.PHPServer != nil {
 			msg += fmt.Sprintf("     The Web server is using %s %s\n", p.PHPServer.Version.ServerTypeName(), p.PHPServer.Version.Version)
 		}
-		applicationUrl := fmt.Sprintf("%s://127.0.0.1:%d", scheme, port)
+		applicationUrl := localServerURL(scheme, config.HTTP.ListenIp, port)
 		msg += fmt.Sprintf("\n     <href=%s>%s</>", applicationUrl, applicationUrl)
 		if proxyConf, err := proxy.Load(homeDir); err == nil {
 			for _, domain := range proxyConf.GetDomains(projectDir) {
@@ -456,4 +458,12 @@ func waitForWorkers(projectDir string, pidFile *pid.PidFile) error {
 		return err
 	}
 	return pidFile.RemovePidFile()
+}
+
+func localServerURL(scheme, listenIp string, port int) string {
+	host := "127.0.0.1"
+	if ip := net.ParseIP(listenIp); ip != nil && !ip.IsUnspecified() {
+		host = ip.String()
+	}
+	return fmt.Sprintf("%s://%s", scheme, net.JoinHostPort(host, strconv.Itoa(port)))
 }
