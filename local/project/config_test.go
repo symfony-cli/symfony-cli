@@ -55,6 +55,7 @@ func (s *ConfigSuite) TestConfigFromDirectory(c *C) {
 	c.Assert(config.Proxy.Domains, DeepEquals, []string{"foo"})
 
 	c.Assert(config.HTTP.PreferredPort, Equals, 8181)
+	c.Assert(config.HTTP.ProxyMercure, Equals, true)
 
 	c.Assert(config.Workers, HasLen, 3)
 	c.Assert(config.Workers["docker_compose"].Cmd, NotNil)
@@ -82,6 +83,7 @@ func (s *ConfigSuite) TestConfigFromContext(c *C) {
 
 			//c.Assert(config.HTTP.PreferredPort, Equals, 8282)
 			c.Assert(config.HTTP.AllowHTTP, Equals, true)
+			c.Assert(config.HTTP.ProxyMercure, Equals, false)
 
 			c.Assert(config.NoWorkers, Equals, true)
 			c.Assert(config.Daemon, Equals, false)
@@ -102,5 +104,5 @@ func (s *ConfigSuite) TestConfigFromContext(c *C) {
 			return nil
 		},
 	}
-	c.Check(app.Run([]string{"--port=8282", "--allow-http=true"}), IsNil)
+	c.Check(app.Run([]string{"--port=8282", "--allow-http=true", "--proxy-mercure=false"}), IsNil)
 }

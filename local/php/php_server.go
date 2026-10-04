@@ -54,6 +54,9 @@ type Server struct {
 	passthru     string
 	addr         string
 	proxy        *httputil.ReverseProxy
+
+	// ProxyMercure exposes the Mercure hub on the web server origin, see lhttp.NewMercureProxy
+	ProxyMercure bool
 }
 
 var addslashes = strings.NewReplacer("\\", "\\\\", "'", "\\'")

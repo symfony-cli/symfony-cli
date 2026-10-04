@@ -57,6 +57,7 @@ type Server struct {
 	UseGzip       bool
 	TlsKeyLogFile string
 	AllowCORS     bool
+	MercureProxy  http.Handler
 
 	httpserver  *http.Server
 	httpsserver *http.Server
@@ -97,6 +98,10 @@ func (s *Server) Start(errChan chan error) (int, error) {
 			return port, errors.WithStack(err)
 		}
 		proxyHandler = gzipWrapper(proxyHandler)
+	}
+
+	if s.MercureProxy != nil {
+		proxyHandler = withMercureProxy(proxyHandler, s.MercureProxy)
 	}
 
 	if s.AllowCORS {

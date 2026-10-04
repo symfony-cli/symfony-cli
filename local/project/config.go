@@ -55,6 +55,7 @@ type config struct {
 		TlsKeyLogFile string
 		UseGzip       bool
 		AllowCORS     bool
+		ProxyMercure  bool
 	}
 	Workers map[string]struct {
 		Cmd   []string
@@ -131,6 +132,9 @@ func (config *config) mergeWithContext(c *console.Context) {
 	}
 	if c.IsSet("allow-cors") {
 		config.HTTP.AllowCORS = c.Bool("allow-cors")
+	}
+	if c.IsSet("proxy-mercure") {
+		config.HTTP.ProxyMercure = c.Bool("proxy-mercure")
 	}
 	if c.IsSet("allow-http") {
 		config.HTTP.AllowHTTP = c.Bool("allow-http")
@@ -210,6 +214,9 @@ func (config *config) mergeWithFileConfig(fileConfig fileConfig) {
 		if fileConfig.HTTP.AllowCORS != nil {
 			config.HTTP.AllowCORS = *fileConfig.HTTP.AllowCORS
 		}
+		if fileConfig.HTTP.ProxyMercure != nil {
+			config.HTTP.ProxyMercure = *fileConfig.HTTP.ProxyMercure
+		}
 		if fileConfig.HTTP.AllowHTTP != nil {
 			config.HTTP.AllowHTTP = *fileConfig.HTTP.AllowHTTP
 		}
@@ -257,6 +264,7 @@ type fileConfig struct {
 		TlsKeyLogFile *string `yaml:"tls_key_log_file"`
 		UseGzip       *bool   `yaml:"use_gzip"`
 		AllowCORS     *bool   `yaml:"allow_cors"`
+		ProxyMercure  *bool   `yaml:"proxy_mercure"`
 
 		// BC-layer
 		Daemon    *bool `yaml:"daemon"`

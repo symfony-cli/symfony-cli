@@ -44,4 +44,5 @@ var ConfigurationFlags = []console.Flag{
 	},
 	&console.BoolFlag{Name: "no-workers", Usage: "Do not start workers"},
 	&console.BoolFlag{Name: "allow-cors", Usage: "Allow Cross-origin resource sharing (CORS) requests"},
+	&console.BoolFlag{Name: "proxy-mercure", Usage: "Serve the Mercure hub detected via Docker on the web server origin (/.well-known/mercure)"},
 }

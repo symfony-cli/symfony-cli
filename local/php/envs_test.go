@@ -20,6 +20,7 @@
 package php
 
 import (
+	"crypto/tls"
 	"net/http"
 	"testing"
 
@@ -200,4 +201,18 @@ func (s *PHPFPMSuite) TestGenerateEnv(c *C) {
 			c.Assert(vv, DeepEquals, v)
 		}
 	}
+}
+
+func (s *PHPFPMSuite) TestSameOriginMercureURL(c *C) {
+	req, _ := http.NewRequest("GET", "/", nil)
+	req.Host = "127.0.0.1:8000"
+	c.Assert(sameOriginMercureURL(req), Equals, "http://127.0.0.1:8000/.well-known/mercure")
+
+	req.Header.Set("X-Forwarded-Proto", "https")
+	c.Assert(sameOriginMercureURL(req), Equals, "https://127.0.0.1:8000/.well-known/mercure")
+
+	req, _ = http.NewRequest("GET", "/", nil)
+	req.Host = "app.wip"
+	req.TLS = &tls.ConnectionState{}
+	c.Assert(sameOriginMercureURL(req), Equals, "https://app.wip/.well-known/mercure")
 }
