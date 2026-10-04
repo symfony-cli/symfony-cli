@@ -20,6 +20,7 @@
 package envs
 
 import (
+	"maps"
 	"os"
 	"path/filepath"
 
@@ -90,25 +91,18 @@ func lookupDotEnv(dir string) map[string]string {
 		}
 	}
 
-	// APP_ENV defined?
-	env := os.Getenv("APP_ENV")
-	if env == "" {
-		if v, ok := vars["APP_ENV"]; ok {
-			env = v
-		}
-	}
-	if env == "" {
-		env = "dev"
-	}
+	env := resolveAppEnv(vars)
 	vars["APP_ENV"] = env
 
-	if vars["APP_ENV"] != "test" {
+	if env != "test" {
 		mergeDovEnvFile(vars, filepath.Join(dir, ".env.local"))
+		env = resolveAppEnv(vars)
+		vars["APP_ENV"] = env
 	}
 
-	mergeDovEnvFile(vars, filepath.Join(dir, ".env."+vars["APP_ENV"]))
+	mergeDovEnvFile(vars, filepath.Join(dir, ".env."+env))
 
-	mergeDovEnvFile(vars, filepath.Join(dir, ".env."+vars["APP_ENV"]+".local"))
+	mergeDovEnvFile(vars, filepath.Join(dir, ".env."+env+".local"))
 
 	// Exported variables win, as with Symfony's Dotenv component
 	for k := range vars {
@@ -130,11 +124,17 @@ func mergeDovEnvFile(vars map[string]string, path string) {
 		return
 	}
 
-	for k, v := range locals {
-		if _, ok := vars[k]; !ok {
-			vars[k] = v
-		}
+	maps.Copy(vars, locals)
+}
+
+func resolveAppEnv(vars map[string]string) string {
+	if env := os.Getenv("APP_ENV"); env != "" {
+		return env
 	}
+	if env := vars["APP_ENV"]; env != "" {
+		return env
+	}
+	return "dev"
 }
 
 func findDotEnvDir(dir string) string {
