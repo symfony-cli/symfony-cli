@@ -1,5 +1,4 @@
 //go:build !windows
-// +build !windows
 
 /*
  * Copyright (c) 2021-present Fabien Potencier <fabien@symfony.com>
@@ -24,25 +23,27 @@ package php
 
 import (
 	"os"
-	"syscall"
+	"path/filepath"
 
-	"github.com/pkg/errors"
+	. "gopkg.in/check.v1"
 )
 
-func shouldSignalBeIgnored(sig os.Signal) bool {
-	// this one in particular should be skipped as we don't want to
-	// send it back to child because it's about it
-	return sig == syscall.SIGCHLD
+func (s *ExecutorSuite) TestSymlinkIsIdempotentWhenTargetIsASymlink(c *C) {
+	dir := c.MkDir()
+	target := filepath.Join(dir, "php-config8.4")
+	c.Assert(os.WriteFile(target, []byte("#!/bin/sh\n"), 0755), IsNil)
+	alternative := filepath.Join(dir, "php-config")
+	c.Assert(os.Symlink(target, alternative), IsNil)
+
+	link := filepath.Join(c.MkDir(), "php-config")
+	c.Assert(symlink(alternative, link), IsNil)
+	c.Assert(symlink(alternative, link), IsNil)
 }
 
-func symlink(oldname, newname string) error {
-	err := errors.WithStack(os.Symlink(oldname, newname))
+func (s *ExecutorSuite) TestSymlinkFailsWhenLinkPointsElsewhere(c *C) {
+	dir := c.MkDir()
+	link := filepath.Join(dir, "php-config")
+	c.Assert(os.Symlink(filepath.Join(dir, "other"), link), IsNil)
 
-	if os.IsExist(errors.Cause(err)) {
-		if target, _ := os.Readlink(newname); target == oldname {
-			return nil
-		}
-	}
-
-	return err
+	c.Assert(symlink(filepath.Join(dir, "php-config8.4"), link), NotNil)
 }
