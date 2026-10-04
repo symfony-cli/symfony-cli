@@ -99,6 +99,28 @@ func (s *ScenvSuite) TestElasticsearchURLEndsWithTrailingSlash(c *C) {
 	c.Assert(rels["ELASTICSEARCH_URL"], Equals, "http://localhost:9200")
 }
 
+func (s *ScenvSuite) TestMeilisearchURLs(c *C) {
+	endpoint := map[string]interface{}{
+		"host":   "127.0.0.1",
+		"ip":     "127.0.0.1",
+		"port":   "58882",
+		"rel":    "meilisearch",
+		"scheme": "http",
+	}
+	expected := Envs{
+		"MEILISEARCH_URL":    "http://127.0.0.1:58882",
+		"MEILISEARCH_SCHEME": "http",
+		"MEILISEARCH_HOST":   "127.0.0.1",
+		"MEILISEARCH_PORT":   "58882",
+		"MEILISEARCH_IP":     "127.0.0.1",
+	}
+	c.Assert(extractRelationshipsEnvs(fakeEnv{Rels: map[string][]map[string]interface{}{"meilisearch": {endpoint}}}), DeepEquals, expected)
+
+	endpoint["password"] = "fooBarKey"
+	expected["MEILISEARCH_API_KEY"] = "fooBarKey"
+	c.Assert(extractRelationshipsEnvs(fakeEnv{Rels: map[string][]map[string]interface{}{"meilisearch": {endpoint}}}), DeepEquals, expected)
+}
+
 func (s *ScenvSuite) TestBeanstalkdURLs(c *C) {
 	env := fakeEnv{
 		Rels: map[string][]map[string]interface{}{
