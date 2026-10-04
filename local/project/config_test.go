@@ -37,6 +37,7 @@ func (s *ConfigSuite) TestDefaultConfig(c *C) {
 	)
 	c.Assert(err, IsNil)
 	c.Assert(config, NotNil)
+	c.Assert(config.LoadedFiles, HasLen, 0)
 }
 
 func (s *ConfigSuite) TestConfigFromDirectory(c *C) {
@@ -47,6 +48,12 @@ func (s *ConfigSuite) TestConfigFromDirectory(c *C) {
 	)
 	c.Assert(err, IsNil)
 	c.Assert(config, NotNil)
+
+	c.Assert(config.LoadedFiles, DeepEquals, []string{
+		".symfony.local.dist.yaml",
+		".symfony.local.yaml",
+		".symfony.local.override.yaml",
+	})
 
 	c.Assert(config.NoWorkers, Equals, true)
 	c.Assert(config.Daemon, Equals, false)
