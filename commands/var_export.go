@@ -20,7 +20,9 @@
 package commands
 
 import (
+	"regexp"
 	"sort"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/symfony-cli/console"
@@ -66,7 +68,7 @@ var variableExportCmd = &console.Command{
 			}
 			sort.Strings(keys)
 			for _, k := range keys {
-				terminal.Printfln("export %s=%s", k, m[k])
+				terminal.Printfln("export %s=%s", k, shellQuote(m[k]))
 			}
 		} else {
 			// output the string (useful when doing export $(envs))
@@ -75,4 +77,14 @@ var variableExportCmd = &console.Command{
 
 		return nil
 	},
+}
+
+var shellSafeValue = regexp.MustCompile(`^[A-Za-z0-9_@%+=:,./-]*$`)
+
+// shellQuote uses POSIX single quotes as $'...' is not understood by dash or fish.
+func shellQuote(value string) string {
+	if shellSafeValue.MatchString(value) {
+		return value
+	}
+	return "'" + strings.ReplaceAll(value, "'", `'\''`) + "'"
 }
