@@ -149,8 +149,11 @@ func (s *HumanlogSuite) TestSymfonyLogConverterUsesLocalTimezone(c *C) {
 	defer func() { time.Local = local }()
 	time.Local = time.FixedZone("CEST", 2*60*60)
 
-	out, err := convertSymfonyLog([]byte(`[2026-10-02T07:05:14.123456+00:00] request.INFO: Matched route "_wdt". [] []`))
-	c.Assert(err, Equals, nil)
-	c.Assert(out.time.Location(), Equals, time.Local)
-	c.Assert(out.time.Format(time.Stamp), Equals, "Oct  2 09:05:14")
+	for _, date := range []string{"2026-10-02T07:05:14.123456+00:00", "2026-10-02T03:05:14.123456-04:00"} {
+		out, err := convertSymfonyLog([]byte(`[` + date + `] request.INFO: Matched route "_wdt". [] []`))
+		c.Assert(err, Equals, nil)
+		c.Assert(out, NotNil)
+		c.Assert(out.time.Location(), Equals, time.Local)
+		c.Assert(out.time.Format(time.Stamp), Equals, "Oct  2 09:05:14")
+	}
 }
