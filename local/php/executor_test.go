@@ -284,6 +284,7 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 	outCloser()
 
 	c.Check(true, Equals, strings.Contains(output.String(), "USER_DEFINED_ENVVAR=custom"))
+	c.Check(false, Equals, strings.Contains(output.String(), "SYMFONY_DOTENV_VARS=USER_DEFINED_ENVVAR"))
 	c.Check(false, Equals, strings.Contains(output.String(), "PHP_INI_SCAN_DIR=test\n"))
 	c.Check(true, Equals, strings.Contains(output.String(), string(os.PathListSeparator)+iniScanDir+"\n"))
 	c.Check(true, Equals, strings.Contains(output.String(), "PHP_PATH="+filepath.FromSlash("../bin/php")))

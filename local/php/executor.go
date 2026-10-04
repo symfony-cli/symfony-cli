@@ -177,6 +177,7 @@ func (e *Executor) DetectScriptDir() (string, error) {
 func (e *Executor) Config(loadDotEnv bool) error {
 	// reset environment
 	e.environ = make([]string, 0)
+	e.phpEnviron = make([]string, 0)
 
 	if len(e.Args) < 1 {
 		return errors.New("args cannot be empty")

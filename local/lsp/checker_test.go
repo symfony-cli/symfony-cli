@@ -157,6 +157,7 @@ func TestProjectEnvironmentIncludesProjectDotenvValues(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("APP_ENV", "")
+	os.Unsetenv("APP_ENV")
 
 	environment, err := loadProjectEnvironment(directory)
 	if err != nil {

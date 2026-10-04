@@ -110,9 +110,9 @@ func lookupDotEnv(dir string) map[string]string {
 
 	mergeDovEnvFile(vars, filepath.Join(dir, ".env."+vars["APP_ENV"]+".local"))
 
-	// When the user has set environment variables, we inherit them instead of overwrite it
-	for k, _ := range vars {
-		if os.Getenv(k) != "" {
+	// Exported variables win, as with Symfony's Dotenv component
+	for k := range vars {
+		if _, exported := os.LookupEnv(k); exported {
 			delete(vars, k)
 		}
 	}
