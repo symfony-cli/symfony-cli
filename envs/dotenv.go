@@ -110,6 +110,13 @@ func lookupDotEnv(dir string) map[string]string {
 
 	mergeDovEnvFile(vars, filepath.Join(dir, ".env."+vars["APP_ENV"]+".local"))
 
+	// Exported variables win, as with Symfony's Dotenv component
+	for k := range vars {
+		if _, exported := os.LookupEnv(k); exported {
+			delete(vars, k)
+		}
+	}
+
 	return vars
 }
 

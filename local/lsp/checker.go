@@ -25,6 +25,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 
 	"github.com/symfony-cli/symfony-cli/envs"
@@ -115,7 +116,7 @@ func (c *Checker) Run(arguments []string) (int, error) {
 	if err != nil {
 		return ExitWrapperFailure, fmt.Errorf("unable to resolve the Symfony CLI executable: %w", err)
 	}
-	environment := append(os.Environ(), projectEnvironment...)
+	environment := append(slices.Clip(projectEnvironment), os.Environ()...)
 	environment = append(environment, SymfonyCLIEnvironment+"="+symfonyCLI)
 
 	return c.Runner.Run(
