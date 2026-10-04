@@ -239,6 +239,17 @@ func extractRelationshipsEnvs(env Environment) Envs {
 				values[fmt.Sprintf("%sHOST", prefix)] = endpoint["host"].(string)
 				values[fmt.Sprintf("%sPORT", prefix)] = formatInt(endpoint["port"])
 				values[fmt.Sprintf("%sSCHEME", prefix)] = endpoint["scheme"].(string)
+			} else if rel == "meilisearch" {
+				values[fmt.Sprintf("%sURL", prefix)] = formatServer(endpoint)
+				values[fmt.Sprintf("%sSCHEME", prefix)] = endpoint["scheme"].(string)
+				values[fmt.Sprintf("%sHOST", prefix)] = endpoint["host"].(string)
+				values[fmt.Sprintf("%sPORT", prefix)] = formatInt(endpoint["port"])
+				if v, ok := endpoint["ip"]; ok && v != nil {
+					values[fmt.Sprintf("%sIP", prefix)] = v.(string)
+				}
+				if v, ok := endpoint["password"].(string); ok && v != "" {
+					values[fmt.Sprintf("%sAPI_KEY", prefix)] = v
+				}
 			} else if scheme == "mongodb" {
 				if !isMaster(endpoint) {
 					continue

@@ -476,6 +476,20 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container con
 			"scheme": "beanstalkd",
 		}
 		return rels
+	} else if p.PrivatePort == 7700 {
+		rels[""] = map[string]interface{}{
+			"host":   host,
+			"ip":     host,
+			"port":   formatDockerPort(p.PublicPort),
+			"rel":    "meilisearch",
+			"scheme": "http",
+		}
+		for _, env := range c.Config.Env {
+			if strings.HasPrefix(env, "MEILI_MASTER_KEY=") {
+				rels[""]["password"] = getEnvValue(env, "MEILI_MASTER_KEY")
+			}
+		}
+		return rels
 	} else if p.PrivatePort == 80 && strings.Contains(container.Image, "dunglas/mercure") {
 		// for podman the image name is docker.io/dunglas/mercure:latest
 		rels[""] = map[string]interface{}{
