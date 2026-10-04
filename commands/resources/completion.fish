@@ -27,6 +27,7 @@ function __complete_{{ .App.HelpName }}
     set -lx COMP_LINE (commandline -cp)
     test -z (commandline -ct)
     and set COMP_LINE "$COMP_LINE "
+    set -lx COMP_SHELL fish
     set -x CURRENT (count (commandline -oc))
     {{ .CurrentBinaryInvocation }} self:autocomplete
 end

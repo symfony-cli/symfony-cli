@@ -52,7 +52,7 @@ _complete_{{ .App.HelpName }}() {
     _get_comp_words_by_ref -n := cur prev words cword
 
     local sfcomplete
-    if sfcomplete=$(COMP_LINE="${COMP_LINE}" COMP_POINT="${COMP_POINT}" COMP_DEBUG="$COMP_DEBUG" CURRENT="$cword" {{ .CurrentBinaryPath }} self:autocomplete 2>&1); then
+    if sfcomplete=$(COMP_LINE="${COMP_LINE}" COMP_POINT="${COMP_POINT}" COMP_DEBUG="$COMP_DEBUG" COMP_SHELL=bash CURRENT="$cword" {{ .CurrentBinaryPath }} self:autocomplete 2>&1); then
         local quote suggestions
         quote=${cur:0:1}
 

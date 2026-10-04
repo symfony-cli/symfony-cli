@@ -75,15 +75,32 @@ func autocompleteComposerWrapper(context *console.Context, words complete.Args) 
 // autocompleteSymfonyConsoleWrapper bridges the symfony-cli/console (Go)
 // autocompletion with a symfony/console (PHP) one.
 func autocompleteSymfonyConsoleWrapper(words complete.Args, commandName string, executor func(args []string) (*php.Executor, error)) []string {
-	args := buildSymfonyConsoleAutocompleteArgs(commandName, words)
-	// Composer does not support those options yet, so we only use them for Symfony Console
-	args = append(args, "-a1", fmt.Sprintf("-s%s", console.GuessShell()))
-
-	if executor, err := executor(args); err == nil {
+	if executor, err := executor(buildSymfonyConsoleWrapperArgs(commandName, words)); err == nil {
 		os.Exit(executor.Execute(false))
 	}
 
 	return []string{}
+}
+
+func buildSymfonyConsoleWrapperArgs(commandName string, words complete.Args) []string {
+	args := buildSymfonyConsoleAutocompleteArgs(commandName, words)
+	// Composer does not support those options yet, so we only use them for Symfony Console
+	args = append(args, "-a1")
+	if shell := completionShell(); shell != "" {
+		args = append(args, "-s"+shell)
+	}
+
+	return args
+}
+
+// completionShell prefers the shell set by our completion scripts as $SHELL
+// is not always exported and might not be the shell running the completion.
+func completionShell() string {
+	if shell := os.Getenv("COMP_SHELL"); shell != "" {
+		return shell
+	}
+
+	return console.GuessShell()
 }
 
 func buildSymfonyConsoleAutocompleteArgs(wrappedCommand string, words complete.Args) []string {
