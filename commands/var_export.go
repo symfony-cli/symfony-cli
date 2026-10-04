@@ -20,7 +20,7 @@
 package commands
 
 import (
-	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -28,7 +28,6 @@ import (
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/envs"
 	"github.com/symfony-cli/terminal"
-	"mvdan.cc/sh/v3/syntax"
 )
 
 var variableExportCmd = &console.Command{
@@ -39,7 +38,6 @@ var variableExportCmd = &console.Command{
 		dirFlag,
 		&console.BoolFlag{Name: "multiline", Usage: "Display each export on its own line"},
 		&console.BoolFlag{Name: "debug", Usage: "Debug Docker support"},
-		&console.BoolFlag{Name: "quote", Usage: "Quote values as Bash strings"},
 	},
 	Args: []*console.Arg{
 		{Name: "name", Optional: true, Description: "Print the value of this environment variable"},
@@ -54,25 +52,12 @@ var variableExportCmd = &console.Command{
 			return err
 		}
 
-		var quote func(string) (string, error)
-
-		if c.Bool("quote") {
-			quote = func(s string) (string, error) { return syntax.Quote(s, syntax.LangBash) }
-		} else {
-			quote = func(s string) (string, error) { return s, nil }
-		}
-
 		if name := c.Args().Get("name"); name != "" {
-			v, ok := envs.AsMap(env)[name]
-			if !ok {
-				return errors.Errorf("no environment variable with name %s", name)
+			if v, ok := envs.AsMap(env)[name]; ok {
+				terminal.Print(v)
+				return nil
 			}
-			q, err := quote(v)
-			if err != nil {
-				return errors.Errorf("can not quote value %q", v)
-			}
-			terminal.Print(q)
-			return nil
+			return errors.Errorf("no environment variable with name %s", name)
 		}
 
 		if c.Bool("multiline") {
@@ -83,25 +68,23 @@ var variableExportCmd = &console.Command{
 			}
 			sort.Strings(keys)
 			for _, k := range keys {
-				q, err := quote(m[k])
-				if err != nil {
-					return errors.Errorf("can not quote value %q for environment variable %s", m[k], k)
-				}
-				terminal.Printfln("export %s=%s", k, q)
+				terminal.Printfln("export %s=%s", k, shellQuote(m[k]))
 			}
 		} else {
-			var vars []string
-			for k, v := range envs.AsMap(env) {
-				q, err := quote(v)
-				if err != nil {
-					return errors.Errorf("can not quote value %q for environment variable %s", v, k)
-				}
-				vars = append(vars, fmt.Sprintf("%s=%s", k, q))
-			}
 			// output the string (useful when doing export $(envs))
-			terminal.Print(strings.Join(vars, " "))
+			terminal.Print(envs.AsString(env))
 		}
 
 		return nil
 	},
+}
+
+var shellSafeValue = regexp.MustCompile(`^[A-Za-z0-9_@%+=:,./-]*$`)
+
+// shellQuote uses POSIX single quotes as $'...' is not understood by dash or fish.
+func shellQuote(value string) string {
+	if shellSafeValue.MatchString(value) {
+		return value
+	}
+	return "'" + strings.ReplaceAll(value, "'", `'\''`) + "'"
 }
