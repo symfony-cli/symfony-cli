@@ -36,9 +36,10 @@ const (
 )
 
 type config struct {
-	Logger     zerolog.Logger
-	HomeDir    string
-	ProjectDir string
+	Logger      zerolog.Logger
+	HomeDir     string
+	ProjectDir  string
+	LoadedFiles []string
 
 	NoWorkers bool
 	Daemon    bool
@@ -89,6 +90,7 @@ func NewConfigFromDirectory(logger zerolog.Logger, homeDir, projectDir string) (
 		}
 
 		config.mergeWithFileConfig(*fileConfig)
+		config.LoadedFiles = append(config.LoadedFiles, fileConfig.filename)
 	}
 
 	for k, v := range config.Workers {

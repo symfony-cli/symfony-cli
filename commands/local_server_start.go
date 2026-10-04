@@ -112,6 +112,15 @@ var localServerStartCmd = &console.Command{
 			return errors.WithStack(err)
 		}
 
+		if !reexec.IsChild() {
+			for _, file := range config.LoadedFiles {
+				_, err := terminal.Eprintfln("Loaded configuration from <info>%s</>", file)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
 		if config.Daemon && !reexec.IsChild() {
 			varDir := filepath.Join(homeDir, "var")
 			if err := os.MkdirAll(varDir, 0755); err != nil {
@@ -125,7 +134,7 @@ var localServerStartCmd = &console.Command{
 				terminal.Eprintln("Continue in foreground")
 				config.Daemon = false
 			} else {
-				terminal.Eprintfln("Stream the logs via <info>%s server:log</>", c.App.HelpName)
+				terminal.Eprintfln("Run <info>%s server:log</> to see logs from your Symfony application, the web server and any workers", c.App.HelpName)
 				return nil
 			}
 		}
@@ -395,7 +404,7 @@ var localServerStartCmd = &console.Command{
 						dockerWg.Wait()
 					}
 
-					ui.Success(fmt.Sprintf("Started worker \"%s\"", name))
+					ui.Success(fmt.Sprintf("Started worker \"%s\"\n     Running \"%s\" in the background", name, pidFile.Command()))
 					if err := runner.Run(); err != nil {
 						terminal.Eprintfln("<warning>WARNING</> Worker \"%s\" exited with an error: %s", name, err)
 					}
