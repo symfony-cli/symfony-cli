@@ -28,6 +28,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
+	"github.com/symfony-cli/symfony-cli/envs"
 	lhttp "github.com/symfony-cli/symfony-cli/local/http"
 	"github.com/symfony-cli/symfony-cli/local/php"
 )
@@ -79,8 +80,23 @@ func New(c *config, appVersion string) (*Project, error) {
 			return nil, err
 		}
 		p.HTTP.Callback = p.PHPServer.Serve
+		if c.HTTP.ProxyMercure {
+			p.PHPServer.ProxyMercure = true
+			p.HTTP.MercureProxy = lhttp.NewMercureProxy(func() (string, error) {
+				return dockerMercureHubURL(c.ProjectDir)
+			}, p.Logger)
+		}
 	}
 	return p, nil
+}
+
+func dockerMercureHubURL(projectDir string) (string, error) {
+	local, err := envs.NewLocal(projectDir, false)
+	if err != nil {
+		return "", err
+	}
+
+	return envs.AsMap(local)["MERCURE_URL"], nil
 }
 
 // realDocumentRoot returns the absolute document root

@@ -1,5 +1,6 @@
 http:
   no_workers: true
+  proxy_mercure: true
 
 workers:
   messenger_consume_async: ~

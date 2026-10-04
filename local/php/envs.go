@@ -28,6 +28,7 @@ import (
 	"strings"
 
 	"github.com/symfony-cli/symfony-cli/envs"
+	lhttp "github.com/symfony-cli/symfony-cli/local/http"
 )
 
 func (p *Server) generateEnv(req *http.Request) map[string]string {
@@ -77,6 +78,9 @@ func (p *Server) generateEnv(req *http.Request) map[string]string {
 			env[k] = v
 		}
 	}
+	if p.ProxyMercure && env["MERCURE_URL"] != "" {
+		env["MERCURE_PUBLIC_URL"] = sameOriginMercureURL(req)
+	}
 
 	// iterate over request headers and append them to the environment variables in the valid format
 	for k, v := range req.Header {
@@ -88,4 +92,13 @@ func (p *Server) generateEnv(req *http.Request) map[string]string {
 		env["HTTP_"+key] = strings.Join(v, ";")
 	}
 	return env
+}
+
+func sameOriginMercureURL(req *http.Request) string {
+	scheme := "http"
+	if req.TLS != nil || req.Header.Get("X-Forwarded-Proto") == "https" {
+		scheme = "https"
+	}
+
+	return scheme + "://" + req.Host + lhttp.MercureHubPath
 }
