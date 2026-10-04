@@ -31,7 +31,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"sync"
 	"syscall"
 
@@ -353,7 +352,7 @@ var localServerStartCmd = &console.Command{
 				// we run each worker in its own goroutine for several reasons:
 				// * to get things up and running faster
 				// * to allow all commands to run when foreground is forced
-				go func(name string, cmd []string, pidFile *pid.PidFile) {
+				go func(name string, pidFile *pid.PidFile) {
 					runner, err := local.NewRunner(pidFile, local.RunnerModeLoopAttached)
 					if err != nil {
 						terminal.Eprintfln("<warning>WARNING</> Unable to start worker \"%s\": %s", name, err)
@@ -405,11 +404,11 @@ var localServerStartCmd = &console.Command{
 						dockerWg.Wait()
 					}
 
-					ui.Success(fmt.Sprintf("Started worker \"%s\"\n     Running \"%s\" in the background", name, strings.Join(cmd, " ")))
+					ui.Success(fmt.Sprintf("Started worker \"%s\"\n     Running \"%s\" in the background", name, pidFile.Command()))
 					if err := runner.Run(); err != nil {
 						terminal.Eprintfln("<warning>WARNING</> Worker \"%s\" exited with an error: %s", name, err)
 					}
-				}(name, worker.Cmd, pidFile)
+				}(name, pidFile)
 			}
 		}
 
