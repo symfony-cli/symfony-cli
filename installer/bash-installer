@@ -18,7 +18,8 @@
 #
 set -euo pipefail
 
-CLI_CONFIG_DIR=".symfony5"
+CLI_CONFIG_DIR="symfony-cli"
+CLI_LEGACY_CONFIG_DIR=".symfony5"
 CLI_EXECUTABLE="symfony"
 CLI_TMP_NAME="$CLI_EXECUTABLE-"$(date +"%s")
 CLI_NAME="Symfony CLI"
@@ -56,7 +57,7 @@ function output {
 }
 
 output "${CLI_NAME} installer" "heading"
-binary_dest="${HOME}/${CLI_CONFIG_DIR}/bin"
+binary_dest=""
 custom_dir="false"
 
 # Getops does not support long option names
@@ -172,6 +173,21 @@ fi
 
 platform="${kernel}_${machine}"
 
+# Mirror the configuration directory resolution of the CLI (see util/homedir.go)
+if [ "${custom_dir}" == "false" ]; then
+    if [ -d "${HOME}/${CLI_LEGACY_CONFIG_DIR}" ]; then
+        # keep using the legacy directory for existing installations
+        config_dir="${HOME}/${CLI_LEGACY_CONFIG_DIR}"
+    elif [ "darwin" = "${kernel}" ]; then
+        config_dir="${HOME}/Library/Application Support/${CLI_CONFIG_DIR}"
+    elif [[ "${XDG_CONFIG_HOME:-}" == /* ]]; then
+        config_dir="${XDG_CONFIG_HOME}/${CLI_CONFIG_DIR}"
+    else
+        config_dir="${HOME}/.config/${CLI_CONFIG_DIR}"
+    fi
+    binary_dest="${config_dir}/bin"
+fi
+
 # The necessary checks have passed. Start downloading the right version.
 output "\nDownload" "heading"
 
@@ -231,11 +247,11 @@ output "\nThe ${CLI_NAME} was installed successfully!" "success"
 
 if [ "${custom_dir}" == "false" ]; then
     output "\nUse it as a local file:" "info"
-    output "  ${binary_dest}/${CLI_EXECUTABLE}"
+    output "  \"${binary_dest}/${CLI_EXECUTABLE}\""
     output "\nOr add the following line to your shell configuration file:" "info"
-    output "  export PATH=\"\$HOME/${CLI_CONFIG_DIR}/bin:\$PATH\""
+    output "  export PATH=\"${binary_dest/#"${HOME}"/\$HOME}:\$PATH\""
     output "\nOr install it globally on your system:" "info"
-    output " mv ${binary_dest}/${CLI_EXECUTABLE} /usr/local/bin/${CLI_EXECUTABLE}"
+    output " mv \"${binary_dest}/${CLI_EXECUTABLE}\" /usr/local/bin/${CLI_EXECUTABLE}"
     output "\nIf moving the file does not work, you might have to prefix the command with sudo."
     output "\nThen start a new shell and run '${CLI_EXECUTABLE}'" "info"
 fi
