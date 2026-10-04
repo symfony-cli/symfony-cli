@@ -103,6 +103,9 @@ func (s *Server) Start(errChan chan error) (int, error) {
 		proxyHandler = corsWrapper(proxyHandler, s.Logger)
 	}
 
+	serverHeader := "symfony-cli/" + s.Appversion
+	proxyHandler = withServerHeader(proxyHandler, serverHeader)
+
 	s.httpserver = &http.Server{
 		Handler: proxyHandler,
 	}
@@ -145,7 +148,7 @@ func (s *Server) Start(errChan chan error) (int, error) {
 	tlsl := m.Match(cmux.Any())
 
 	if !s.AllowHTTP {
-		s.httpserver.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.httpserver.Handler = withServerHeader(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Header.Get("X-Forwarded-Proto") == "https" && strings.HasPrefix(r.RemoteAddr, "127.0.0.1:") {
 				s.httpsserver.Handler.ServeHTTP(w, r)
 				return
@@ -156,7 +159,7 @@ func (s *Server) Start(errChan chan error) (int, error) {
 				target += "?" + r.URL.RawQuery
 			}
 			http.Redirect(w, r, target, http.StatusTemporaryRedirect)
-		})
+		}), serverHeader)
 	}
 
 	go func() {
