@@ -54,3 +54,77 @@ func (s *DotEnvSuite) TestLoadDotEnvKeepsExportedVariables(c *C) {
 	_, ok = vars["EXPORTED_EMPTY"]
 	c.Check(ok, Equals, false)
 }
+
+func (s *DotEnvSuite) TestLookupDotEnvCascade(c *C) {
+	for _, tc := range []struct {
+		name     string
+		appEnv   string
+		files    map[string]string
+		expected map[string]string
+	}{
+		{
+			name: "later files override earlier ones",
+			files: map[string]string{
+				".env":           "A=env\nB=env\nC=env\nD=env\n",
+				".env.local":     "B=local\nC=local\nD=local\n",
+				".env.dev":       "C=dev\nD=dev\n",
+				".env.dev.local": "D=dev.local\n",
+			},
+			expected: map[string]string{"APP_ENV": "dev", "A": "env", "B": "local", "C": "dev", "D": "dev.local"},
+		},
+		{
+			name: ".env.local can change the environment",
+			files: map[string]string{
+				".env":       "APP_ENV=dev\nA=env\n",
+				".env.local": "APP_ENV=prod\n",
+				".env.dev":   "A=dev\n",
+				".env.prod":  "A=prod\n",
+			},
+			expected: map[string]string{"APP_ENV": "prod", "A": "prod"},
+		},
+		{
+			name:   "an exported environment wins over .env.local",
+			appEnv: "dev",
+			files: map[string]string{
+				".env":       "A=env\n",
+				".env.local": "APP_ENV=prod\n",
+				".env.dev":   "A=dev\n",
+				".env.prod":  "A=prod\n",
+			},
+			expected: map[string]string{"A": "dev"},
+		},
+		{
+			name: ".env.local is ignored in the test environment",
+			files: map[string]string{
+				".env":       "APP_ENV=test\nA=env\n",
+				".env.local": "A=local\n",
+			},
+			expected: map[string]string{"APP_ENV": "test", "A": "env"},
+		},
+	} {
+		dir := c.MkDir()
+		for name, content := range tc.files {
+			c.Assert(os.WriteFile(filepath.Join(dir, name), []byte(content), 0644), IsNil)
+		}
+		withAppEnv(tc.appEnv, func() {
+			c.Check(lookupDotEnv(dir), DeepEquals, tc.expected, Commentf(tc.name))
+		})
+	}
+}
+
+func withAppEnv(value string, fn func()) {
+	previous, wasSet := os.LookupEnv("APP_ENV")
+	defer func() {
+		if wasSet {
+			os.Setenv("APP_ENV", previous)
+		} else {
+			os.Unsetenv("APP_ENV")
+		}
+	}()
+	if value == "" {
+		os.Unsetenv("APP_ENV")
+	} else {
+		os.Setenv("APP_ENV", value)
+	}
+	fn()
+}
