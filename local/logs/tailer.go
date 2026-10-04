@@ -30,7 +30,6 @@ import (
 
 	"github.com/nxadm/tail"
 	"github.com/pkg/errors"
-	realinotify "github.com/rjeczalik/notify"
 	"github.com/stoicperlman/fls"
 	"github.com/symfony-cli/symfony-cli/humanlog"
 	"github.com/symfony-cli/symfony-cli/inotify"
@@ -41,20 +40,6 @@ import (
 type namedLine struct {
 	name string
 	line *tail.Line
-}
-
-type logFileEvent string
-
-func (e logFileEvent) Event() realinotify.Event {
-	return inotify.Create
-}
-
-func (e logFileEvent) Path() string {
-	return string(e)
-}
-
-func (e logFileEvent) Sys() interface{} {
-	return nil
 }
 
 type Tailer struct {
@@ -126,72 +111,19 @@ func (tailer *Tailer) Watch(pidFile *pid.PidFile) error {
 		}
 	}
 
-	// Application log file (Symfony for now)
+	// Application log files (Symfony for now)
 	if !tailer.NoAppLogs {
-		applogs := tailer.AppLogs
-		if len(applogs) == 0 {
-			applogs = findApplicationLogFiles(pidFile.Dir)
-		}
-
-		for _, applog := range applogs {
-			watcherChan := make(chan inotify.EventInfo, 1)
-
-			// Convert relative paths to absolute paths
-			absAppLog, err := filepath.Abs(applog)
-			if err != nil {
-				return errors.Wrapf(err, "unable to get absolute path for %s", applog)
-			}
-			applog = absAppLog
-
-			dir := filepath.Dir(applog)
-			if err := os.MkdirAll(dir, 0755); err != nil {
+		for _, applog := range tailer.AppLogs {
+			if err := tailer.watchAppLogFile(applog, &seenDirs); err != nil {
 				return err
 			}
-			if err := inotify.Watch(dir, watcherChan, inotify.Create); err != nil {
-				return errors.Wrap(err, "unable to watch the applog directory")
+		}
+		if len(tailer.AppLogs) == 0 {
+			for _, dir := range findApplicationLogDirs(pidFile.Dir) {
+				if err := tailer.watchAppLogDir(dir, &seenDirs); err != nil {
+					return err
+				}
 			}
-
-			// Evaluate possible symlinks in the applog path, this is needed because
-			// inotify will notify us on source path, and not the symlink path.
-			if _, err := os.Stat(applog); err == nil {
-				realAppLog, err := filepath.EvalSymlinks(applog)
-				if err != nil {
-					return errors.Wrapf(err, "unable to evaluate symlinks for %s", applog)
-				}
-				applog = realAppLog
-			} else if errors.Is(err, os.ErrNotExist) {
-				realDir, err := filepath.EvalSymlinks(dir)
-				if err != nil {
-					return errors.Wrapf(err, "unable to evaluate symlinks for %s", dir)
-				}
-				applog = filepath.Join(realDir, filepath.Base(applog))
-			} else {
-				return errors.Wrapf(err, "unable to evaluate symlinks for %s", applog)
-			}
-
-			go func(applog string) {
-				for {
-					e := <-watcherChan
-					if e.Path() != applog {
-						continue
-					}
-					if _, ok := seenDirs.Load(applog); ok {
-						continue
-					}
-					seenDirs.Store(applog, true)
-					go func() {
-						tsf, err := tailFile(applog, tailer.Follow, tailer.LinesNb)
-						if err != nil {
-							terminal.Printfln("<warning>WARNING</> %s log file cannot be tailed: %s", applog, err)
-							return
-						}
-						for line := range tsf.Lines {
-							tailer.lines <- &namedLine{name: "Application", line: line}
-						}
-					}()
-				}
-			}(applog)
-			watcherChan <- logFileEvent(applog)
 		}
 	}
 
@@ -253,6 +185,10 @@ func tailFile(filename string, follow bool, nblines int64) (*tail.Tail, error) {
 		pos, _ = fls.LineFile(f).SeekLine(-nblines, io.SeekEnd)
 	}
 	f.Close()
+	return tailFileAt(filename, follow, pos)
+}
+
+func tailFileAt(filename string, follow bool, pos int64) (*tail.Tail, error) {
 	return tail.TailFile(filename, tail.Config{
 		Location: &tail.SeekInfo{
 			Offset: pos,
@@ -265,22 +201,108 @@ func tailFile(filename string, follow bool, nblines int64) (*tail.Tail, error) {
 	})
 }
 
-// find the application log file(s) (only Symfony is supported for now)
-func findApplicationLogFiles(projectDir string) []string {
-	subdirs := []string{
+// find the application log directories (only Symfony is supported for now)
+func findApplicationLogDirs(projectDir string) []string {
+	dirs := []string{}
+	for _, subdir := range []string{
 		filepath.Join("var", "log"),
 		filepath.Join("var", "logs"),
 		filepath.Join("app", "logs"),
-	}
-	// FIXME
-	env := "dev"
-	files := []string{}
-	for _, subdir := range subdirs {
-		applog := filepath.Join(projectDir, subdir, env+".log")
-		if _, err := os.Stat(applog); err != nil {
-			continue
+	} {
+		dir := filepath.Join(projectDir, subdir)
+		if fi, err := os.Stat(dir); err == nil && fi.IsDir() {
+			dirs = append(dirs, dir)
 		}
-		files = append(files, applog)
 	}
-	return files
+	return dirs
+}
+
+// watchAppLogFile tails the given log file, waiting for it to be created if needed
+func (tailer *Tailer) watchAppLogFile(applog string, seen *sync.Map) error {
+	applog, err := filepath.Abs(applog)
+	if err != nil {
+		return errors.Wrapf(err, "unable to get absolute path for %s", applog)
+	}
+	dir := filepath.Dir(applog)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return errors.WithStack(err)
+	}
+	// inotify reports paths with symlinks evaluated
+	realDir, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		return errors.Wrapf(err, "unable to evaluate symlinks for %s", dir)
+	}
+	applog = filepath.Join(realDir, filepath.Base(applog))
+	if realAppLog, err := filepath.EvalSymlinks(applog); err == nil {
+		applog = realAppLog
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return errors.Wrapf(err, "unable to evaluate symlinks for %s", applog)
+	}
+
+	if err := tailer.watchAppLogs(dir, func(path string) bool { return path == applog }, seen); err != nil {
+		return err
+	}
+	tailer.tailAppLog(applog, false, seen)
+	return nil
+}
+
+// watchAppLogDir tails all the log files of a directory, including the ones created later on
+func (tailer *Tailer) watchAppLogDir(dir string, seen *sync.Map) error {
+	realDir, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		return errors.Wrapf(err, "unable to evaluate symlinks for %s", dir)
+	}
+	isLogFile := func(path string) bool {
+		return filepath.Dir(path) == realDir && filepath.Ext(path) == ".log"
+	}
+
+	if err := tailer.watchAppLogs(dir, isLogFile, seen); err != nil {
+		return err
+	}
+	applogs, err := filepath.Glob(filepath.Join(realDir, "*.log"))
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	for _, applog := range applogs {
+		tailer.tailAppLog(applog, false, seen)
+	}
+	return nil
+}
+
+func (tailer *Tailer) watchAppLogs(dir string, match func(path string) bool, seen *sync.Map) error {
+	watcherChan := make(chan inotify.EventInfo, 10)
+	if err := inotify.Watch(dir, watcherChan, inotify.Create); err != nil {
+		return errors.Wrap(err, "unable to watch the applog directory")
+	}
+	go func() {
+		for e := range watcherChan {
+			if match(e.Path()) {
+				// everything in a file created after the tailer started is new
+				tailer.tailAppLog(e.Path(), true, seen)
+			}
+		}
+	}()
+	return nil
+}
+
+func (tailer *Tailer) tailAppLog(applog string, fromStart bool, seen *sync.Map) {
+	if _, loaded := seen.LoadOrStore(applog, true); loaded {
+		return
+	}
+	go func() {
+		var tsf *tail.Tail
+		var err error
+		if fromStart {
+			tsf, err = tailFileAt(applog, tailer.Follow, 0)
+		} else {
+			tsf, err = tailFile(applog, tailer.Follow, tailer.LinesNb)
+		}
+		if err != nil {
+			terminal.Printfln("<warning>WARNING</> %s log file cannot be tailed: %s", applog, err)
+			return
+		}
+		for line := range tsf.Lines {
+			tailer.lines <- &namedLine{name: "Application", line: line}
+		}
+	}()
 }
