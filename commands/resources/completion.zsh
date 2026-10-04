@@ -80,7 +80,7 @@ _complete_{{ .App.HelpName }}() {
             comp=${comp//$tab/:}
             completions+=${comp}
         fi
-    done < <(COMP_LINE="$words" CURRENT="$CURRENT" ${words[0]} ${_SF_CMD:-${words[1]}} self:autocomplete)
+    done < <(COMP_LINE="$words" COMP_SHELL=zsh CURRENT="$CURRENT" ${words[0]} ${_SF_CMD:-${words[1]}} self:autocomplete)
 
     # Let inbuilt _describe handle completions
     eval _describe "completions" completions $flagPrefix
