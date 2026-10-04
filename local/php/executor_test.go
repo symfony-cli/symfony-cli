@@ -313,6 +313,28 @@ func (s *ExecutorSuite) TestPhpIniScanDirKeepsSystemScanDir(c *C) {
 	c.Check(strings.Contains(output.String(), "PHP_INI_SCAN_DIR="+sep), Equals, false)
 }
 
+func (s *ExecutorSuite) TestConfigReportsUnwritableTempDir(c *C) {
+	home, err := filepath.Abs("testdata/executor")
+	c.Assert(err, IsNil)
+
+	homedir.Reset()
+	os.Setenv("HOME", home)
+	defer homedir.Reset()
+
+	oldwd, _ := os.Getwd()
+	defer os.Chdir(oldwd)
+	os.Chdir(filepath.Join(home, "project"))
+	defer cleanupExecutorTempFiles()
+
+	blocker := filepath.Join(c.MkDir(), "file")
+	c.Assert(os.WriteFile(blocker, nil, 0644), IsNil)
+
+	e := &Executor{BinName: "php", Args: []string{"php"}, tempDir: filepath.Join(blocker, "tmp")}
+	err = e.Config(false)
+	c.Assert(err, NotNil)
+	c.Check(err.Error(), Matches, `unable to create a temporary directory in .*\.symfony5 \(required to run PHP with the selected version\), make sure it can be created and is writable by the current user: .*`)
+}
+
 func (s *PHPSuite) TestDetectScript(c *C) {
 	phpgo, err := filepath.Abs("php.go")
 	c.Assert(err, IsNil)
