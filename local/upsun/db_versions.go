@@ -148,12 +148,11 @@ func ReadDBVersionFromDoctrineConfigYAML(projectDir string) (string, error) {
 	var doctrineConfig struct {
 		Doctrine struct {
 			Dbal struct {
-				ServerVersion string `yaml:"server_version"`
-				Connections   struct {
-					Default struct {
-						ServerVersion string `yaml:"server_version"`
-					} `yaml:"default"`
-				}
+				ServerVersion     string `yaml:"server_version"`
+				DefaultConnection string `yaml:"default_connection"`
+				Connections       map[string]struct {
+					ServerVersion string `yaml:"server_version"`
+				} `yaml:"connections"`
 			} `yaml:"dbal"`
 		} `yaml:"doctrine"`
 	}
@@ -162,7 +161,11 @@ func ReadDBVersionFromDoctrineConfigYAML(projectDir string) (string, error) {
 		return "", err
 	}
 
-	version := doctrineConfig.Doctrine.Dbal.Connections.Default.ServerVersion
+	defaultConnection := doctrineConfig.Doctrine.Dbal.DefaultConnection
+	if defaultConnection == "" {
+		defaultConnection = "default"
+	}
+	version := doctrineConfig.Doctrine.Dbal.Connections[defaultConnection].ServerVersion
 	if version == "" {
 		version = doctrineConfig.Doctrine.Dbal.ServerVersion
 	}
