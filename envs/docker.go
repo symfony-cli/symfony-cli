@@ -25,6 +25,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -33,6 +34,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	compose "github.com/compose-spec/compose-go/cli"
 	composeConsts "github.com/compose-spec/compose-go/consts"
@@ -211,7 +213,27 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container con
 	p := exposedPorts[0]
 
 	rels := make(map[string]map[string]interface{})
-	if p.PrivatePort == 1025 {
+	// for podman the image name is docker.io/dunglas/mercure:latest
+	if strings.Contains(container.Image, "dunglas/mercure") {
+		serverName := ""
+		for _, env := range c.Config.Env {
+			if strings.HasPrefix(env, "SERVER_NAME=") {
+				serverName = getEnvValue(env, "SERVER_NAME")
+			}
+		}
+		scheme, hostname, port := mercureEndpoint(serverName, exposedPorts)
+		if hostname == "" {
+			hostname = host
+		}
+		rels[""] = map[string]interface{}{
+			"host":   hostname,
+			"ip":     host,
+			"port":   formatDockerPort(port.PublicPort),
+			"rel":    "mercure",
+			"scheme": scheme,
+		}
+		return rels
+	} else if p.PrivatePort == 1025 {
 		// recommended image: sj26/mailcatcher or axllent/mailpit (default now)
 		for _, pw := range exposedPorts {
 			if pw.PrivatePort == 1080 || pw.PrivatePort == 8025 {
@@ -490,16 +512,6 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container con
 			}
 		}
 		return rels
-	} else if p.PrivatePort == 80 && strings.Contains(container.Image, "dunglas/mercure") {
-		// for podman the image name is docker.io/dunglas/mercure:latest
-		rels[""] = map[string]interface{}{
-			"host":   host,
-			"ip":     host,
-			"port":   formatDockerPort(p.PublicPort),
-			"rel":    "mercure",
-			"scheme": "http",
-		}
-		return rels
 	}
 
 	if l.Debug {
@@ -522,6 +534,61 @@ func (l *Local) dockerServiceToRelationship(client *docker.Client, container con
 		rels[""]["scheme"] = "tcp"
 	}
 	return rels
+}
+
+// mercureEndpoint finds the published port serving one of the Caddy site
+// addresses of a Mercure container (SERVER_NAME, "localhost" by default), as
+// the hub only answers on that port, with that scheme, and for that host.
+// It falls back to plain HTTP on the first published port.
+func mercureEndpoint(serverName string, ports []container.Port) (scheme, hostname string, port container.Port) {
+	if serverName == "" {
+		serverName = "localhost"
+	}
+	for _, address := range strings.FieldsFunc(serverName, func(r rune) bool { return r == ',' || unicode.IsSpace(r) }) {
+		scheme, hostname, privatePort := parseCaddySiteAddress(address)
+		for _, p := range ports {
+			if p.PrivatePort == privatePort {
+				return scheme, hostname, p
+			}
+		}
+	}
+
+	return "http", "", ports[0]
+}
+
+// parseCaddySiteAddress follows Caddy's rules: HTTP is used for an explicit
+// http:// scheme, for port 80, or when there is no hostname to get a
+// certificate for; HTTPS is used otherwise.
+func parseCaddySiteAddress(address string) (scheme, hostname string, port uint16) {
+	if s, rest, found := strings.Cut(address, "://"); found {
+		scheme, address = s, rest
+	}
+	address, _, _ = strings.Cut(address, "/")
+	hostname = address
+	portStr := ""
+	if h, p, err := net.SplitHostPort(address); err == nil {
+		hostname, portStr = h, p
+	}
+	if strings.Contains(hostname, "*") {
+		hostname = ""
+	}
+	if scheme == "" {
+		scheme = "https"
+		if portStr == "80" || (hostname == "" && portStr != "443") {
+			scheme = "http"
+		}
+	}
+	if portStr == "" {
+		portStr = "443"
+		if scheme == "http" {
+			portStr = "80"
+		}
+	}
+	if p, err := strconv.ParseUint(portStr, 10, 16); err == nil {
+		port = uint16(p)
+	}
+
+	return scheme, hostname, port
 }
 
 func formatDockerPort(port uint16) string {

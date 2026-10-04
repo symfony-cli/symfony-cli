@@ -20,6 +20,7 @@
 package envs
 
 import (
+	"github.com/docker/docker/api/types/container"
 	. "gopkg.in/check.v1"
 )
 
@@ -42,5 +43,47 @@ func (s *DockerSuite) TestNormalizeDockerComposeProjectName(c *C) {
 	} {
 		c.Check(normalizeDockerComposeProjectName(testCase.ProjectName), Equals, testCase.Expected)
 		c.Check(normalizeDockerComposeProjectNameLegacy(testCase.ProjectName), Equals, testCase.ExpectedLegacy)
+	}
+}
+
+func (s *DockerSuite) TestMercureEndpoint(c *C) {
+	ports := func(privatePorts ...uint16) []container.Port {
+		var ps []container.Port
+		for _, p := range privatePorts {
+			ps = append(ps, container.Port{PrivatePort: p, PublicPort: 30000 + p})
+		}
+		return ps
+	}
+
+	for _, tc := range []struct {
+		serverName       string
+		ports            []container.Port
+		expectedScheme   string
+		expectedHostname string
+		expectedPort     uint16
+	}{
+		// default SERVER_NAME (localhost) serves HTTPS on 443
+		{"", ports(80, 443), "https", "localhost", 30443},
+		// HTTPS port not published, fall back to the first one
+		{"", ports(80), "http", "", 30080},
+		{":80", ports(80), "http", "", 30080},
+		{":9877", ports(9877), "http", "", 39877},
+		{"mercure.superproject.localhost:80", ports(80), "http", "mercure.superproject.localhost", 30080},
+		{"mercure.localhost", ports(80, 443), "https", "mercure.localhost", 30443},
+		{"mercure.localhost:8443", ports(8443), "https", "mercure.localhost", 38443},
+		{"http://mercure.localhost:8080", ports(8080), "http", "mercure.localhost", 38080},
+		{"https://:8443", ports(8443), "https", "", 38443},
+		{"*.example.com:80", ports(80), "http", "", 30080},
+		// first address with a published port wins
+		{"localhost, :80", ports(80), "http", "", 30080},
+		{"localhost :80", ports(80, 443), "https", "localhost", 30443},
+		// nothing matches, fall back to HTTP on the first published port
+		{"", ports(9877), "http", "", 39877},
+	} {
+		scheme, hostname, port := mercureEndpoint(tc.serverName, tc.ports)
+		comment := Commentf("SERVER_NAME=%q", tc.serverName)
+		c.Check(scheme, Equals, tc.expectedScheme, comment)
+		c.Check(hostname, Equals, tc.expectedHostname, comment)
+		c.Check(port.PublicPort, Equals, tc.expectedPort, comment)
 	}
 }
