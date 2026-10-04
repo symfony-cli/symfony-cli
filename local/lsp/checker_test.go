@@ -27,6 +27,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/symfony-cli/symfony-cli/local/externaltool"
@@ -125,6 +126,45 @@ func TestCheckerDelegatesArgumentsStreamsEnvironmentAndExitStatus(t *testing.T) 
 	if stdout.String() != "report" || stderr.String() != "details" {
 		t.Fatalf("streams were not preserved: stdout=%q stderr=%q", stdout.String(), stderr.String())
 	}
+}
+
+func TestCheckerLetsExportedVariablesOverrideProjectEnvironment(t *testing.T) {
+	t.Setenv("DATABASE_URL", "mysql://exported")
+	runner := &capturingProcessRunner{}
+	checker := &Checker{
+		Resolver:       &fakeResolver{installation: externaltool.Installation{Executable: "/managed/symfony-lsp"}},
+		Runner:         runner,
+		SymfonyCLIPath: func() (string, error) { return "/symfony", nil },
+		ProjectEnvironment: func(string) ([]string, error) {
+			return []string{"DATABASE_URL=mysql://docker", SymfonyCLIEnvironment + "=/project"}, nil
+		},
+		Stdout: io.Discard,
+		Stderr: io.Discard,
+	}
+
+	if _, err := checker.Run(nil); err != nil {
+		t.Fatal(err)
+	}
+	if value := lastEnvironmentValue(runner.environment, "DATABASE_URL"); value != "mysql://exported" {
+		t.Fatalf("exported variable was overridden: %q", value)
+	}
+	expectedCLI, err := filepath.Abs("/symfony")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if value := lastEnvironmentValue(runner.environment, SymfonyCLIEnvironment); value != expectedCLI {
+		t.Fatalf("Symfony CLI handoff was overridden: %q", value)
+	}
+}
+
+func lastEnvironmentValue(environment []string, key string) string {
+	value := ""
+	for _, entry := range environment {
+		if name, v, ok := strings.Cut(entry, "="); ok && name == key {
+			value = v
+		}
+	}
+	return value
 }
 
 func TestCheckerDoesNotStartAfterWrapperFailure(t *testing.T) {
