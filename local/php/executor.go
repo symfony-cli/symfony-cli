@@ -234,7 +234,7 @@ func (e *Executor) Config(loadDotEnv bool) error {
 	}
 	phpDir := filepath.Join(e.tempDir, "bin")
 	if err := os.MkdirAll(phpDir, 0755); err != nil {
-		return err
+		return errors.Wrapf(err, "unable to create a temporary directory in %s (required to run PHP with the selected version), make sure it can be created and is writable by the current user", cliDir)
 	}
 	// always symlink (copy on Windows) these binaries as they can be called internally (like pecl for instance)
 	if v.PHPConfigPath != "" {
