@@ -20,6 +20,12 @@
 package php
 
 import (
+	"os"
+	"os/exec"
+	"path/filepath"
+	"slices"
+
+	"github.com/mitchellh/go-homedir"
 	. "gopkg.in/check.v1"
 )
 
@@ -33,4 +39,38 @@ func (s *PHPSuite) TestPhpAddslashes(c *C) {
 	c.Assert(addslashes.Replace("foo\"bar"), Equals, "foo\"bar")
 	c.Assert(addslashes.Replace("foo\\bar"), Equals, "foo\\\\bar")
 	c.Assert(addslashes.Replace(`"hello"`), Equals, `"hello"`)
+}
+
+func (s *PHPSuite) TestServerCmdHookLoadsProjectPhpIni(c *C) {
+	defer restoreExecCommand()
+	execCommand = func(name string, arg ...string) *exec.Cmd {
+		cmd := exec.Command(os.Args[0], "-test.run=TestHelperProcess", "--", "echo-arg", "/opt/test/conf.d")
+		cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
+		return cmd
+	}
+
+	home, err := filepath.Abs("testdata/executor")
+	c.Assert(err, IsNil)
+	homedir.Reset()
+	os.Setenv("HOME", home)
+	defer homedir.Reset()
+
+	projectDir := filepath.Join(home, "project")
+	oldwd, _ := os.Getwd()
+	defer os.Chdir(oldwd)
+	os.Chdir(projectDir)
+	defer cleanupExecutorTempFiles()
+
+	iniPath := filepath.Join(projectDir, "php.ini")
+	c.Assert(os.WriteFile(iniPath, []byte("memory_limit = -1\n"), 0644), IsNil)
+	defer os.Remove(iniPath)
+
+	e := &Executor{BinName: "php", Args: []string{"php"}, scriptDir: projectDir}
+	defer e.CleanupTemporaryDirectories()
+	cmd := &exec.Cmd{}
+	c.Assert(serverCmdHook(e, projectDir, []string{"FOO=bar"})(cmd), IsNil)
+
+	c.Check(slices.Contains(cmd.Env, "PHP_INI_SCAN_DIR=/opt/test/conf.d"+string(os.PathListSeparator)+projectDir), Equals, true)
+	c.Check(slices.Contains(cmd.Env, "FOO=bar"), Equals, true)
+	c.Check(cmd.Dir, Equals, projectDir)
 }
