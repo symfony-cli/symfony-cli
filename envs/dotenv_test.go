@@ -109,6 +109,28 @@ func (s *DotEnvSuite) TestLoadDotEnvInNestedRunUsesInnerProjectEnvironment(c *C)
 	c.Check(sortedDotEnvVars(vars), DeepEquals, []string{"APP_ENV", "BAR", "FOO"})
 }
 
+func (s *DotEnvSuite) TestLookupEnv(c *C) {
+	dir := c.MkDir()
+	c.Assert(os.WriteFile(filepath.Join(dir, ".env"), []byte("INHERITED=dotenv\nEXPORTED=dotenv\nDOTENV_ONLY=dotenv\n"), 0644), IsNil)
+
+	for k, v := range map[string]string{"INHERITED": "parent", "INHERITED_ONLY": "parent", "EXPORTED": "exported", "SYMFONY_DOTENV_VARS": "INHERITED,INHERITED_ONLY"} {
+		if old, ok := os.LookupEnv(k); ok {
+			defer os.Setenv(k, old)
+		} else {
+			defer os.Unsetenv(k)
+		}
+		os.Setenv(k, v)
+	}
+
+	for key, expected := range map[string]string{"INHERITED": "dotenv", "INHERITED_ONLY": "parent", "EXPORTED": "exported", "DOTENV_ONLY": "dotenv"} {
+		value, ok := LookupEnv(dir, key)
+		c.Check(ok, Equals, true, Commentf(key))
+		c.Check(value, Equals, expected, Commentf(key))
+	}
+	_, ok := LookupEnv(dir, "UNDEFINED")
+	c.Check(ok, Equals, false)
+}
+
 func (s *DotEnvSuite) TestLookupDotEnvCascade(c *C) {
 	for _, tc := range []struct {
 		name     string

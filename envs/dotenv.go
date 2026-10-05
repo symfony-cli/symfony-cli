@@ -54,20 +54,13 @@ func LoadDotEnv(vars map[string]string, scriptDir string) map[string]string {
 }
 
 // LookupEnv allows one to lookup for a single environment variable in the same
-// way os.LookupEnv would. It automatically let the environment variable take
-// over if defined.
+// way os.LookupEnv would. Exported variables win over .env files.
 func LookupEnv(dotEnvDir, key string) (string, bool) {
-	// first check if the user defined it in its environment
-	if value, isUserDefined := os.LookupEnv(key); isUserDefined {
-		return value, isUserDefined
-	}
-
-	dotEnvEnv := lookupDotEnv(dotEnvDir)
-	if value, isDefined := dotEnvEnv[key]; isDefined {
+	if value, isDefined := lookupDotEnv(dotEnvDir)[key]; isDefined {
 		return value, isDefined
 	}
 
-	return "", false
+	return os.LookupEnv(key)
 }
 
 // algorithm is here: https://github.com/symfony/recipes/blob/master/symfony/framework-bundle/3.3/config/bootstrap.php
