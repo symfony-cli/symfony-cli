@@ -128,8 +128,8 @@ func TestCheckerDelegatesArgumentsStreamsEnvironmentAndExitStatus(t *testing.T) 
 	}
 }
 
-func TestCheckerLetsExportedVariablesOverrideProjectEnvironment(t *testing.T) {
-	t.Setenv("DATABASE_URL", "mysql://exported")
+func TestCheckerLetsProjectEnvironmentOverrideExportedVariables(t *testing.T) {
+	t.Setenv("DATABASE_URL", "mysql://stale")
 	runner := &capturingProcessRunner{}
 	checker := &Checker{
 		Resolver:       &fakeResolver{installation: externaltool.Installation{Executable: "/managed/symfony-lsp"}},
@@ -145,8 +145,8 @@ func TestCheckerLetsExportedVariablesOverrideProjectEnvironment(t *testing.T) {
 	if _, err := checker.Run(nil); err != nil {
 		t.Fatal(err)
 	}
-	if value := lastEnvironmentValue(runner.environment, "DATABASE_URL"); value != "mysql://exported" {
-		t.Fatalf("exported variable was overridden: %q", value)
+	if value := lastEnvironmentValue(runner.environment, "DATABASE_URL"); value != "mysql://docker" {
+		t.Fatalf("project environment was overridden: %q", value)
 	}
 	expectedCLI, err := filepath.Abs("/symfony")
 	if err != nil {
