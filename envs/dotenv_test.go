@@ -147,6 +147,15 @@ func (s *DotEnvSuite) TestLookupDotEnvCascade(c *C) {
 			},
 			expected: map[string]string{"APP_ENV": "test", "A": "env"},
 		},
+		{
+			name: "environment-specific files are ignored in the local environment",
+			files: map[string]string{
+				".env":             "APP_ENV=local\nA=env\n",
+				".env.local":       "B=local\n",
+				".env.local.local": "A=local.local\n",
+			},
+			expected: map[string]string{"APP_ENV": "local", "A": "env", "B": "local"},
+		},
 	} {
 		dir := c.MkDir()
 		for name, content := range tc.files {
@@ -156,6 +165,25 @@ func (s *DotEnvSuite) TestLookupDotEnvCascade(c *C) {
 			c.Check(lookupDotEnv(dir), DeepEquals, tc.expected, Commentf(tc.name))
 		})
 	}
+}
+
+func (s *DotEnvSuite) TestLookupDotEnvKeepsExportedEmptyEnvironment(c *C) {
+	dir := c.MkDir()
+	c.Assert(os.WriteFile(filepath.Join(dir, ".env"), []byte("APP_ENV=prod\nA=env\n"), 0644), IsNil)
+	c.Assert(os.WriteFile(filepath.Join(dir, ".env.local"), []byte("B=local\n"), 0644), IsNil)
+	c.Assert(os.WriteFile(filepath.Join(dir, ".env.dev"), []byte("A=dev\n"), 0644), IsNil)
+	c.Assert(os.WriteFile(filepath.Join(dir, ".env.prod"), []byte("A=prod\n"), 0644), IsNil)
+
+	for k, v := range map[string]string{"APP_ENV": "", "SYMFONY_DOTENV_VARS": ""} {
+		if old, ok := os.LookupEnv(k); ok {
+			defer os.Setenv(k, old)
+		} else {
+			defer os.Unsetenv(k)
+		}
+		os.Setenv(k, v)
+	}
+
+	c.Check(lookupDotEnv(dir), DeepEquals, map[string]string{"A": "env", "B": "local"})
 }
 
 func withAppEnv(value string, fn func()) {
