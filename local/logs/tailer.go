@@ -259,12 +259,14 @@ func (tailer *Tailer) watchAppLogDir(dir string, seen *sync.Map) error {
 	if err := tailer.watchAppLogs(dir, isLogFile, seen); err != nil {
 		return err
 	}
-	applogs, err := filepath.Glob(filepath.Join(realDir, "*.log"))
+	entries, err := os.ReadDir(realDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	for _, applog := range applogs {
-		tailer.tailAppLog(applog, false, seen)
+	for _, entry := range entries {
+		if applog := filepath.Join(realDir, entry.Name()); !entry.IsDir() && isLogFile(applog) {
+			tailer.tailAppLog(applog, false, seen)
+		}
 	}
 	return nil
 }

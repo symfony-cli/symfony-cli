@@ -29,7 +29,8 @@ import (
 )
 
 func TestWatchApplicationLogDirectories(t *testing.T) {
-	projectDir := t.TempDir()
+	// glob special characters in the project path must not be interpreted
+	projectDir := filepath.Join(t.TempDir(), "client[1")
 	logDir := filepath.Join(projectDir, "var", "log")
 	if err := os.MkdirAll(logDir, 0755); err != nil {
 		t.Fatal(err)
