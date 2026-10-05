@@ -113,3 +113,26 @@ func (s *ConfigSuite) TestConfigFromContext(c *C) {
 	}
 	c.Check(app.Run([]string{"--port=8282", "--allow-http=true", "--proxy-mercure=false"}), IsNil)
 }
+
+func (s *ConfigSuite) TestListenIpFromContext(c *C) {
+	for _, tc := range []struct {
+		listenIp string
+		expected string
+	}{
+		{"127.0.0.1", "127.0.0.1"},
+		{"::1", "::1"},
+		{"[::1]", "::1"},
+		{"[::]", "::"},
+	} {
+		app := console.Application{
+			Flags: ConfigurationFlags,
+			Action: func(context *console.Context) error {
+				config, err := NewConfigFromContext(context, zerolog.Nop(), "testdata", "testdata")
+				c.Assert(err, IsNil)
+				c.Check(config.HTTP.ListenIp, Equals, tc.expected, Commentf(tc.listenIp))
+				return nil
+			},
+		}
+		c.Check(app.Run([]string{"symfony", "--listen-ip=" + tc.listenIp}), IsNil)
+	}
+}

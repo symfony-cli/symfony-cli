@@ -22,6 +22,7 @@ package project
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -118,7 +119,8 @@ func (config *config) mergeWithContext(c *console.Context) {
 	if c.IsSet("allow-all-ip") {
 		config.HTTP.ListenIp = ""
 	} else {
-		config.HTTP.ListenIp = c.String("listen-ip")
+		// accept the bracketed IPv6 form that older versions required
+		config.HTTP.ListenIp = strings.TrimSuffix(strings.TrimPrefix(c.String("listen-ip"), "["), "]")
 	}
 	if c.IsSet("document-root") {
 		config.HTTP.DocumentRoot = c.String("document-root")
