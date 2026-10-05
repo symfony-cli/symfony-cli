@@ -55,6 +55,29 @@ func (s *DotEnvSuite) TestLoadDotEnvKeepsExportedVariables(c *C) {
 	c.Check(ok, Equals, false)
 }
 
+func (s *DotEnvSuite) TestLoadDotEnvOverridesVariablesLoadedByParentProcess(c *C) {
+	dir := c.MkDir()
+	c.Assert(os.WriteFile(filepath.Join(dir, ".env"), []byte("APP_ENV=dev\nINHERITED=dotenv\nEXPORTED=dotenv\n"), 0644), IsNil)
+
+	// INHERITED was loaded from a .env file by a parent process, EXPORTED by the user
+	for k, v := range map[string]string{"INHERITED": "parent", "EXPORTED": "exported", "APP_ENV": "prod", "SYMFONY_DOTENV_VARS": "INHERITED,APP_ENV"} {
+		if old, ok := os.LookupEnv(k); ok {
+			defer os.Setenv(k, old)
+		} else {
+			defer os.Unsetenv(k)
+		}
+		os.Setenv(k, v)
+	}
+
+	vars := LoadDotEnv(map[string]string{}, dir)
+
+	c.Check(vars["INHERITED"], Equals, "dotenv")
+	c.Check(vars["APP_ENV"], Equals, "dev")
+	_, ok := vars["EXPORTED"]
+	c.Check(ok, Equals, false)
+	c.Check(vars["SYMFONY_DOTENV_VARS"], Equals, "INHERITED,APP_ENV")
+}
+
 func (s *DotEnvSuite) TestLookupDotEnvCascade(c *C) {
 	for _, tc := range []struct {
 		name     string
