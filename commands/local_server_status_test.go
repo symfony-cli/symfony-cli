@@ -33,9 +33,13 @@ func TestWatchedPaths(t *testing.T) {
 		t.Fatal(err)
 	}
 	missing := filepath.Join(dir, "missing")
+	if err := os.Mkdir(filepath.Join(dir, "public"), 0755); err != nil {
+		t.Fatal(err)
+	}
 
-	got := watchedPaths([]string{dir, file, missing})
-	want := []string{dir + string(filepath.Separator), file, missing}
+	// relative paths are relative to the project directory, not the current one
+	got := watchedPaths(dir, []string{dir, file, missing, "public", "php.ini"})
+	want := []string{dir + string(filepath.Separator), file, missing, "public" + string(filepath.Separator), "php.ini"}
 	if !slices.Equal(got, want) {
 		t.Errorf("watchedPaths() = %q, want %q", got, want)
 	}
