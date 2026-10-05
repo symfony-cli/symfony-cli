@@ -22,6 +22,8 @@ package envs
 import (
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 
 	. "gopkg.in/check.v1"
 )
@@ -48,10 +50,84 @@ func (s *DotEnvSuite) TestLoadDotEnvKeepsExportedVariables(c *C) {
 	vars := LoadDotEnv(map[string]string{}, dir)
 
 	c.Check(vars["DOTENV_ONLY"], Equals, "dotenv")
-	c.Check(vars["SYMFONY_DOTENV_VARS"], Equals, "DOTENV_ONLY")
+	c.Check(sortedDotEnvVars(vars), DeepEquals, []string{"APP_ENV", "DOTENV_ONLY"})
 	_, ok := vars["EXPORTED"]
 	c.Check(ok, Equals, false)
 	_, ok = vars["EXPORTED_EMPTY"]
+	c.Check(ok, Equals, false)
+}
+
+func (s *DotEnvSuite) TestLoadDotEnvOverridesVariablesLoadedByParentProcess(c *C) {
+	dir := c.MkDir()
+	c.Assert(os.WriteFile(filepath.Join(dir, ".env"), []byte("APP_ENV=dev\nINHERITED=dotenv\nEXPORTED=dotenv\n"), 0644), IsNil)
+
+	// INHERITED was loaded from a .env file by a parent process, EXPORTED by the user
+	for k, v := range map[string]string{"INHERITED": "parent", "EXPORTED": "exported", "APP_ENV": "prod", "SYMFONY_DOTENV_VARS": "INHERITED,APP_ENV"} {
+		if old, ok := os.LookupEnv(k); ok {
+			defer os.Setenv(k, old)
+		} else {
+			defer os.Unsetenv(k)
+		}
+		os.Setenv(k, v)
+	}
+
+	vars := LoadDotEnv(map[string]string{}, dir)
+
+	c.Check(vars["INHERITED"], Equals, "dotenv")
+	c.Check(vars["APP_ENV"], Equals, "dev")
+	_, ok := vars["EXPORTED"]
+	c.Check(ok, Equals, false)
+	c.Check(vars["SYMFONY_DOTENV_VARS"], Equals, "INHERITED,APP_ENV")
+}
+
+func (s *DotEnvSuite) TestLoadDotEnvInNestedRunUsesInnerProjectEnvironment(c *C) {
+	outer := c.MkDir()
+	c.Assert(os.WriteFile(filepath.Join(outer, ".env"), []byte("APP_ENV=prod\nFOO=outer\n"), 0644), IsNil)
+	c.Assert(os.WriteFile(filepath.Join(outer, ".env.prod"), []byte("BAR=outer-prod\n"), 0644), IsNil)
+	inner := c.MkDir()
+	c.Assert(os.WriteFile(filepath.Join(inner, ".env"), []byte("APP_ENV=dev\nFOO=inner\n"), 0644), IsNil)
+	c.Assert(os.WriteFile(filepath.Join(inner, ".env.dev"), []byte("BAR=inner-dev\n"), 0644), IsNil)
+	c.Assert(os.WriteFile(filepath.Join(inner, ".env.prod"), []byte("BAR=inner-prod\n"), 0644), IsNil)
+
+	for _, k := range []string{"APP_ENV", "FOO", "BAR", "SYMFONY_DOTENV_VARS"} {
+		if old, ok := os.LookupEnv(k); ok {
+			defer os.Setenv(k, old)
+		} else {
+			defer os.Unsetenv(k)
+		}
+		os.Unsetenv(k)
+	}
+
+	for k, v := range LoadDotEnv(map[string]string{}, outer) {
+		os.Setenv(k, v)
+	}
+	vars := LoadDotEnv(map[string]string{}, inner)
+
+	c.Check(vars["APP_ENV"], Equals, "dev")
+	c.Check(vars["FOO"], Equals, "inner")
+	c.Check(vars["BAR"], Equals, "inner-dev")
+	c.Check(sortedDotEnvVars(vars), DeepEquals, []string{"APP_ENV", "BAR", "FOO"})
+}
+
+func (s *DotEnvSuite) TestLookupEnv(c *C) {
+	dir := c.MkDir()
+	c.Assert(os.WriteFile(filepath.Join(dir, ".env"), []byte("INHERITED=dotenv\nEXPORTED=dotenv\nDOTENV_ONLY=dotenv\n"), 0644), IsNil)
+
+	for k, v := range map[string]string{"INHERITED": "parent", "INHERITED_ONLY": "parent", "EXPORTED": "exported", "SYMFONY_DOTENV_VARS": "INHERITED,INHERITED_ONLY"} {
+		if old, ok := os.LookupEnv(k); ok {
+			defer os.Setenv(k, old)
+		} else {
+			defer os.Unsetenv(k)
+		}
+		os.Setenv(k, v)
+	}
+
+	for key, expected := range map[string]string{"INHERITED": "dotenv", "INHERITED_ONLY": "parent", "EXPORTED": "exported", "DOTENV_ONLY": "dotenv"} {
+		value, ok := LookupEnv(dir, key)
+		c.Check(ok, Equals, true, Commentf(key))
+		c.Check(value, Equals, expected, Commentf(key))
+	}
+	_, ok := LookupEnv(dir, "UNDEFINED")
 	c.Check(ok, Equals, false)
 }
 
@@ -110,6 +186,12 @@ func (s *DotEnvSuite) TestLookupDotEnvCascade(c *C) {
 			c.Check(lookupDotEnv(dir), DeepEquals, tc.expected, Commentf(tc.name))
 		})
 	}
+}
+
+func sortedDotEnvVars(vars map[string]string) []string {
+	keys := strings.Split(vars["SYMFONY_DOTENV_VARS"], ",")
+	slices.Sort(keys)
+	return keys
 }
 
 func withAppEnv(value string, fn func()) {

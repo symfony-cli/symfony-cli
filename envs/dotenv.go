@@ -23,6 +23,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -34,13 +35,14 @@ import (
 func LoadDotEnv(vars map[string]string, scriptDir string) map[string]string {
 	dotEnvDir := findDotEnvDir(scriptDir)
 	vars["SYMFONY_DOTENV_VARS"] = os.Getenv("SYMFONY_DOTENV_VARS")
+	loaded := dotEnvLoadedVars()
 	for k, v := range lookupDotEnv(dotEnvDir) {
 		if _, alreadyDefined := vars[k]; alreadyDefined {
 			continue
 		}
 
 		vars[k] = v
-		if k != "APP_ENV" {
+		if !loaded[k] {
 			if vars["SYMFONY_DOTENV_VARS"] != "" {
 				vars["SYMFONY_DOTENV_VARS"] += ","
 			}
@@ -52,20 +54,13 @@ func LoadDotEnv(vars map[string]string, scriptDir string) map[string]string {
 }
 
 // LookupEnv allows one to lookup for a single environment variable in the same
-// way os.LookupEnv would. It automatically let the environment variable take
-// over if defined.
+// way os.LookupEnv would. Exported variables win over .env files.
 func LookupEnv(dotEnvDir, key string) (string, bool) {
-	// first check if the user defined it in its environment
-	if value, isUserDefined := os.LookupEnv(key); isUserDefined {
-		return value, isUserDefined
-	}
-
-	dotEnvEnv := lookupDotEnv(dotEnvDir)
-	if value, isDefined := dotEnvEnv[key]; isDefined {
+	if value, isDefined := lookupDotEnv(dotEnvDir)[key]; isDefined {
 		return value, isDefined
 	}
 
-	return "", false
+	return os.LookupEnv(key)
 }
 
 // algorithm is here: https://github.com/symfony/recipes/blob/master/symfony/framework-bundle/3.3/config/bootstrap.php
@@ -106,7 +101,7 @@ func lookupDotEnv(dir string) map[string]string {
 
 	// Exported variables win, as with Symfony's Dotenv component
 	for k := range vars {
-		if _, exported := os.LookupEnv(k); exported {
+		if isExported(k) {
 			delete(vars, k)
 		}
 	}
@@ -128,13 +123,32 @@ func mergeDovEnvFile(vars map[string]string, path string) {
 }
 
 func resolveAppEnv(vars map[string]string) string {
-	if env := os.Getenv("APP_ENV"); env != "" {
+	if env := os.Getenv("APP_ENV"); env != "" && isExported("APP_ENV") {
 		return env
 	}
 	if env := vars["APP_ENV"]; env != "" {
 		return env
 	}
 	return "dev"
+}
+
+// isExported mirrors Symfony's Dotenv: variables loaded from .env files by a
+// parent process (listed in SYMFONY_DOTENV_VARS) can be overridden.
+func isExported(key string) bool {
+	if _, ok := os.LookupEnv(key); !ok {
+		return false
+	}
+	return !dotEnvLoadedVars()[key]
+}
+
+func dotEnvLoadedVars() map[string]bool {
+	loaded := map[string]bool{}
+	for _, k := range strings.Split(os.Getenv("SYMFONY_DOTENV_VARS"), ",") {
+		if k != "" {
+			loaded[k] = true
+		}
+	}
+	return loaded
 }
 
 func findDotEnvDir(dir string) string {
