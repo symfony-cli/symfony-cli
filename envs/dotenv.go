@@ -47,7 +47,8 @@ import (
 //  5. Exported variables are never taken from .env files.
 //  6. Variables already in vars (computed from Docker or tunnels) are never
 //     taken from .env files.
-//  7. SYMFONY_DOTENV_VARS starts with the inherited value; every variable
+//  7. SYMFONY_DOTENV_VARS starts with the inherited value, minus the variables
+//     already in vars so that Dotenv cannot replace them; every variable
 //     taken from .env files and not already listed is appended to it so that
 //     Dotenv, when the script boots it, can recompute it (for instance after
 //     --env changes the environment). APP_ENV is never appended: PHP code sets
@@ -59,8 +60,14 @@ import (
 // The returned map is vars itself. See LookupEnv for a single variable.
 func LoadDotEnv(vars map[string]string, scriptDir string) map[string]string {
 	dotEnvDir := findDotEnvDir(scriptDir)
-	vars["SYMFONY_DOTENV_VARS"] = os.Getenv("SYMFONY_DOTENV_VARS")
 	loaded := dotEnvLoadedVars()
+	var listed []string
+	for _, k := range strings.Split(os.Getenv("SYMFONY_DOTENV_VARS"), ",") {
+		if _, computed := vars[k]; k != "" && !computed {
+			listed = append(listed, k)
+		}
+	}
+	vars["SYMFONY_DOTENV_VARS"] = ""
 	for k, v := range lookupDotEnv(dotEnvDir) {
 		if _, alreadyDefined := vars[k]; alreadyDefined {
 			continue
@@ -68,12 +75,10 @@ func LoadDotEnv(vars map[string]string, scriptDir string) map[string]string {
 
 		vars[k] = v
 		if k != "APP_ENV" && !loaded[k] {
-			if vars["SYMFONY_DOTENV_VARS"] != "" {
-				vars["SYMFONY_DOTENV_VARS"] += ","
-			}
-			vars["SYMFONY_DOTENV_VARS"] += k
+			listed = append(listed, k)
 		}
 	}
+	vars["SYMFONY_DOTENV_VARS"] = strings.Join(listed, ",")
 
 	return vars
 }

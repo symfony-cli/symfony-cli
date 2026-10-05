@@ -79,6 +79,26 @@ func (s *DotEnvSuite) TestLoadDotEnvOverridesVariablesLoadedByParentProcess(c *C
 	c.Check(vars["SYMFONY_DOTENV_VARS"], Equals, "INHERITED,APP_ENV")
 }
 
+func (s *DotEnvSuite) TestLoadDotEnvUnlistsComputedVariables(c *C) {
+	dir := c.MkDir()
+	c.Assert(os.WriteFile(filepath.Join(dir, ".env"), []byte("DATABASE_URL=dotenv\nFOO=dotenv\n"), 0644), IsNil)
+
+	for k, v := range map[string]string{"DATABASE_URL": "parent", "FOO": "parent", "SYMFONY_DOTENV_VARS": "DATABASE_URL,FOO"} {
+		if old, ok := os.LookupEnv(k); ok {
+			defer os.Setenv(k, old)
+		} else {
+			defer os.Unsetenv(k)
+		}
+		os.Setenv(k, v)
+	}
+
+	vars := LoadDotEnv(map[string]string{"DATABASE_URL": "docker"}, dir)
+
+	c.Check(vars["DATABASE_URL"], Equals, "docker")
+	c.Check(vars["FOO"], Equals, "dotenv")
+	c.Check(vars["SYMFONY_DOTENV_VARS"], Equals, "FOO")
+}
+
 func (s *DotEnvSuite) TestLookupEnv(c *C) {
 	dir := c.MkDir()
 	c.Assert(os.WriteFile(filepath.Join(dir, ".env"), []byte("INHERITED=dotenv\nEXPORTED=dotenv\nDOTENV_ONLY=dotenv\n"), 0644), IsNil)
