@@ -235,7 +235,7 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 	c.Check(true, Equals, strings.Contains(output.String(), "USER_DEFINED_ENVVAR=foobar"))
 	c.Check(true, Equals, strings.Contains(output.String(), "DATABASE_URL=mysql://127.0.0.1"))
 	// Checks local properly feed Symfony with SYMFONY_DOTENV_VARS
-	c.Check(dotEnvVarsFromOutput(output.String()), DeepEquals, []string{"APP_ENV", "DATABASE_URL", "USER_DEFINED_ENVVAR"})
+	c.Check(dotEnvVarsFromOutput(output.String()), DeepEquals, []string{"DATABASE_URL", "USER_DEFINED_ENVVAR"})
 
 	// change the project name to get exposed env vars
 	projectFile := filepath.Join(".platform", "local", "project.yaml")
@@ -260,7 +260,7 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 	// But do not override tunnel information
 	c.Check(false, Equals, strings.Contains(output.String(), "DATABASE_URL=mysql://127.0.0.1"))
 	// Checks local properly feed Symfony with SYMFONY_DOTENV_VARS
-	c.Check(dotEnvVarsFromOutput(output.String()), DeepEquals, []string{"APP_ENV", "USER_DEFINED_ENVVAR"})
+	c.Check(dotEnvVarsFromOutput(output.String()), DeepEquals, []string{"USER_DEFINED_ENVVAR"})
 
 	// When a variable is already set, the value should be kept
 	os.Setenv("USER_DEFINED_ENVVAR", "custom")
@@ -290,7 +290,7 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 	c.Check(true, Equals, strings.Contains(output.String(), "USER_DEFINED_ENVVAR=custom"))
 	c.Check(true, Equals, strings.Contains(output.String(), "DATABASE_URL=postgres://main:main@127.0.0.1:30001/main"))
 	c.Check(false, Equals, strings.Contains(output.String(), "DATABASE_URL=mysql://stale"))
-	c.Check(dotEnvVarsFromOutput(output.String()), DeepEquals, []string{"APP_ENV"})
+	c.Check(dotEnvVarsFromOutput(output.String()), HasLen, 0)
 	c.Check(false, Equals, strings.Contains(output.String(), "PHP_INI_SCAN_DIR=test\n"))
 	c.Check(true, Equals, strings.Contains(output.String(), string(os.PathListSeparator)+iniScanDir+"\n"))
 	c.Check(true, Equals, strings.Contains(output.String(), "PHP_PATH="+filepath.FromSlash("../bin/php")))
@@ -299,7 +299,7 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 func dotEnvVarsFromOutput(output string) []string {
 	for line := range strings.Lines(output) {
 		if vars, ok := strings.CutPrefix(strings.TrimSpace(line), "SYMFONY_DOTENV_VARS="); ok {
-			keys := strings.Split(vars, ",")
+			keys := strings.FieldsFunc(vars, func(r rune) bool { return r == ',' })
 			slices.Sort(keys)
 			return keys
 		}

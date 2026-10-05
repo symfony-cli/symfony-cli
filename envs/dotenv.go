@@ -42,7 +42,8 @@ func LoadDotEnv(vars map[string]string, scriptDir string) map[string]string {
 		}
 
 		vars[k] = v
-		if !loaded[k] {
+		// PHP code sets APP_ENV before Dotenv runs (--env, PHPUnit); listing it would let Dotenv revert it
+		if k != "APP_ENV" && !loaded[k] {
 			if vars["SYMFONY_DOTENV_VARS"] != "" {
 				vars["SYMFONY_DOTENV_VARS"] += ","
 			}
