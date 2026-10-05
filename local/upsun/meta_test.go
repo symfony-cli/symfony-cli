@@ -92,6 +92,9 @@ func newTestMetaRegistry(t *testing.T) (*MetaRegistry, map[string]int) {
 		if r.Header.Get("Accept") != "application/json" {
 			t.Errorf("unexpected Accept header %q", r.Header.Get("Accept"))
 		}
+		if r.Header.Get("User-Agent") != "symfony-cli/1.2.3" {
+			t.Errorf("unexpected User-Agent header %q", r.Header.Get("User-Agent"))
+		}
 		switch r.URL.Path {
 		case "/images":
 			_, _ = io.WriteString(w, metaImagesFixture)
@@ -102,7 +105,7 @@ func newTestMetaRegistry(t *testing.T) (*MetaRegistry, map[string]int) {
 		}
 	}))
 	t.Cleanup(server.Close)
-	registry := NewMetaRegistry()
+	registry := NewMetaRegistry("1.2.3")
 	registry.BaseURL = server.URL
 	return registry, hits
 }
@@ -166,7 +169,7 @@ func TestMetaRegistryFailsOnErrorStatus(t *testing.T) {
 		w.WriteHeader(http.StatusTooManyRequests)
 	}))
 	defer server.Close()
-	registry := NewMetaRegistry()
+	registry := NewMetaRegistry("1.2.3")
 	registry.BaseURL = server.URL
 
 	if _, err := registry.ServiceLastVersion("postgresql"); err == nil {

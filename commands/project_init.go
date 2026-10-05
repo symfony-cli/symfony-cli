@@ -76,7 +76,7 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 			slug = "app"
 		}
 
-		registry := upsun.NewMetaRegistry()
+		registry := upsun.NewMetaRegistry(c.App.Version)
 		cloudServices, err := parseCloudServices(registry, projectDir, c.StringSlice("service"))
 		if err != nil {
 			return err

@@ -256,7 +256,7 @@ func isEmpty(dir string) (bool, error) {
 func initCloud(c *console.Context, product upsun.CloudProduct, minorPHPVersion, dir string) error {
 	terminal.Printfln("* Adding %s configuration", product)
 
-	registry := upsun.NewMetaRegistry()
+	registry := upsun.NewMetaRegistry(c.App.Version)
 	cloudServices, err := parseCloudServices(registry, dir, c.StringSlice("service"))
 	if err != nil {
 		return err

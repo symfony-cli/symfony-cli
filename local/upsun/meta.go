@@ -33,8 +33,9 @@ import (
 const metaRegistryURL = "https://meta.upsun.com"
 
 type MetaRegistry struct {
-	BaseURL string
-	Client  *http.Client
+	BaseURL   string
+	Client    *http.Client
+	UserAgent string
 
 	images     map[string]metaImage
 	extensions map[string]metaExtension
@@ -55,10 +56,11 @@ type metaExtension struct {
 	} `json:"versions"`
 }
 
-func NewMetaRegistry() *MetaRegistry {
+func NewMetaRegistry(appVersion string) *MetaRegistry {
 	return &MetaRegistry{
-		BaseURL: metaRegistryURL,
-		Client:  &http.Client{Timeout: 30 * time.Second},
+		BaseURL:   metaRegistryURL,
+		Client:    &http.Client{Timeout: 30 * time.Second},
+		UserAgent: "symfony-cli/" + appVersion,
 	}
 }
 
@@ -124,6 +126,7 @@ func (r *MetaRegistry) fetch(path string, v any) error {
 		return errors.Wrapf(err, "unable to fetch %s", url)
 	}
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", r.UserAgent)
 	resp, err := r.Client.Do(req)
 	if err != nil {
 		return errors.Wrapf(err, "unable to fetch %s", url)
