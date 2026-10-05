@@ -28,10 +28,35 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// find .env in the script directory and up
-// SHOULD ONLY be enabled on demand, so that Symfony has the priority
-// so this feature is only useful for when you want to load a .env file that you are NOT loading yourself, so everything but PHP scripts
-// and here, we only have PHP scripts anyway
+// LoadDotEnv adds the variables of the project .env files to vars, so that PHP
+// scripts not booting Symfony's Dotenv see the same values as the ones that
+// do. It reproduces Dotenv::loadEnv() with its default arguments:
+//
+//  1. The project directory is the first one containing a .env or .env.dist
+//     file, starting from scriptDir and going up.
+//  2. A variable is exported when it is defined in the CLI environment (even
+//     empty) and not listed in an inherited SYMFONY_DOTENV_VARS. A listed
+//     variable was loaded from .env files by a parent process, so .env files
+//     can override it, like Dotenv does.
+//  3. The environment is the exported APP_ENV (even empty), else the APP_ENV
+//     of .env, possibly changed by .env.local, else "dev".
+//  4. Files are merged in this order, later ones winning: .env (or .env.dist
+//     when .env does not exist), .env.local (skipped in the "test"
+//     environment), .env.<env>, and .env.<env>.local (both skipped in the
+//     "local" environment).
+//  5. Exported variables are never taken from .env files.
+//  6. Variables already in vars (computed from Docker or tunnels) are never
+//     taken from .env files.
+//  7. SYMFONY_DOTENV_VARS starts with the inherited value; every variable
+//     taken from .env files and not already listed is appended to it so that
+//     Dotenv, when the script boots it, can recompute it (for instance after
+//     --env changes the environment). APP_ENV is never appended: PHP code sets
+//     it before booting Dotenv (Symfony Runtime's --env, PHPUnit's forced
+//     APP_ENV), and Dotenv would revert it to the .env value. As a
+//     consequence, a nested CLI run from such a PHP process sees APP_ENV as
+//     exported.
+//
+// The returned map is vars itself. See LookupEnv for a single variable.
 func LoadDotEnv(vars map[string]string, scriptDir string) map[string]string {
 	dotEnvDir := findDotEnvDir(scriptDir)
 	vars["SYMFONY_DOTENV_VARS"] = os.Getenv("SYMFONY_DOTENV_VARS")
@@ -42,7 +67,6 @@ func LoadDotEnv(vars map[string]string, scriptDir string) map[string]string {
 		}
 
 		vars[k] = v
-		// PHP code sets APP_ENV before Dotenv runs (--env, PHPUnit); listing it would let Dotenv revert it
 		if k != "APP_ENV" && !loaded[k] {
 			if vars["SYMFONY_DOTENV_VARS"] != "" {
 				vars["SYMFONY_DOTENV_VARS"] += ","
@@ -54,8 +78,9 @@ func LoadDotEnv(vars map[string]string, scriptDir string) map[string]string {
 	return vars
 }
 
-// LookupEnv allows one to lookup for a single environment variable in the same
-// way os.LookupEnv would. Exported variables win over .env files.
+// LookupEnv looks up a single variable like os.LookupEnv would, but takes it
+// from the .env files of dotEnvDir unless it is exported, following the
+// LoadDotEnv algorithm (without computed variables).
 func LookupEnv(dotEnvDir, key string) (string, bool) {
 	if value, isDefined := lookupDotEnv(dotEnvDir)[key]; isDefined {
 		return value, isDefined
@@ -64,7 +89,7 @@ func LookupEnv(dotEnvDir, key string) (string, bool) {
 	return os.LookupEnv(key)
 }
 
-// algorithm is here: https://github.com/symfony/recipes/blob/master/symfony/framework-bundle/3.3/config/bootstrap.php
+// lookupDotEnv implements steps 2 to 5 of the LoadDotEnv algorithm.
 func lookupDotEnv(dir string) map[string]string {
 	var err error
 	vars := map[string]string{}

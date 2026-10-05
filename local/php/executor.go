@@ -175,6 +175,19 @@ func (e *Executor) DetectScriptDir() (string, error) {
 // with underlying tools that could try to run PHP. This is the responsibility
 // of the caller to clean those temporary files. One can call
 // CleanupTemporaryDirectories to do so.
+//
+// The environment of the PHP process is layered, later layers winning:
+//
+//  1. exported variables (os.Environ);
+//  2. when loadDotEnv is true, variables from the project .env files, which
+//     never override exported ones (see envs.LoadDotEnv);
+//  3. variables computed from Docker or tunnels, which override exported ones
+//     as these can be stale;
+//  4. PHP_BINARY, PHP_PATH, PHP_PEAR_PHP_BIN and PHP_INI_SCAN_DIR, which point
+//     to the selected PHP version.
+//
+// Execute then prepends the PATH entries and appends ExtraEnv. PHP server
+// workers get the same layers, without .env files.
 func (e *Executor) Config(loadDotEnv bool) error {
 	// reset environment
 	e.environ = make([]string, 0)
