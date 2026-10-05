@@ -26,6 +26,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"syscall"
@@ -290,7 +291,7 @@ func (e *Executor) Config(loadDotEnv bool) error {
 			// builds (Nix, ...) inject their scan dir at runtime and have no
 			// compile-time default, so it would resolve to nothing.
 			scanDir := os.Getenv("PHP_INI_SCAN_DIR")
-			if systemScanDir := e.phpSystemIniScanDir(v.PHPPath); systemScanDir != "" {
+			if systemScanDir := e.phpSystemIniScanDir(path); systemScanDir != "" {
 				scanDir = systemScanDir
 			}
 			e.phpEnviron = append(e.phpEnviron, fmt.Sprintf("PHP_INI_SCAN_DIR=%s%s", scanDir, dirs))
@@ -636,21 +637,34 @@ func (e *Executor) phpiniDirForDir() string {
 	return ""
 }
 
+var iniScanDirRegexp = regexp.MustCompile(`Scan this dir for additional \.ini files(?:\s*=>|\s*</td><td class="v">)([^<\r\n]*)`)
+
 // phpSystemIniScanDir returns the .ini scan directory the given PHP binary loads
 // on its own, including one injected at runtime by a wrapper (Nix, Homebrew...).
-// It runs the binary because that value isn't always known at compile time, and
-// returns "" when it can't be determined so callers can fall back to the default.
-func (e *Executor) phpSystemIniScanDir(phpPath string) string {
-	if phpPath == "" {
+// It runs the binary because that value isn't always known at compile time and
+// differs between SAPIs (Debian uses a conf.d per SAPI), and returns "" when it
+// can't be determined so callers can fall back to the default.
+func (e *Executor) phpSystemIniScanDir(binPath string) string {
+	if binPath == "" {
 		return ""
 	}
-	// getenv() catches a wrapper's runtime value; PHP_CONFIG_FILE_SCAN_DIR is the
-	// compile-time default used by regular builds.
-	cmd := execCommand(phpPath, "-r", `echo getenv("PHP_INI_SCAN_DIR") ?: PHP_CONFIG_FILE_SCAN_DIR;`)
-	out, err := cmd.Output()
+	// -i is supported by every SAPI binary (php, php-fpm, php-cgi), unlike -r.
+	out, err := execCommand(binPath, "-i").Output()
 	if err != nil {
 		e.Logger.Debug().Err(err).Msg("unable to detect the PHP ini scan directory")
 		return ""
 	}
-	return strings.TrimSpace(string(out))
+	return parseIniScanDir(string(out))
+}
+
+func parseIniScanDir(phpinfo string) string {
+	matches := iniScanDirRegexp.FindStringSubmatch(phpinfo)
+	if matches == nil {
+		return ""
+	}
+	dir := strings.TrimSpace(matches[1])
+	if dir == "(none)" {
+		return ""
+	}
+	return dir
 }

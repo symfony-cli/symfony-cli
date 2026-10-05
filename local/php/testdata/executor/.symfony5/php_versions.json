@@ -4,7 +4,7 @@
         "path": "",
         "php_path": "../bin/php",
         "fpm_path": "",
-        "cgi_path": "",
+        "cgi_path": "../bin/php-cgi",
         "php_config_path": "",
         "phpize_path": "",
         "phpdbg_path": "",

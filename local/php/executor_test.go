@@ -292,14 +292,14 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 
 func (s *ExecutorSuite) TestPhpIniScanDirKeepsSystemScanDir(c *C) {
 	defer restoreExecCommand()
-	// The executor first runs `php -r ...` to discover the scan directory the
+	// The executor first runs `php -i` to discover the scan directory the
 	// binary loads on its own; the actual run then dumps its environment.
 	execCommand = func(name string, arg ...string) *exec.Cmd {
 		helper := "dump-env"
 		var extra []string
-		if slices.Contains(arg, "-r") {
+		if slices.Contains(arg, "-i") {
 			helper = "echo-arg"
-			extra = []string{"/opt/test/conf.d"}
+			extra = []string{"Scan this dir for additional .ini files => /opt/test/conf.d"}
 		}
 		cs := append([]string{"-test.run=TestHelperProcess", "--", helper}, extra...)
 		cmd := exec.Command(os.Args[0], cs...)
@@ -338,6 +338,49 @@ func (s *ExecutorSuite) TestPhpIniScanDirKeepsSystemScanDir(c *C) {
 	// project directory appended to it, not clobbered.
 	c.Check(strings.Contains(output.String(), "PHP_INI_SCAN_DIR=/opt/test/conf.d"+sep), Equals, true)
 	c.Check(strings.Contains(output.String(), "PHP_INI_SCAN_DIR="+sep), Equals, false)
+}
+
+func (s *ExecutorSuite) TestPhpIniScanDirComesFromTheExecutedBinary(c *C) {
+	defer restoreExecCommand()
+	execCommand = func(name string, arg ...string) *exec.Cmd {
+		dir := "/etc/php/cli/conf.d"
+		if filepath.Base(name) == "php-cgi" {
+			dir = "/etc/php/cgi/conf.d"
+		}
+		cmd := exec.Command(os.Args[0], "-test.run=TestHelperProcess", "--", "echo-arg", "Scan this dir for additional .ini files => "+dir)
+		cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
+		return cmd
+	}
+
+	home, err := filepath.Abs("testdata/executor")
+	c.Assert(err, IsNil)
+
+	homedir.Reset()
+	os.Setenv("HOME", home)
+	defer homedir.Reset()
+
+	projectDir := filepath.Join(home, "project")
+	oldwd, _ := os.Getwd()
+	defer os.Chdir(oldwd)
+	os.Chdir(projectDir)
+	defer cleanupExecutorTempFiles()
+
+	iniPath := filepath.Join(projectDir, "php.ini")
+	c.Assert(os.WriteFile(iniPath, []byte("memory_limit = 256M\n"), 0644), IsNil)
+	defer os.Remove(iniPath)
+
+	e := &Executor{BinName: "php-cgi", Args: []string{"php-cgi"}, scriptDir: projectDir}
+	defer e.CleanupTemporaryDirectories()
+	c.Assert(e.Config(false), IsNil)
+
+	c.Check(slices.Contains(e.phpEnviron, "PHP_INI_SCAN_DIR=/etc/php/cgi/conf.d"+string(os.PathListSeparator)+projectDir), Equals, true)
+}
+
+func (s *ExecutorSuite) TestParseIniScanDir(c *C) {
+	c.Check(parseIniScanDir("Configuration File (php.ini) Path => /etc/php\nScan this dir for additional .ini files => /etc/php/fpm/conf.d\nAdditional .ini files parsed => /etc/php/fpm/conf.d/10-opcache.ini\n"), Equals, "/etc/php/fpm/conf.d")
+	c.Check(parseIniScanDir(`<tr><td class="e">Scan this dir for additional .ini files </td><td class="v">/etc/php/cgi/conf.d </td></tr>`), Equals, "/etc/php/cgi/conf.d")
+	c.Check(parseIniScanDir("Scan this dir for additional .ini files => (none)\n"), Equals, "")
+	c.Check(parseIniScanDir("PHP Version => 8.4.0\n"), Equals, "")
 }
 
 func (s *ExecutorSuite) TestConfigReportsUnwritableTempDir(c *C) {

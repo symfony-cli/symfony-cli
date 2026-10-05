@@ -44,7 +44,7 @@ func (s *PHPSuite) TestPhpAddslashes(c *C) {
 func (s *PHPSuite) TestServerCmdHookLoadsProjectPhpIni(c *C) {
 	defer restoreExecCommand()
 	execCommand = func(name string, arg ...string) *exec.Cmd {
-		cmd := exec.Command(os.Args[0], "-test.run=TestHelperProcess", "--", "echo-arg", "/opt/test/conf.d")
+		cmd := exec.Command(os.Args[0], "-test.run=TestHelperProcess", "--", "echo-arg", "Scan this dir for additional .ini files => /opt/test/conf.d")
 		cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
 		return cmd
 	}
