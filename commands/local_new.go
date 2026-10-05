@@ -320,6 +320,18 @@ func parseCLIServices(services []string) ([]*CloudService, error) {
 	return cloudServices, nil
 }
 
+func isNewerVersion(v, than string) bool {
+	parsed, err := version.NewVersion(v)
+	if err != nil {
+		return false
+	}
+	parsedThan, err := version.NewVersion(than)
+	if err != nil {
+		return false
+	}
+	return parsed.GreaterThan(parsedThan)
+}
+
 func parseDockerComposeServices(dir string) []*CloudService {
 	var cloudServices []*CloudService
 
@@ -374,7 +386,7 @@ func parseDockerComposeServices(dir string) []*CloudService {
 				serviceLastVersion := upsun.ServiceLastVersion(s.Type)
 				if s.Version == "" {
 					s.Version = serviceLastVersion
-				} else if s.Version > serviceLastVersion {
+				} else if isNewerVersion(s.Version, serviceLastVersion) {
 					terminal.Printf("Unsupported %s version %s using version %s\n", s.Type, s.Version, serviceLastVersion)
 					s.Version = serviceLastVersion
 				}
