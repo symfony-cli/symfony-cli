@@ -20,6 +20,7 @@
 package commands
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -40,14 +41,7 @@ import (
 
 const templatesGitRepository = "https://github.com/symfonycorp/cloud-templates.git"
 
-type nopCloser struct {
-	io.Writer
-}
-
-func (nopCloser) Close() error { return nil }
-
 func createRequiredFilesProject(checker phpExtensionChecker, product upsun.CloudProduct, rootDirectory, projectSlug, templateName string, minorPHPVersion string, cloudServices []*CloudService, dump, force bool) ([]string, error) {
-	createdFiles := []string{}
 	templates, err := getTemplates(checker, product, rootDirectory, templateName, minorPHPVersion)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not determine template to use")
@@ -84,35 +78,42 @@ func createRequiredFilesProject(checker phpExtensionChecker, product upsun.Cloud
 		ServiceDiskSizes: serviceDiskSizes,
 	}
 
+	return writeTemplates(templates, rootDirectory, data, dump, force)
+}
+
+// writeTemplates renders each template before writing it, so that a rendering
+// error (like a failed registry lookup) never leaves a truncated file behind.
+func writeTemplates(templates map[string]*template.Template, rootDirectory string, data any, dump, force bool) ([]string, error) {
+	createdFiles := []string{}
 	for file, templateText := range templates {
 		file = filepath.Join(rootDirectory, file)
-		var f io.WriteCloser
+		if !dump && !force {
+			if _, err := os.Stat(file); err == nil || !os.IsNotExist(err) {
+				terminal.Logger.Warn().Msgf("%s already exists, template generation skipped\n", file)
+				continue
+			}
+		}
+
+		var content bytes.Buffer
+		if err := templateText.Execute(&content, data); err != nil {
+			return createdFiles, errors.Wrapf(err, "unable to generate %s", file)
+		}
+
 		if dump {
-			f = nopCloser{terminal.Stdout}
-			fmt.Fprintf(f, "\n<info># %s:</>\n", file)
-		} else if _, err := os.Stat(file); !force && (err == nil || !os.IsNotExist(err)) {
-			terminal.Logger.Warn().Msgf("%s already exists, template generation skipped\n", file)
+			fmt.Fprintf(terminal.Stdout, "\n<info># %s:</>\n", file)
+			if _, err := terminal.Stdout.Write(content.Bytes()); err != nil {
+				return createdFiles, errors.WithStack(err)
+			}
 			continue
-		} else {
-			createdFiles = append(createdFiles, file)
-
-			if dir := filepath.Dir(file); dir != "" {
-				if err := os.MkdirAll(dir, 0755); err != nil {
-					return createdFiles, errors.WithStack(errors.Wrapf(err, "unable to create directory %s", dir))
-				}
-			}
-			f, err = os.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-			if err != nil {
-				return createdFiles, errors.WithStack(errors.Wrapf(err, "unable to create %s", file))
-			}
 		}
 
-		if err = templateText.Execute(f, data); err != nil {
-			return createdFiles, errors.WithStack(errors.Wrapf(err, "unable to write to %s", file))
+		if err := os.MkdirAll(filepath.Dir(file), 0755); err != nil {
+			return createdFiles, errors.Wrapf(err, "unable to create directory %s", filepath.Dir(file))
 		}
-		if err = f.Close(); err != nil {
-			return createdFiles, errors.WithStack(errors.Wrapf(err, "unable to close %s", file))
+		if err := os.WriteFile(file, content.Bytes(), 0644); err != nil {
+			return createdFiles, errors.Wrapf(err, "unable to write to %s", file)
 		}
+		createdFiles = append(createdFiles, file)
 	}
 
 	return createdFiles, nil

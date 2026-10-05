@@ -21,11 +21,13 @@ package commands
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
+	"text/template"
 
 	"github.com/symfony-cli/symfony-cli/local/upsun"
 )
@@ -150,5 +152,31 @@ func TestCloudPHPExtensionsAreUnique(t *testing.T) {
 	expected := []string{"apcu", "blackfire", "mbstring", "redis", "sodium", "xsl", "zip"}
 	if !slices.Equal(got, expected) {
 		t.Errorf("got %v, expected %v", got, expected)
+	}
+}
+
+func TestWriteTemplatesDoesNotLeaveTruncatedFilesOnError(t *testing.T) {
+	dir := t.TempDir()
+	failing := template.Must(template.New("config").Funcs(template.FuncMap{
+		"php_extension_available": func(string, string) (bool, error) {
+			return false, errors.New("unable to fetch the registry")
+		},
+	}).Parse("runtime:\n    extensions:\n{{ if php_extension_available \"apcu\" \"8.4\" }}        - apcu\n{{ end }}"))
+	templates := map[string]*template.Template{".upsun/config.yaml": failing}
+
+	if _, err := writeTemplates(templates, dir, nil, false, false); err == nil {
+		t.Fatal("expected an error")
+	}
+	if _, err := os.Stat(filepath.Join(dir, ".upsun", "config.yaml")); !os.IsNotExist(err) {
+		t.Fatalf("expected no file to be written, got %v", err)
+	}
+
+	templates[".upsun/config.yaml"] = template.Must(template.New("config").Parse("runtime: {}\n"))
+	createdFiles, err := writeTemplates(templates, dir, nil, false, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if expected := []string{filepath.Join(dir, ".upsun", "config.yaml")}; !slices.Equal(createdFiles, expected) {
+		t.Errorf("got %v, expected %v", createdFiles, expected)
 	}
 }
