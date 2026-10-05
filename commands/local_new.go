@@ -256,13 +256,14 @@ func isEmpty(dir string) (bool, error) {
 func initCloud(c *console.Context, product upsun.CloudProduct, minorPHPVersion, dir string) error {
 	terminal.Printfln("* Adding %s configuration", product)
 
-	cloudServices, err := parseCloudServices(dir, c.StringSlice("service"))
+	registry := upsun.NewMetaRegistry(c.App.Version)
+	cloudServices, err := parseCloudServices(registry, dir, c.StringSlice("service"))
 	if err != nil {
 		return err
 	}
 
 	// FIXME: display or hide output based on debug flag
-	_, err = createRequiredFilesProject(product, dir, "app", "", minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
+	_, err = createRequiredFilesProject(registry, product, dir, "app", "", minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
 	if err != nil {
 		return err
 	}
@@ -277,20 +278,27 @@ func initCloud(c *console.Context, product upsun.CloudProduct, minorPHPVersion, 
 	return err
 }
 
-func parseCloudServices(dir string, services []string) ([]*CloudService, error) {
+type serviceVersionFinder interface {
+	ServiceLastVersion(serviceType string) (string, error)
+}
+
+func parseCloudServices(finder serviceVersionFinder, dir string, services []string) ([]*CloudService, error) {
 	// from CLI flag
-	cloudServices, err := parseCLIServices(services)
+	cloudServices, err := parseCLIServices(finder, services)
 	if err != nil {
 		return nil, err
 	}
 
 	// from Docker Compose configuration
-	cloudServices = append(cloudServices, parseDockerComposeServices(dir)...)
+	composeServices, err := parseDockerComposeServices(finder, dir)
+	if err != nil {
+		return nil, err
+	}
 
-	return cloudServices, nil
+	return append(cloudServices, composeServices...), nil
 }
 
-func parseCLIServices(services []string) ([]*CloudService, error) {
+func parseCLIServices(finder serviceVersionFinder, services []string) ([]*CloudService, error) {
 	var cloudServices []*CloudService
 
 	for _, config := range services {
@@ -299,9 +307,9 @@ func parseCLIServices(services []string) ([]*CloudService, error) {
 		parts := strings.Split(config, ":")
 		if len(parts) == 1 {
 			// service == name
-			service = &CloudService{Name: parts[0], Type: parts[0], Version: upsun.ServiceLastVersion(parts[0])}
+			service = &CloudService{Name: parts[0], Type: parts[0]}
 		} else if len(parts) == 2 {
-			service = &CloudService{Name: parts[0], Type: parts[1], Version: upsun.ServiceLastVersion(parts[1])}
+			service = &CloudService{Name: parts[0], Type: parts[1]}
 		} else if len(parts) == 3 {
 			service = &CloudService{Name: parts[0], Type: parts[1], Version: parts[2]}
 		} else {
@@ -310,9 +318,17 @@ func parseCLIServices(services []string) ([]*CloudService, error) {
 
 		service.SetEndpoint()
 
-		// For redis-persistent, update version based on the endpoint
-		if service.Type == "redis-persistent" {
-			service.Version = upsun.ServiceLastVersion(service.Endpoint)
+		if service.Version == "" {
+			// For redis-persistent, the version is based on the endpoint
+			serviceType := service.Type
+			if serviceType == "redis-persistent" {
+				serviceType = service.Endpoint
+			}
+			version, err := finder.ServiceLastVersion(serviceType)
+			if err != nil {
+				return nil, err
+			}
+			service.Version = version
 		}
 
 		cloudServices = append(cloudServices, service)
@@ -332,16 +348,16 @@ func isNewerVersion(v, than string) bool {
 	return parsed.GreaterThan(parsedThan)
 }
 
-func parseDockerComposeServices(dir string) []*CloudService {
+func parseDockerComposeServices(finder serviceVersionFinder, dir string) ([]*CloudService, error) {
 	var cloudServices []*CloudService
 
 	options, err := compose.NewProjectOptions(nil, compose.WithWorkingDirectory(dir), compose.WithDefaultConfigPath, compose.WithConfigFileEnv, compose.WithEnv(os.Environ()))
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 	project, err := compose.ProjectFromOptions(options)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 
 	seen := map[string]bool{}
@@ -383,7 +399,10 @@ func parseDockerComposeServices(dir string) []*CloudService {
 
 				parts := strings.Split(service.Image, ":")
 				s.Version = regexp.MustCompile(`\d+(\.\d+)?`).FindString(parts[len(parts)-1])
-				serviceLastVersion := upsun.ServiceLastVersion(s.Type)
+				serviceLastVersion, err := finder.ServiceLastVersion(s.Type)
+				if err != nil {
+					return nil, err
+				}
 				if s.Version == "" {
 					s.Version = serviceLastVersion
 				} else if isNewerVersion(s.Version, serviceLastVersion) {
@@ -394,7 +413,7 @@ func parseDockerComposeServices(dir string) []*CloudService {
 			}
 		}
 	}
-	return cloudServices
+	return cloudServices, nil
 }
 
 func initProjectGit(c *console.Context, dir string) error {
