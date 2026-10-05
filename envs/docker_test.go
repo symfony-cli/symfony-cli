@@ -20,6 +20,8 @@
 package envs
 
 import (
+	"sort"
+
 	"github.com/docker/docker/api/types/container"
 	. "gopkg.in/check.v1"
 )
@@ -44,6 +46,21 @@ func (s *DockerSuite) TestNormalizeDockerComposeProjectName(c *C) {
 		c.Check(normalizeDockerComposeProjectName(testCase.ProjectName), Equals, testCase.Expected)
 		c.Check(normalizeDockerComposeProjectNameLegacy(testCase.ProjectName), Equals, testCase.ExpectedLegacy)
 	}
+}
+
+func (s *DockerSuite) TestSortedPortsPreferTCP(c *C) {
+	ports := sortedPorts{
+		{PrivatePort: 443, PublicPort: 30001, Type: "udp"},
+		{PrivatePort: 443, PublicPort: 30002, Type: "tcp"},
+		{PrivatePort: 80, PublicPort: 30003, Type: "tcp"},
+	}
+	sort.Sort(ports)
+
+	c.Check(ports[0].PublicPort, Equals, uint16(30003))
+	c.Check(ports[1].PublicPort, Equals, uint16(30002))
+
+	_, _, port := mercureEndpoint("localhost", ports)
+	c.Check(port.PublicPort, Equals, uint16(30002))
 }
 
 func (s *DockerSuite) TestMercureEndpoint(c *C) {
