@@ -184,18 +184,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 		return phpPidFile, nil, err
 	}
 	runner.AlwaysRestartOnExit = true
-	runner.BuildCmdHook = func(cmd *exec.Cmd) error {
-		cmd.Dir = workingDir
-
-		if err = e.Config(false); err != nil {
-			return err
-		}
-
-		cmd.Env = append(cmd.Env, e.environ...)
-		cmd.Env = append(cmd.Env, env...)
-
-		return nil
-	}
+	runner.BuildCmdHook = serverCmdHook(e, workingDir, env)
 
 	return phpPidFile, func() error {
 		defer func() {
@@ -205,6 +194,22 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 
 		return errors.Wrap(runner.Run(), "PHP server exited unexpectedly")
 	}, nil
+}
+
+func serverCmdHook(e *Executor, workingDir string, env []string) func(*exec.Cmd) error {
+	return func(cmd *exec.Cmd) error {
+		cmd.Dir = workingDir
+
+		if err := e.Config(false); err != nil {
+			return err
+		}
+
+		cmd.Env = append(cmd.Env, e.environ...)
+		cmd.Env = append(cmd.Env, e.phpEnviron...)
+		cmd.Env = append(cmd.Env, env...)
+
+		return nil
+	}
 }
 
 // Serve serves an HTTP request
