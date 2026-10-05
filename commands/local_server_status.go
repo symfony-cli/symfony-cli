@@ -21,6 +21,8 @@ package commands
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/symfony-cli/console"
@@ -87,7 +89,7 @@ func printWebServerStatus(projectDir string) error {
 		for _, p := range workers {
 			msg := fmt.Sprintf(`    PID <info>%d</>: %s`, p.Pid, p.Command())
 			if len(p.Watched) > 0 {
-				msg += fmt.Sprintf(" (watching <comment>%s/</comment>)", strings.Join(p.Watched, "/, "))
+				msg += fmt.Sprintf(" (watching <comment>%s</comment>)", strings.Join(watchedPaths(p.Watched), ", "))
 			}
 			terminal.Println(msg)
 		}
@@ -111,4 +113,15 @@ func printWebServerStatus(projectDir string) error {
 	terminal.Printfln("    %s", envVars)
 
 	return nil
+}
+
+func watchedPaths(paths []string) []string {
+	formatted := make([]string, len(paths))
+	for i, path := range paths {
+		formatted[i] = path
+		if fi, err := os.Stat(path); err == nil && fi.IsDir() {
+			formatted[i] += string(filepath.Separator)
+		}
+	}
+	return formatted
 }
