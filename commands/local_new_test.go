@@ -21,7 +21,6 @@ package commands
 
 import (
 	"errors"
-	"os"
 	"testing"
 )
 
@@ -45,8 +44,7 @@ func (failingUpsunRegistry) ServiceLastVersion(serviceType string) (string, erro
 
 func TestParseDockerComposeServices(t *testing.T) {
 	registry := fakeUpsunRegistry{"postgresql": "18"}
-	os.Setenv("POSTGRES_NEXT_VERSION", "19")
-	defer os.Unsetenv("POSTGRES_NEXT_VERSION")
+	t.Setenv("POSTGRES_NEXT_VERSION", "19")
 
 	for dir, expected := range map[string]CloudService{
 		"testdata/docker/postgresql/noversion/": {
