@@ -273,6 +273,10 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 	os.Setenv("PHP_PATH", "test")
 	defer os.Unsetenv("PHP_PATH")
 
+	// Variables computed from Docker or tunnels win over (possibly stale) exported ones
+	os.Setenv("DATABASE_URL", "mysql://stale:3306/main")
+	defer os.Unsetenv("DATABASE_URL")
+
 	iniScanDir := filepath.Join(home, "project")
 	_, err = os.Create(filepath.Join(iniScanDir, "php.ini"))
 	c.Assert(err, IsNil)
@@ -284,6 +288,8 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 	outCloser()
 
 	c.Check(true, Equals, strings.Contains(output.String(), "USER_DEFINED_ENVVAR=custom"))
+	c.Check(true, Equals, strings.Contains(output.String(), "DATABASE_URL=postgres://main:main@127.0.0.1:30001/main"))
+	c.Check(false, Equals, strings.Contains(output.String(), "DATABASE_URL=mysql://stale"))
 	c.Check(false, Equals, strings.Contains(output.String(), "SYMFONY_DOTENV_VARS=USER_DEFINED_ENVVAR"))
 	c.Check(false, Equals, strings.Contains(output.String(), "PHP_INI_SCAN_DIR=test\n"))
 	c.Check(true, Equals, strings.Contains(output.String(), string(os.PathListSeparator)+iniScanDir+"\n"))

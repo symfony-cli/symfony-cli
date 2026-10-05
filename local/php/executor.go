@@ -455,8 +455,7 @@ func (e *Executor) Execute(loadDotEnv bool) int {
 	}
 	defer e.CleanupTemporaryDirectories()
 	cmd := execCommand(e.Args[0], e.Args[1:]...)
-	environ := append([]string(nil), e.environ...)
-	environ = append(environ, os.Environ()...)
+	environ := append(os.Environ(), e.environ...)
 	environ = append(environ, e.phpEnviron...)
 	gpathname := "PATH"
 	if runtime.GOOS == "windows" {
