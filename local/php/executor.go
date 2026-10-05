@@ -21,6 +21,7 @@ package php
 
 import (
 	"fmt"
+	"html"
 	"io"
 	"os"
 	"os/exec"
@@ -649,7 +650,7 @@ func (e *Executor) phpiniDirForDir() string {
 	return ""
 }
 
-var iniScanDirRegexp = regexp.MustCompile(`Scan this dir for additional \.ini files(?:\s*=>|\s*</td><td class="v">)([^<\r\n]*)`)
+var iniScanDirRegexp = regexp.MustCompile(`Scan this dir for additional \.ini files(?:\s*=>([^\r\n]*)|\s*</td><td class="v">([^<\r\n]*))`)
 
 // phpSystemIniScanDir returns the .ini scan directory the given PHP binary loads
 // on its own, including one injected at runtime by a wrapper (Nix, Homebrew...).
@@ -674,7 +675,11 @@ func parseIniScanDir(phpinfo string) string {
 	if matches == nil {
 		return ""
 	}
-	dir := strings.TrimSpace(matches[1])
+	dir := matches[1]
+	if strings.Contains(matches[0], "</td>") {
+		dir = html.UnescapeString(matches[2])
+	}
+	dir = strings.TrimSpace(dir)
 	if dir == "(none)" {
 		return ""
 	}

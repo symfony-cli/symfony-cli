@@ -396,6 +396,8 @@ func (s *ExecutorSuite) TestPhpIniScanDirComesFromTheExecutedBinary(c *C) {
 func (s *ExecutorSuite) TestParseIniScanDir(c *C) {
 	c.Check(parseIniScanDir("Configuration File (php.ini) Path => /etc/php\nScan this dir for additional .ini files => /etc/php/fpm/conf.d\nAdditional .ini files parsed => /etc/php/fpm/conf.d/10-opcache.ini\n"), Equals, "/etc/php/fpm/conf.d")
 	c.Check(parseIniScanDir(`<tr><td class="e">Scan this dir for additional .ini files </td><td class="v">/etc/php/cgi/conf.d </td></tr>`), Equals, "/etc/php/cgi/conf.d")
+	c.Check(parseIniScanDir(`<tr><td class="e">Scan this dir for additional .ini files </td><td class="v">C:\Users\O&#039;Brien\scoop\apps\php\current\cli;C:\a&amp;b </td></tr>`), Equals, `C:\Users\O'Brien\scoop\apps\php\current\cli;C:\a&b`)
+	c.Check(parseIniScanDir("Scan this dir for additional .ini files => /opt/a&amp;b\n"), Equals, "/opt/a&amp;b")
 	c.Check(parseIniScanDir("Scan this dir for additional .ini files => (none)\n"), Equals, "")
 	c.Check(parseIniScanDir("PHP Version => 8.4.0\n"), Equals, "")
 }
