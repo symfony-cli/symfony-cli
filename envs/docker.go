@@ -56,9 +56,15 @@ func ComputeDockerUserAgent(appName, appVersion string) {
 
 type sortedPorts []container.Port
 
-func (ps sortedPorts) Len() int           { return len(ps) }
-func (ps sortedPorts) Swap(i, j int)      { ps[i], ps[j] = ps[j], ps[i] }
-func (ps sortedPorts) Less(i, j int) bool { return ps[i].PrivatePort < ps[j].PrivatePort }
+func (ps sortedPorts) Len() int      { return len(ps) }
+func (ps sortedPorts) Swap(i, j int) { ps[i], ps[j] = ps[j], ps[i] }
+func (ps sortedPorts) Less(i, j int) bool {
+	if ps[i].PrivatePort != ps[j].PrivatePort {
+		return ps[i].PrivatePort < ps[j].PrivatePort
+	}
+	// services are reached over TCP, even when the same port is also published over UDP (HTTP/3)
+	return ps[i].Type == "tcp" && ps[j].Type != "tcp"
+}
 
 // Port of https://github.com/docker/compose/blob/615c01c50a51408a7fdfed66ecccf73781e87f2c/compose/cli/command.py#L153-L154
 func normalizeDockerComposeProjectName(projectName string) string {
