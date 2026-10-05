@@ -89,7 +89,7 @@ func printWebServerStatus(projectDir string) error {
 		for _, p := range workers {
 			msg := fmt.Sprintf(`    PID <info>%d</>: %s`, p.Pid, p.Command())
 			if len(p.Watched) > 0 {
-				msg += fmt.Sprintf(" (watching <comment>%s</comment>)", strings.Join(watchedPaths(p.Watched), ", "))
+				msg += fmt.Sprintf(" (watching <comment>%s</comment>)", strings.Join(watchedPaths(p.Dir, p.Watched), ", "))
 			}
 			terminal.Println(msg)
 		}
@@ -115,10 +115,13 @@ func printWebServerStatus(projectDir string) error {
 	return nil
 }
 
-func watchedPaths(paths []string) []string {
+func watchedPaths(dir string, paths []string) []string {
 	formatted := make([]string, len(paths))
 	for i, path := range paths {
 		formatted[i] = path
+		if !filepath.IsAbs(path) {
+			path = filepath.Join(dir, path)
+		}
 		if fi, err := os.Stat(path); err == nil && fi.IsDir() {
 			formatted[i] += string(filepath.Separator)
 		}
