@@ -76,7 +76,8 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 			slug = "app"
 		}
 
-		cloudServices, err := parseCloudServices(projectDir, c.StringSlice("service"))
+		registry := upsun.NewMetaRegistry()
+		cloudServices, err := parseCloudServices(registry, projectDir, c.StringSlice("service"))
 		if err != nil {
 			return err
 		}
@@ -85,7 +86,7 @@ Templates used by this tool are fetched from ` + templatesGitRepository + `.
 		if c.Bool("upsun") {
 			product = upsun.Flex
 		}
-		createdFiles, err := createRequiredFilesProject(product, projectDir, slug, c.String("template"), minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
+		createdFiles, err := createRequiredFilesProject(registry, product, projectDir, slug, c.String("template"), minorPHPVersion, cloudServices, c.Bool("dump"), c.Bool("force"))
 		if err != nil {
 			return err
 		}

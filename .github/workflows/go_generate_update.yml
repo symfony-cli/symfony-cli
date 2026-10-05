@@ -69,8 +69,8 @@ jobs:
                 name: Commit the update for Upsun-related code
                 if: steps.git.outputs.gitstatus != ''
                 run: |
-                    git add local/upsun/commands.go local/upsun/config.go
-                    git diff --staged --quiet || git commit -m "Update supported Upsun services"
+                    git add local/upsun/commands.go
+                    git diff --staged --quiet || git commit -m "Update Upsun CLI commands"
 
             -   name: Commit the update for Docker-related code
                 if: steps.git.outputs.gitstatus != ''

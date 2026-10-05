@@ -21,5 +21,4 @@ package main
 
 func main() {
 	generateCommands()
-	generateConfig()
 }

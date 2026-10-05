@@ -47,9 +47,9 @@ type nopCloser struct {
 
 func (nopCloser) Close() error { return nil }
 
-func createRequiredFilesProject(product upsun.CloudProduct, rootDirectory, projectSlug, templateName string, minorPHPVersion string, cloudServices []*CloudService, dump, force bool) ([]string, error) {
+func createRequiredFilesProject(checker phpExtensionChecker, product upsun.CloudProduct, rootDirectory, projectSlug, templateName string, minorPHPVersion string, cloudServices []*CloudService, dump, force bool) ([]string, error) {
 	createdFiles := []string{}
-	templates, err := getTemplates(product, rootDirectory, templateName, minorPHPVersion)
+	templates, err := getTemplates(checker, product, rootDirectory, templateName, minorPHPVersion)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not determine template to use")
 	}
@@ -158,7 +158,7 @@ func isValidFilePath(toTest string) bool {
 	return true
 }
 
-func getTemplates(product upsun.CloudProduct, rootDirectory, chosenTemplateName string, minorPHPVersion string) (map[string]*template.Template, error) {
+func getTemplates(checker phpExtensionChecker, product upsun.CloudProduct, rootDirectory, chosenTemplateName string, minorPHPVersion string) (map[string]*template.Template, error) {
 	var foundTemplate *configTemplate
 
 	s := terminal.NewSpinner(terminal.Stderr)
@@ -267,7 +267,7 @@ func getTemplates(product upsun.CloudProduct, rootDirectory, chosenTemplateName 
 				continue
 			}
 
-			if chosenTemplateName == "" && !templateConfig.Match(rootDirectory, minorPHPVersion) {
+			if chosenTemplateName == "" && !templateConfig.Match(checker, rootDirectory, minorPHPVersion) {
 				continue
 			}
 
@@ -296,7 +296,7 @@ func getTemplates(product upsun.CloudProduct, rootDirectory, chosenTemplateName 
 {{ end -}}
 `
 
-	templateFuncs := getTemplateFuncs(rootDirectory, minorPHPVersion)
+	templateFuncs := getTemplateFuncs(checker, rootDirectory, minorPHPVersion)
 	var templates map[string]*template.Template
 	if product == upsun.Flex {
 		templates = map[string]*template.Template{
@@ -332,9 +332,9 @@ type configTemplate struct {
 	Template     string
 }
 
-func (c *configTemplate) Match(directory, minorPHPVersion string) bool {
+func (c *configTemplate) Match(checker phpExtensionChecker, directory, minorPHPVersion string) bool {
 	for _, req := range c.Requirements {
-		if !req.Check(directory, minorPHPVersion) {
+		if !req.Check(checker, directory, minorPHPVersion) {
 			return false
 		}
 	}
@@ -346,8 +346,8 @@ type configRequirement struct {
 	Type, Value string
 }
 
-func (req configRequirement) Check(directory, minorPHPVersion string) bool {
-	if f, ok := getTemplateFuncs(directory, minorPHPVersion)[req.Type].(func(string) bool); ok {
+func (req configRequirement) Check(checker phpExtensionChecker, directory, minorPHPVersion string) bool {
+	if f, ok := getTemplateFuncs(checker, directory, minorPHPVersion)[req.Type].(func(string) bool); ok {
 		return f(req.Value)
 	}
 
@@ -355,7 +355,11 @@ func (req configRequirement) Check(directory, minorPHPVersion string) bool {
 	return false
 }
 
-func getTemplateFuncs(rootDirectory, minorPHPVersion string) template.FuncMap {
+type phpExtensionChecker interface {
+	IsPHPExtensionAvailable(ext, phpVersion string) (bool, error)
+}
+
+func getTemplateFuncs(checker phpExtensionChecker, rootDirectory, minorPHPVersion string) template.FuncMap {
 	return template.FuncMap{
 		"file_exists": func(file string) bool {
 			_, err := os.Stat(filepath.Join(rootDirectory, file))
@@ -372,7 +376,7 @@ func getTemplateFuncs(rootDirectory, minorPHPVersion string) template.FuncMap {
 			// FIXME: obsolete, replaced by PHPExtensions, should be removed
 			return phpExtensions(rootDirectory)
 		},
-		"php_extension_available": upsun.IsPhpExtensionAvailable,
+		"php_extension_available": checker.IsPHPExtensionAvailable,
 		"php_at_least": func(v string) bool {
 			minVersion, err := version.NewVersion(v)
 			if err != nil {

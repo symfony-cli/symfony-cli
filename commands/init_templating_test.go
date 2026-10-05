@@ -53,7 +53,7 @@ func TestCreateRequiredFilesProject(t *testing.T) {
 		service.SetEndpoint()
 	}
 
-	if _, err := createRequiredFilesProject(upsun.Fixed, projectDir, slug, "", "8.0", services, false, true); err != nil {
+	if _, err := createRequiredFilesProject(fakeUpsunRegistry{}, upsun.Fixed, projectDir, slug, "", "8.0", services, false, true); err != nil {
 		panic(err)
 	}
 
@@ -104,7 +104,7 @@ func TestCreateRequiredFilesProjectForUpsun(t *testing.T) {
 		service.SetEndpoint()
 	}
 
-	if _, err := createRequiredFilesProject(upsun.Flex, projectDir, slug, "", "8.0", services, false, true); err != nil {
+	if _, err := createRequiredFilesProject(fakeUpsunRegistry{}, upsun.Flex, projectDir, slug, "", "8.0", services, false, true); err != nil {
 		panic(err)
 	}
 
