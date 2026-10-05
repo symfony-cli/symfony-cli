@@ -1,0 +1,7 @@
+version: '3'
+
+services:
+  database:
+    image: postgres:9.6-alpine
+    ports:
+      - "5432"

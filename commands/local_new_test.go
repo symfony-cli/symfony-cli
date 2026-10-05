@@ -48,6 +48,11 @@ func TestParseDockerComposeServices(t *testing.T) {
 			Type:    "postgresql",
 			Version: "10",
 		},
+		"testdata/docker/postgresql/9/": {
+			Name:    "database",
+			Type:    "postgresql",
+			Version: "9.6",
+		},
 		"testdata/docker/postgresql/next/": {
 			Name:    "database",
 			Type:    "postgresql",
