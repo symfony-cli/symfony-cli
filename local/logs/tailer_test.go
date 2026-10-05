@@ -50,6 +50,30 @@ func TestWatchApplicationLogDirectories(t *testing.T) {
 	assertLines(t, tailer, "prod line", "test line", "dev line")
 }
 
+func TestWatchApplicationLogDirectoryOnlyReplaysLatestLogFile(t *testing.T) {
+	projectDir := t.TempDir()
+	logDir := filepath.Join(projectDir, "var", "log")
+	rotated := filepath.Join(logDir, "dev-2026-10-01.log")
+	writeLog(t, rotated, "rotated line\n")
+	writeLog(t, filepath.Join(logDir, "dev-2026-10-02.log"), "latest line\n")
+	old := time.Now().Add(-24 * time.Hour)
+	if err := os.Chtimes(rotated, old, old); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("HOME", t.TempDir())
+	tailer := &Tailer{Follow: true, LinesNb: 10, NoServerLogs: true, NoWorkerLogs: true}
+	if err := tailer.Watch(pid.New(projectDir, nil)); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(500 * time.Millisecond)
+
+	// older log files are followed from their end once written to
+	writeLog(t, rotated, "new rotated line\n")
+
+	assertLines(t, tailer, "latest line", "new rotated line")
+}
+
 func TestWatchApplicationLogFile(t *testing.T) {
 	projectDir := t.TempDir()
 	logDir := filepath.Join(projectDir, "var", "log")
