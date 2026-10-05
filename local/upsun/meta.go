@@ -23,6 +23,8 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -64,18 +66,65 @@ func NewMetaRegistry(appVersion string) *MetaRegistry {
 	}
 }
 
-// ServiceLastVersion returns an empty string for unknown service types.
-func (r *MetaRegistry) ServiceLastVersion(serviceType string) (string, error) {
+// ServiceVersion returns the Upsun version of a service type to use for the
+// wanted one (like a Docker image version), and whether it matches it:
+//
+//  1. the newest supported or deprecated version matching the wanted one, like
+//     16 for 16.4 or 8.8 for 8;
+//  2. otherwise, the oldest supported version newer than the wanted one, so
+//     that a retired version is upgraded as little as possible;
+//  3. otherwise (or when wanted is empty), the newest supported version.
+//
+// Deprecated versions are only used in steps 2 and 3 when no version is
+// supported. It returns an empty string for unknown service types.
+func (r *MetaRegistry) ServiceVersion(serviceType, wanted string) (string, bool, error) {
+	supported, deprecated, err := r.serviceVersions(serviceType)
+	if err != nil {
+		return "", false, err
+	}
+
+	if wanted != "" {
+		var match *version.Version
+		for _, v := range slices.Concat(supported, deprecated) {
+			if versionMatches(v.Original(), wanted) && (match == nil || v.GreaterThan(match)) {
+				match = v
+			}
+		}
+		if match != nil {
+			return match.Original(), true, nil
+		}
+	}
+
+	candidates := supported
+	if len(candidates) == 0 {
+		candidates = deprecated
+	}
+	if len(candidates) == 0 {
+		return "", false, nil
+	}
+	if w, err := version.NewVersion(wanted); err == nil {
+		for _, v := range candidates {
+			if v.GreaterThan(w) {
+				return v.Original(), false, nil
+			}
+		}
+	}
+	return candidates[len(candidates)-1].Original(), false, nil
+}
+
+// serviceVersions returns the supported and deprecated versions of a service
+// type, sorted from the oldest to the newest.
+func (r *MetaRegistry) serviceVersions(serviceType string) ([]*version.Version, []*version.Version, error) {
 	if r.images == nil {
 		if err := r.fetch("/images", &r.images); err != nil {
-			return "", err
+			return nil, nil, err
 		}
 	}
 	image, ok := r.images[serviceType]
 	if !ok || !image.Service {
-		return "", nil
+		return nil, nil, nil
 	}
-	latest := map[string]*version.Version{}
+	var supported, deprecated []*version.Version
 	for raw, info := range image.Versions {
 		status := info.Upsun.Status
 		if status != "supported" && status != "deprecated" {
@@ -83,18 +132,29 @@ func (r *MetaRegistry) ServiceLastVersion(serviceType string) (string, error) {
 		}
 		v, err := version.NewVersion(raw)
 		if err != nil {
-			return "", errors.Wrapf(err, "unable to parse version %q of service %q", raw, serviceType)
+			return nil, nil, errors.Wrapf(err, "unable to parse version %q of service %q", raw, serviceType)
 		}
-		if l := latest[status]; l == nil || v.GreaterThan(l) {
-			latest[status] = v
-		}
-	}
-	for _, status := range []string{"supported", "deprecated"} {
-		if v := latest[status]; v != nil {
-			return v.Original(), nil
+		if status == "supported" {
+			supported = append(supported, v)
+		} else {
+			deprecated = append(deprecated, v)
 		}
 	}
-	return "", nil
+	sort.Sort(version.Collection(supported))
+	sort.Sort(version.Collection(deprecated))
+	return supported, deprecated, nil
+}
+
+// versionMatches reports whether two versions are equal on the segments they
+// both define, like 16 and 16.4.
+func versionMatches(a, b string) bool {
+	as, bs := strings.Split(a, "."), strings.Split(b, ".")
+	for i := range min(len(as), len(bs)) {
+		if as[i] != bs[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func (r *MetaRegistry) IsPHPExtensionAvailable(ext, phpVersion string) (bool, error) {

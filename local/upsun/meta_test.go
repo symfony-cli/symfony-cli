@@ -110,23 +110,39 @@ func newTestMetaRegistry(t *testing.T) (*MetaRegistry, map[string]int) {
 	return registry, hits
 }
 
-func TestMetaRegistryServiceLastVersion(t *testing.T) {
+func TestMetaRegistryServiceVersion(t *testing.T) {
 	registry, hits := newTestMetaRegistry(t)
-	for serviceType, expected := range map[string]string{
-		"postgresql": "18",
-		"opensearch": "3",
-		"legacy":     "1.10",
-		"gone":       "",
-		"php":        "",
-		"unknown":    "",
+	for _, tc := range []struct {
+		serviceType, wanted string
+		expected            string
+		matches             bool
+	}{
+		{"postgresql", "", "18", false},
+		{"postgresql", "14", "14", true},
+		{"postgresql", "14.5", "14", true},
+		{"postgresql", "9.6", "14", false},
+		{"postgresql", "10", "14", false},
+		{"postgresql", "16", "18", false},
+		{"postgresql", "19", "18", false},
+		{"opensearch", "", "3", false},
+		{"opensearch", "2.11", "2", true},
+		{"opensearch", "1", "3", false},
+		{"legacy", "", "1.10", false},
+		{"legacy", "1", "1.10", true},
+		{"legacy", "1.1", "1.9", false},
+		{"legacy", "2.0", "1.10", false},
+		{"gone", "", "", false},
+		{"gone", "1.0", "", false},
+		{"php", "8.5", "", false},
+		{"unknown", "1", "", false},
 	} {
-		t.Run(serviceType, func(t *testing.T) {
-			got, err := registry.ServiceLastVersion(serviceType)
+		t.Run(tc.serviceType+":"+tc.wanted, func(t *testing.T) {
+			got, matches, err := registry.ServiceVersion(tc.serviceType, tc.wanted)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if got != expected {
-				t.Errorf("got %q, expected %q", got, expected)
+			if got != tc.expected || matches != tc.matches {
+				t.Errorf("got %q (matches: %v), expected %q (matches: %v)", got, matches, tc.expected, tc.matches)
 			}
 		})
 	}
@@ -172,7 +188,7 @@ func TestMetaRegistryFailsOnErrorStatus(t *testing.T) {
 	registry := NewMetaRegistry("1.2.3")
 	registry.BaseURL = server.URL
 
-	if _, err := registry.ServiceLastVersion("postgresql"); err == nil {
+	if _, _, err := registry.ServiceVersion("postgresql", ""); err == nil {
 		t.Error("expected an error when fetching services fails")
 	}
 	if _, err := registry.IsPHPExtensionAvailable("redis", "8.4"); err == nil {

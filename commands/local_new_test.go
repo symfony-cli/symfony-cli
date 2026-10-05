@@ -21,13 +21,18 @@ package commands
 
 import (
 	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"testing"
+
+	"github.com/symfony-cli/symfony-cli/local/upsun"
 )
 
 type fakeUpsunRegistry map[string]string
 
-func (r fakeUpsunRegistry) ServiceLastVersion(serviceType string) (string, error) {
-	return r[serviceType], nil
+func (r fakeUpsunRegistry) ServiceVersion(serviceType, wanted string) (string, bool, error) {
+	return r[serviceType], wanted != "" && r[serviceType] == wanted, nil
 }
 
 func (r fakeUpsunRegistry) IsPHPExtensionAvailable(ext, phpVersion string) (bool, error) {
@@ -38,42 +43,36 @@ type failingUpsunRegistry struct{}
 
 var errRegistryUnavailable = errors.New("registry unavailable")
 
-func (failingUpsunRegistry) ServiceLastVersion(serviceType string) (string, error) {
-	return "", errRegistryUnavailable
+func (failingUpsunRegistry) ServiceVersion(serviceType, wanted string) (string, bool, error) {
+	return "", false, errRegistryUnavailable
 }
 
 func TestParseDockerComposeServices(t *testing.T) {
-	registry := fakeUpsunRegistry{"postgresql": "18"}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, `{"postgresql": {"service": true, "versions": {
+			"9.6": {"upsun": {"status": "retired"}},
+			"10": {"upsun": {"status": "retired"}},
+			"14": {"upsun": {"status": "supported"}},
+			"18": {"upsun": {"status": "supported"}}
+		}}}`)
+	}))
+	defer server.Close()
+	registry := upsun.NewMetaRegistry("dev")
+	registry.BaseURL = server.URL
 	t.Setenv("POSTGRES_NEXT_VERSION", "19")
 
-	for dir, expected := range map[string]CloudService{
-		"testdata/docker/postgresql/noversion/": {
-			Name:    "database",
-			Type:    "postgresql",
-			Version: "18",
-		},
-		"testdata/docker/postgresql/10/": {
-			Name:    "database",
-			Type:    "postgresql",
-			Version: "10",
-		},
-		"testdata/docker/postgresql/9/": {
-			Name:    "database",
-			Type:    "postgresql",
-			Version: "9.6",
-		},
-		"testdata/docker/postgresql/next/": {
-			Name:    "database",
-			Type:    "postgresql",
-			Version: "18",
-		},
+	for dir, expected := range map[string]string{
+		"testdata/docker/postgresql/noversion/": "18",
+		"testdata/docker/postgresql/10/":        "14",
+		"testdata/docker/postgresql/9/":         "14",
+		"testdata/docker/postgresql/next/":      "18",
 	} {
 		result, err := parseDockerComposeServices(registry, dir)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if result[0].Version != expected.Version {
-			t.Errorf("parseDockerComposeServices(none/%q): got %v, expected %v", dir, result[0].Version, expected.Version)
+		if result[0].Name != "database" || result[0].Type != "postgresql" || result[0].Version != expected {
+			t.Errorf("parseDockerComposeServices(%q): got %s:%s:%s, expected database:postgresql:%s", dir, result[0].Name, result[0].Type, result[0].Version, expected)
 		}
 	}
 }

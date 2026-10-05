@@ -279,7 +279,7 @@ func initCloud(c *console.Context, product upsun.CloudProduct, minorPHPVersion, 
 }
 
 type serviceVersionFinder interface {
-	ServiceLastVersion(serviceType string) (string, error)
+	ServiceVersion(serviceType, wanted string) (string, bool, error)
 }
 
 func parseCloudServices(finder serviceVersionFinder, dir string, services []string) ([]*CloudService, error) {
@@ -324,7 +324,7 @@ func parseCLIServices(finder serviceVersionFinder, services []string) ([]*CloudS
 			if serviceType == "redis-persistent" {
 				serviceType = service.Endpoint
 			}
-			version, err := finder.ServiceLastVersion(serviceType)
+			version, _, err := finder.ServiceVersion(serviceType, "")
 			if err != nil {
 				return nil, err
 			}
@@ -334,18 +334,6 @@ func parseCLIServices(finder serviceVersionFinder, services []string) ([]*CloudS
 		cloudServices = append(cloudServices, service)
 	}
 	return cloudServices, nil
-}
-
-func isNewerVersion(v, than string) bool {
-	parsed, err := version.NewVersion(v)
-	if err != nil {
-		return false
-	}
-	parsedThan, err := version.NewVersion(than)
-	if err != nil {
-		return false
-	}
-	return parsed.GreaterThan(parsedThan)
 }
 
 func parseDockerComposeServices(finder serviceVersionFinder, dir string) ([]*CloudService, error) {
@@ -398,16 +386,17 @@ func parseDockerComposeServices(finder serviceVersionFinder, dir string) ([]*Clo
 				s.SetEndpoint()
 
 				parts := strings.Split(service.Image, ":")
-				s.Version = regexp.MustCompile(`\d+(\.\d+)?`).FindString(parts[len(parts)-1])
-				serviceLastVersion, err := finder.ServiceLastVersion(s.Type)
+				dockerVersion := regexp.MustCompile(`\d+(\.\d+)?`).FindString(parts[len(parts)-1])
+				version, matches, err := finder.ServiceVersion(s.Type, dockerVersion)
 				if err != nil {
 					return nil, err
 				}
-				if s.Version == "" {
-					s.Version = serviceLastVersion
-				} else if isNewerVersion(s.Version, serviceLastVersion) {
-					terminal.Printf("Unsupported %s version %s using version %s\n", s.Type, s.Version, serviceLastVersion)
-					s.Version = serviceLastVersion
+				s.Version = dockerVersion
+				if version != "" {
+					if dockerVersion != "" && !matches {
+						terminal.Printf("Unsupported %s version %s, using version %s\n", s.Type, dockerVersion, version)
+					}
+					s.Version = version
 				}
 				cloudServices = append(cloudServices, s)
 			}
