@@ -62,11 +62,14 @@ func (s *Server) servePreloadLinks(w http.ResponseWriter, r *http.Request) ([]st
 			if isRemoteResource(resource.uri) {
 				continue
 			}
-			if err := errors.WithStack(pusher.Push(resource.uri, &http.PushOptions{
+			if err := pusher.Push(resource.uri, &http.PushOptions{
 				Method: http.MethodGet,
 				Header: headers,
-			})); err != nil {
-				return nil, err
+			}); errors.Is(err, http.ErrNotSupported) {
+				// HTTP/1.x, or HTTP/2 with push disabled by the client
+				return nil, nil
+			} else if err != nil {
+				return nil, errors.WithStack(err)
 			}
 			rs = append(rs, resource.uri)
 		}
