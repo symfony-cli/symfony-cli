@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/symfony-cli/terminal"
@@ -105,6 +106,20 @@ func phpExtensions(directory string) []string {
 	}
 
 	return exts
+}
+
+func cloudPHPExtensions(rootDirectory string, cloudServices []*CloudService) []string {
+	serviceExtensions := map[string][]string{
+		"postgresql": {"pdo_pgsql"},
+		"redis":      {"redis"},
+		"rabbitmq":   {"amqp"},
+	}
+	exts := append(phpExtensions(rootDirectory), "apcu", "mbstring", "sodium", "xsl", "blackfire")
+	for _, service := range cloudServices {
+		exts = append(exts, serviceExtensions[service.Endpoint]...)
+	}
+	slices.Sort(exts)
+	return slices.Compact(exts)
 }
 
 func hasPHPExtension(directory, ext string) bool {

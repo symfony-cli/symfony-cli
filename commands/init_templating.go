@@ -26,7 +26,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"text/template"
 
@@ -63,18 +62,6 @@ func createRequiredFilesProject(checker phpExtensionChecker, product upsun.Cloud
 	if _, err := os.Stat(filepath.Join(rootDirectory, publicDirectory, "app.php")); err == nil {
 		frontController = "app.php"
 	}
-	availablePHPExtensions := map[string][]string{
-		"postgresql": {"pdo_pgsql"},
-		"redis":      {"redis"},
-		"rabbitmq":   {"amqp"},
-	}
-	phpExts := append(phpExtensions(rootDirectory), "apcu", "mbstring", "sodium", "xsl", "blackfire")
-	for _, service := range cloudServices {
-		if v, ok := availablePHPExtensions[service.Endpoint]; ok {
-			phpExts = append(phpExts, v...)
-		}
-	}
-	sort.Strings(phpExts)
 	serviceDiskSizes := map[string]string{
 		"postgresql": "1024",
 	}
@@ -92,7 +79,7 @@ func createRequiredFilesProject(checker phpExtensionChecker, product upsun.Cloud
 		FrontController:  frontController,
 		PublicDirectory:  publicDirectory,
 		PhpVersion:       minorPHPVersion,
-		PHPExtensions:    phpExts,
+		PHPExtensions:    cloudPHPExtensions(rootDirectory, cloudServices),
 		Services:         cloudServices,
 		ServiceDiskSizes: serviceDiskSizes,
 	}

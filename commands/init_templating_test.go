@@ -23,6 +23,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -129,5 +130,25 @@ services:
 	expected = strings.TrimSpace(expected)
 	if strings.Contains(string(result), expected) {
 		t.Errorf("upsun/config.yaml: got %v, expected %v", string(result), expected)
+	}
+}
+
+func TestCloudPHPExtensionsAreUnique(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "composer.json"), []byte(`{"require": {"ext-redis": "*", "ext-sodium": "*", "ext-zip": "*"}}`), 0644); err != nil {
+		t.Fatal(err)
+	}
+	services := []*CloudService{
+		{Name: "cache", Type: "redis"},
+		{Name: "sessions", Type: "redis-persistent"},
+	}
+	for _, service := range services {
+		service.SetEndpoint()
+	}
+
+	got := cloudPHPExtensions(dir, services)
+	expected := []string{"apcu", "blackfire", "mbstring", "redis", "sodium", "xsl", "zip"}
+	if !slices.Equal(got, expected) {
+		t.Errorf("got %v, expected %v", got, expected)
 	}
 }
