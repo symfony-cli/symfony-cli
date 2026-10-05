@@ -42,7 +42,7 @@ func LoadDotEnv(vars map[string]string, scriptDir string) map[string]string {
 		}
 
 		vars[k] = v
-		if k != "APP_ENV" && !loaded[k] {
+		if !loaded[k] {
 			if vars["SYMFONY_DOTENV_VARS"] != "" {
 				vars["SYMFONY_DOTENV_VARS"] += ","
 			}
