@@ -25,11 +25,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 
-	"github.com/symfony-cli/symfony-cli/envs"
 	"github.com/symfony-cli/symfony-cli/local/externaltool"
-	"github.com/symfony-cli/symfony-cli/local/php"
 	"github.com/symfony-cli/terminal"
 )
 
@@ -47,14 +44,13 @@ type ProcessRunner interface {
 }
 
 type Checker struct {
-	Resolver           Resolver
-	Runner             ProcessRunner
-	Definition         externaltool.Definition
-	SymfonyCLIPath     func() (string, error)
-	ProjectEnvironment func(string) ([]string, error)
-	Stdin              io.Reader
-	Stdout             io.Writer
-	Stderr             io.Writer
+	Resolver       Resolver
+	Runner         ProcessRunner
+	Definition     externaltool.Definition
+	SymfonyCLIPath func() (string, error)
+	Stdin          io.Reader
+	Stdout         io.Writer
+	Stderr         io.Writer
 }
 
 func NewChecker(home string) *Checker {
@@ -62,14 +58,13 @@ func NewChecker(home string) *Checker {
 	manager.Stderr = terminal.Stderr
 
 	return &Checker{
-		Resolver:           manager,
-		Runner:             NativeProcessRunner{},
-		Definition:         ToolDefinition(home),
-		SymfonyCLIPath:     os.Executable,
-		ProjectEnvironment: projectEnvironmentLoader(php.PHPBinaryForDir),
-		Stdin:              os.Stdin,
-		Stdout:             os.Stdout,
-		Stderr:             os.Stderr,
+		Resolver:       manager,
+		Runner:         NativeProcessRunner{},
+		Definition:     ToolDefinition(home),
+		SymfonyCLIPath: os.Executable,
+		Stdin:          os.Stdin,
+		Stdout:         os.Stdout,
+		Stderr:         os.Stderr,
 	}
 }
 
@@ -104,10 +99,6 @@ func (c *Checker) Run(arguments []string) (int, error) {
 	if err != nil {
 		return ExitWrapperFailure, err
 	}
-	projectEnvironment, err := c.ProjectEnvironment(directory)
-	if err != nil {
-		return ExitWrapperFailure, fmt.Errorf("unable to prepare the project environment: %w", err)
-	}
 	symfonyCLI, err := c.SymfonyCLIPath()
 	if err != nil {
 		return ExitWrapperFailure, fmt.Errorf("unable to locate the Symfony CLI executable: %w", err)
@@ -116,8 +107,8 @@ func (c *Checker) Run(arguments []string) (int, error) {
 	if err != nil {
 		return ExitWrapperFailure, fmt.Errorf("unable to resolve the Symfony CLI executable: %w", err)
 	}
-	environment := append(os.Environ(), projectEnvironment...)
-	environment = append(environment, SymfonyCLIEnvironment+"="+symfonyCLI)
+	// the checker runs the project PHP code with "symfony php", which sets up the project environment
+	environment := append(os.Environ(), SymfonyCLIEnvironment+"="+symfonyCLI)
 
 	return c.Runner.Run(
 		installation.Executable,
@@ -128,32 +119,4 @@ func (c *Checker) Run(arguments []string) (int, error) {
 		c.Stdout,
 		c.Stderr,
 	)
-}
-
-func projectEnvironmentLoader(phpBinaryForDir func(string) envs.PHPBinary) func(string) ([]string, error) {
-	return func(directory string) ([]string, error) {
-		return loadProjectEnvironment(directory, phpBinaryForDir(directory))
-	}
-}
-
-func loadProjectEnvironment(directory string, phpBinary envs.PHPBinary) ([]string, error) {
-	environment, err := envs.GetEnv(directory, terminal.IsDebug())
-	if err != nil {
-		return nil, err
-	}
-	values, err := envs.LoadDotEnv(envs.AsMap(environment), directory, phpBinary)
-	if err != nil {
-		terminal.Eprintfln("<warning>WARNING</> %s", err)
-	}
-	keys := make([]string, 0, len(values))
-	for key := range values {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	result := make([]string, 0, len(keys))
-	for _, key := range keys {
-		result = append(result, key+"="+values[key])
-	}
-
-	return result, nil
 }

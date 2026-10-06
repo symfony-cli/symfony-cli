@@ -38,7 +38,7 @@ func newLspCheckCommand(run func([]string) (int, error)) *console.Command {
 		Category:    "lsp",
 		Name:        "check",
 		Usage:       "Run Symfony Language Tools diagnostics",
-		Description: "Runs the managed Symfony Language Tools checker with the project's PHP version and environment.",
+		Description: "Runs the managed Symfony Language Tools checker, which runs the project code with \"symfony php\" to use the project's PHP version and environment.",
 		FlagParsing: console.FlagParsingSkipped,
 		Args: []*console.Arg{
 			{Name: "arguments", Optional: true, Slice: true},
