@@ -21,218 +21,184 @@ package envs
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	. "gopkg.in/check.v1"
 )
 
-type DotEnvSuite struct{}
+type DotEnvSuite struct {
+	php         string
+	previousEnv map[string]*string
+}
 
 var _ = Suite(&DotEnvSuite{})
 
-func (s *DotEnvSuite) TestLoadDotEnvKeepsExportedVariables(c *C) {
-	dir := c.MkDir()
-	c.Assert(os.WriteFile(filepath.Join(dir, ".env"), []byte("EXPORTED=dotenv\nEXPORTED_EMPTY=dotenv\nDOTENV_ONLY=dotenv\n"), 0644), IsNil)
-
-	for k, v := range map[string]string{"EXPORTED": "exported", "EXPORTED_EMPTY": ""} {
-		os.Setenv(k, v)
-		defer os.Unsetenv(k)
-	}
-	for _, k := range []string{"APP_ENV", "SYMFONY_DOTENV_VARS"} {
-		if v, ok := os.LookupEnv(k); ok {
-			os.Unsetenv(k)
-			defer os.Setenv(k, v)
+func (s *DotEnvSuite) SetUpTest(c *C) {
+	s.previousEnv = map[string]*string{}
+	if s.php == "" {
+		php, err := exec.LookPath("php")
+		if err != nil {
+			c.Skip("PHP is required to run Dotenv")
 		}
+		s.php = php
 	}
-
-	vars := LoadDotEnv(map[string]string{}, dir)
-
-	c.Check(vars["DOTENV_ONLY"], Equals, "dotenv")
-	c.Check(vars["APP_ENV"], Equals, "dev")
-	c.Check(vars["SYMFONY_DOTENV_VARS"], Equals, "DOTENV_ONLY")
-	_, ok := vars["EXPORTED"]
-	c.Check(ok, Equals, false)
-	_, ok = vars["EXPORTED_EMPTY"]
-	c.Check(ok, Equals, false)
+	vendorDir, err := filepath.Abs("testdata/dotenv/vendor")
+	c.Assert(err, IsNil)
+	s.setEnv(c, map[string]string{"COMPOSER_VENDOR_DIR": vendorDir, "APP_ENV": "", "SYMFONY_DOTENV_VARS": ""})
+	os.Unsetenv("APP_ENV")
 }
 
-func (s *DotEnvSuite) TestLoadDotEnvOverridesVariablesLoadedByParentProcess(c *C) {
-	dir := c.MkDir()
-	c.Assert(os.WriteFile(filepath.Join(dir, ".env"), []byte("APP_ENV=dev\nINHERITED=dotenv\nEXPORTED=dotenv\n"), 0644), IsNil)
-
-	// INHERITED was loaded from a .env file by a parent process, EXPORTED by the user
-	for k, v := range map[string]string{"INHERITED": "parent", "EXPORTED": "exported", "APP_ENV": "prod", "SYMFONY_DOTENV_VARS": "INHERITED,APP_ENV"} {
-		if old, ok := os.LookupEnv(k); ok {
-			defer os.Setenv(k, old)
-		} else {
-			defer os.Unsetenv(k)
-		}
-		os.Setenv(k, v)
-	}
-
-	vars := LoadDotEnv(map[string]string{}, dir)
-
-	c.Check(vars["INHERITED"], Equals, "dotenv")
-	c.Check(vars["APP_ENV"], Equals, "dev")
-	_, ok := vars["EXPORTED"]
-	c.Check(ok, Equals, false)
-	c.Check(vars["SYMFONY_DOTENV_VARS"], Equals, "INHERITED,APP_ENV")
+func (s *DotEnvSuite) phpBinary() (string, error) {
+	return s.php, nil
 }
 
-func (s *DotEnvSuite) TestLoadDotEnvUnlistsComputedVariables(c *C) {
-	dir := c.MkDir()
-	c.Assert(os.WriteFile(filepath.Join(dir, ".env"), []byte("DATABASE_URL=dotenv\nFOO=dotenv\n"), 0644), IsNil)
+func (s *DotEnvSuite) TestLoadDotEnv(c *C) {
+	dir := writeDotEnvFiles(c, map[string]string{
+		".env":       "APP_ENV=dev\nEXPORTED=dotenv\nFOO=env\nBAR=env\n",
+		".env.local": "BAR=local\n",
+		".env.dev":   "BAZ=dev\n",
+	})
+	s.setEnv(c, map[string]string{"EXPORTED": "exported"})
 
-	for k, v := range map[string]string{"DATABASE_URL": "parent", "FOO": "parent", "SYMFONY_DOTENV_VARS": "DATABASE_URL,FOO"} {
-		if old, ok := os.LookupEnv(k); ok {
-			defer os.Setenv(k, old)
-		} else {
-			defer os.Unsetenv(k)
-		}
-		os.Setenv(k, v)
-	}
+	vars, err := LoadDotEnv(map[string]string{}, dir, s.phpBinary)
 
-	vars := LoadDotEnv(map[string]string{"DATABASE_URL": "docker"}, dir)
+	c.Assert(err, IsNil)
+	c.Check(vars, DeepEquals, map[string]string{
+		"APP_ENV":             "dev",
+		"FOO":                 "env",
+		"BAR":                 "local",
+		"BAZ":                 "dev",
+		"SYMFONY_DOTENV_VARS": "FOO,BAR,BAZ",
+	})
+}
 
+func (s *DotEnvSuite) TestLoadDotEnvFromSubdirectory(c *C) {
+	dir := writeDotEnvFiles(c, map[string]string{".env": "FOO=env\n"})
+	subdir := filepath.Join(dir, "bin")
+	c.Assert(os.Mkdir(subdir, 0755), IsNil)
+
+	vars, err := LoadDotEnv(map[string]string{}, subdir, s.phpBinary)
+
+	c.Assert(err, IsNil)
+	c.Check(vars["FOO"], Equals, "env")
+}
+
+func (s *DotEnvSuite) TestLoadDotEnvKeepsComputedVariables(c *C) {
+	dir := writeDotEnvFiles(c, map[string]string{".env": "DATABASE_URL=dotenv\nFOO=dotenv\n"})
+	// a parent process loaded both from .env files
+	s.setEnv(c, map[string]string{"DATABASE_URL": "parent", "FOO": "parent", "SYMFONY_DOTENV_VARS": "DATABASE_URL,FOO"})
+
+	vars, err := LoadDotEnv(map[string]string{"DATABASE_URL": "docker"}, dir, s.phpBinary)
+
+	c.Assert(err, IsNil)
 	c.Check(vars["DATABASE_URL"], Equals, "docker")
 	c.Check(vars["FOO"], Equals, "dotenv")
 	c.Check(vars["SYMFONY_DOTENV_VARS"], Equals, "FOO")
 }
 
-func (s *DotEnvSuite) TestLoadDotEnvWithoutDotEnvFiles(c *C) {
-	cwd := c.MkDir()
-	c.Assert(os.WriteFile(filepath.Join(cwd, ".env"), []byte("FOO=cwd\n"), 0644), IsNil)
-	previous, err := os.Getwd()
-	c.Assert(err, IsNil)
-	defer os.Chdir(previous)
-	c.Assert(os.Chdir(cwd), IsNil)
-	withAppEnv("", func() {
-		vars := LoadDotEnv(map[string]string{}, c.MkDir())
+func (s *DotEnvSuite) TestLoadDotEnvKeepsInheritedAppEnvListed(c *C) {
+	dir := writeDotEnvFiles(c, map[string]string{".env": "APP_ENV=dev\n", ".env.dev": "FOO=dev\n"})
+	s.setEnv(c, map[string]string{"APP_ENV": "prod", "SYMFONY_DOTENV_VARS": "APP_ENV"})
 
-		c.Check(vars, DeepEquals, map[string]string{"SYMFONY_DOTENV_VARS": ""})
-	})
+	vars, err := LoadDotEnv(map[string]string{}, dir, s.phpBinary)
+
+	c.Assert(err, IsNil)
+	c.Check(vars["APP_ENV"], Equals, "dev")
+	c.Check(vars["FOO"], Equals, "dev")
+	c.Check(vars["SYMFONY_DOTENV_VARS"], Equals, "APP_ENV,FOO")
+}
+
+func (s *DotEnvSuite) TestLoadDotEnvWithoutDotEnvFiles(c *C) {
+	vars, err := LoadDotEnv(map[string]string{}, c.MkDir(), failingPHPBinary(c))
+
+	c.Assert(err, IsNil)
+	c.Check(vars, DeepEquals, map[string]string{"SYMFONY_DOTENV_VARS": ""})
+}
+
+func (s *DotEnvSuite) TestLoadDotEnvWithoutDotenvComponent(c *C) {
+	dir := writeDotEnvFiles(c, map[string]string{".env": "FOO=env\n"})
+	s.setEnv(c, map[string]string{"COMPOSER_VENDOR_DIR": c.MkDir()})
+
+	vars, err := LoadDotEnv(map[string]string{}, dir, failingPHPBinary(c))
+
+	c.Assert(err, IsNil)
+	c.Check(vars, DeepEquals, map[string]string{"SYMFONY_DOTENV_VARS": ""})
+}
+
+func (s *DotEnvSuite) TestLoadDotEnvReportsDotenvErrors(c *C) {
+	dir := writeDotEnvFiles(c, map[string]string{".env": "FOO=env\nINVALID\n"})
+
+	vars, err := LoadDotEnv(map[string]string{"DATABASE_URL": "docker"}, dir, s.phpBinary)
+
+	c.Assert(err, ErrorMatches, `unable to load the \.env files: Missing = in ".*\.env"\.`)
+	c.Check(vars, DeepEquals, map[string]string{"DATABASE_URL": "docker", "SYMFONY_DOTENV_VARS": ""})
 }
 
 func (s *DotEnvSuite) TestLookupEnv(c *C) {
-	dir := c.MkDir()
-	c.Assert(os.WriteFile(filepath.Join(dir, ".env"), []byte("INHERITED=dotenv\nEXPORTED=dotenv\nDOTENV_ONLY=dotenv\n"), 0644), IsNil)
+	dir := writeDotEnvFiles(c, map[string]string{".env": "FOO=env\nEXPORTED=env\n"})
+	s.setEnv(c, map[string]string{"EXPORTED": "exported", "UNRELATED": "exported"})
 
-	for k, v := range map[string]string{"INHERITED": "parent", "INHERITED_ONLY": "parent", "EXPORTED": "exported", "SYMFONY_DOTENV_VARS": "INHERITED,INHERITED_ONLY"} {
-		if old, ok := os.LookupEnv(k); ok {
-			defer os.Setenv(k, old)
-		} else {
-			defer os.Unsetenv(k)
-		}
-		os.Setenv(k, v)
-	}
-
-	for key, expected := range map[string]string{"INHERITED": "dotenv", "INHERITED_ONLY": "parent", "EXPORTED": "exported", "DOTENV_ONLY": "dotenv"} {
-		value, ok := LookupEnv(dir, key)
+	for key, expected := range map[string]string{"FOO": "env", "EXPORTED": "exported"} {
+		value, ok := LookupEnv(dir, key, s.phpBinary)
 		c.Check(ok, Equals, true, Commentf(key))
 		c.Check(value, Equals, expected, Commentf(key))
 	}
-	_, ok := LookupEnv(dir, "UNDEFINED")
+
+	value, ok := LookupEnv(dir, "UNRELATED", failingPHPBinary(c))
+	c.Check(ok, Equals, true)
+	c.Check(value, Equals, "exported")
+	_, ok = LookupEnv(dir, "UNDEFINED", failingPHPBinary(c))
 	c.Check(ok, Equals, false)
 }
 
-func (s *DotEnvSuite) TestLookupDotEnvCascade(c *C) {
-	for _, tc := range []struct {
-		name     string
-		appEnv   string
-		files    map[string]string
-		expected map[string]string
-	}{
-		{
-			name: "later files override earlier ones",
-			files: map[string]string{
-				".env":           "A=env\nB=env\nC=env\nD=env\n",
-				".env.local":     "B=local\nC=local\nD=local\n",
-				".env.dev":       "C=dev\nD=dev\n",
-				".env.dev.local": "D=dev.local\n",
-			},
-			expected: map[string]string{"APP_ENV": "dev", "A": "env", "B": "local", "C": "dev", "D": "dev.local"},
-		},
-		{
-			name: ".env.local can change the environment",
-			files: map[string]string{
-				".env":       "APP_ENV=dev\nA=env\n",
-				".env.local": "APP_ENV=prod\n",
-				".env.dev":   "A=dev\n",
-				".env.prod":  "A=prod\n",
-			},
-			expected: map[string]string{"APP_ENV": "prod", "A": "prod"},
-		},
-		{
-			name:   "an exported environment wins over .env.local",
-			appEnv: "dev",
-			files: map[string]string{
-				".env":       "A=env\n",
-				".env.local": "APP_ENV=prod\n",
-				".env.dev":   "A=dev\n",
-				".env.prod":  "A=prod\n",
-			},
-			expected: map[string]string{"A": "dev"},
-		},
-		{
-			name: ".env.local is ignored in the test environment",
-			files: map[string]string{
-				".env":       "APP_ENV=test\nA=env\n",
-				".env.local": "A=local\n",
-			},
-			expected: map[string]string{"APP_ENV": "test", "A": "env"},
-		},
-		{
-			name: "environment-specific files are ignored in the local environment",
-			files: map[string]string{
-				".env":             "APP_ENV=local\nA=env\n",
-				".env.local":       "B=local\n",
-				".env.local.local": "A=local.local\n",
-			},
-			expected: map[string]string{"APP_ENV": "local", "A": "env", "B": "local"},
-		},
-	} {
-		dir := c.MkDir()
-		for name, content := range tc.files {
-			c.Assert(os.WriteFile(filepath.Join(dir, name), []byte(content), 0644), IsNil)
-		}
-		withAppEnv(tc.appEnv, func() {
-			c.Check(lookupDotEnv(dir), DeepEquals, tc.expected, Commentf(tc.name))
-		})
-	}
-}
-
-func (s *DotEnvSuite) TestLookupDotEnvKeepsExportedEmptyEnvironment(c *C) {
+func (s *DotEnvSuite) TestComposerVendorDir(c *C) {
 	dir := c.MkDir()
-	c.Assert(os.WriteFile(filepath.Join(dir, ".env"), []byte("APP_ENV=prod\nA=env\n"), 0644), IsNil)
-	c.Assert(os.WriteFile(filepath.Join(dir, ".env.local"), []byte("B=local\n"), 0644), IsNil)
-	c.Assert(os.WriteFile(filepath.Join(dir, ".env.dev"), []byte("A=dev\n"), 0644), IsNil)
-	c.Assert(os.WriteFile(filepath.Join(dir, ".env.prod"), []byte("A=prod\n"), 0644), IsNil)
+	os.Unsetenv("COMPOSER_VENDOR_DIR")
+	c.Check(composerVendorDir(dir), Equals, filepath.Join(dir, "vendor"))
 
-	for k, v := range map[string]string{"APP_ENV": "", "SYMFONY_DOTENV_VARS": ""} {
-		if old, ok := os.LookupEnv(k); ok {
-			defer os.Setenv(k, old)
-		} else {
-			defer os.Unsetenv(k)
-		}
-		os.Setenv(k, v)
-	}
+	c.Assert(os.WriteFile(filepath.Join(dir, "composer.json"), []byte(`{"config": {"vendor-dir": "libs"}}`), 0644), IsNil)
+	c.Check(composerVendorDir(dir), Equals, filepath.Join(dir, "libs"))
 
-	c.Check(lookupDotEnv(dir), DeepEquals, map[string]string{"A": "env", "B": "local"})
+	s.setEnv(c, map[string]string{"COMPOSER_VENDOR_DIR": "deps"})
+	c.Check(composerVendorDir(dir), Equals, filepath.Join(dir, "deps"))
 }
 
-func withAppEnv(value string, fn func()) {
-	previous, wasSet := os.LookupEnv("APP_ENV")
-	defer func() {
-		if wasSet {
-			os.Setenv("APP_ENV", previous)
-		} else {
-			os.Unsetenv("APP_ENV")
-		}
-	}()
-	if value == "" {
-		os.Unsetenv("APP_ENV")
-	} else {
-		os.Setenv("APP_ENV", value)
+func writeDotEnvFiles(c *C, files map[string]string) string {
+	dir := c.MkDir()
+	for name, content := range files {
+		c.Assert(os.WriteFile(filepath.Join(dir, name), []byte(content), 0644), IsNil)
 	}
-	fn()
+	return dir
+}
+
+func failingPHPBinary(c *C) PHPBinary {
+	return func() (string, error) {
+		c.Error("PHP must not run")
+		return "", os.ErrNotExist
+	}
+}
+
+// setEnv sets environment variables until the end of the test.
+func (s *DotEnvSuite) setEnv(c *C, vars map[string]string) {
+	for k, v := range vars {
+		if _, recorded := s.previousEnv[k]; !recorded {
+			if previous, ok := os.LookupEnv(k); ok {
+				s.previousEnv[k] = &previous
+			} else {
+				s.previousEnv[k] = nil
+			}
+		}
+		c.Assert(os.Setenv(k, v), IsNil)
+	}
+}
+
+func (s *DotEnvSuite) TearDownTest(c *C) {
+	for k, v := range s.previousEnv {
+		if v == nil {
+			os.Unsetenv(k)
+		} else {
+			os.Setenv(k, *v)
+		}
+	}
 }
