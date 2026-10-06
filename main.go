@@ -66,10 +66,11 @@ func main() {
 	// called via "symfony php"?
 	if len(args) >= 2 && php.IsBinaryName(args[1]) {
 		e := &php.Executor{
-			BinName:  args[1],
-			Args:     args[1:],
-			ExtraEnv: getCliExtraEnv(),
-			Logger:   terminal.Logger,
+			BinName:        args[1],
+			Args:           args[1:],
+			ExtraEnv:       getCliExtraEnv(),
+			Logger:         terminal.Logger,
+			SkipProjectEnv: !php.RunsProjectCode(args[1]),
 		}
 		os.Exit(e.Execute(php.RunsScripts(args[1])))
 	}

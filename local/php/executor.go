@@ -53,6 +53,9 @@ type Executor struct {
 	Paths      []string
 	ExtraEnv   []string
 	Logger     zerolog.Logger
+	// SkipProjectEnv skips the variables computed from Docker or tunnels, for
+	// commands not running project code
+	SkipProjectEnv bool
 
 	environ    []string
 	phpEnviron []string
@@ -92,6 +95,16 @@ func IsBinaryName(name string) bool {
 // might expect the project .env files to be loaded.
 func RunsScripts(name string) bool {
 	return name == "php" || name == "phpdbg"
+}
+
+// RunsProjectCode returns false for the PHP binaries that never run project
+// code, like the ones installing or building extensions.
+func RunsProjectCode(name string) bool {
+	switch name {
+	case "pecl", "pear", "phpize", "php-config":
+		return false
+	}
+	return true
 }
 
 func GetBinaryNames() []string {
@@ -203,8 +216,8 @@ func (e *Executor) DetectScriptDir() (string, error) {
 //  1. exported variables (os.Environ);
 //  2. when loadDotEnv is true, variables from the project .env files, which
 //     never override exported ones (see envs.LoadDotEnv);
-//  3. variables computed from Docker or tunnels, which override exported ones
-//     as these can be stale;
+//  3. unless SkipProjectEnv is true, variables computed from Docker or
+//     tunnels, which override exported ones as these can be stale;
 //  4. PHP_BINARY, PHP_PATH, PHP_PEAR_PHP_BIN and PHP_INI_SCAN_DIR, which point
 //     to the selected PHP version.
 //
@@ -225,9 +238,11 @@ func (e *Executor) Config(loadDotEnv bool) error {
 
 	vars := make(map[string]string)
 	// env defined by Platform.sh services/tunnels or docker-compose services
-	if env, err := envs.GetEnv(e.scriptDir, terminal.IsDebug()); err == nil {
-		for k, v := range envs.AsMap(env) {
-			vars[k] = v
+	if !e.SkipProjectEnv {
+		if env, err := envs.GetEnv(e.scriptDir, terminal.IsDebug()); err == nil {
+			for k, v := range envs.AsMap(env) {
+				vars[k] = v
+			}
 		}
 	}
 

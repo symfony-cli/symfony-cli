@@ -212,6 +212,34 @@ func (s *ExecutorSuite) TestRunsScripts(c *C) {
 	}
 }
 
+func (s *ExecutorSuite) TestSkipProjectEnv(c *C) {
+	home, err := filepath.Abs("testdata/executor")
+	c.Assert(err, IsNil)
+	homedir.Reset()
+	os.Setenv("HOME", home)
+	defer homedir.Reset()
+	defer cleanupExecutorTempFiles()
+	oldwd, _ := os.Getwd()
+	defer os.Chdir(oldwd)
+	os.Chdir(filepath.Join(home, "project"))
+
+	for _, skip := range []bool{false, true} {
+		e := &Executor{BinName: "php", Args: []string{"php"}, SkipProjectEnv: skip}
+		c.Assert(e.Config(false), IsNil)
+		hasProjectEnv := slices.ContainsFunc(e.environ, func(v string) bool { return strings.HasPrefix(v, "SYMFONY_TUNNEL=") })
+		c.Check(hasProjectEnv, Equals, !skip, Commentf("SkipProjectEnv: %v", skip))
+	}
+}
+
+func (s *ExecutorSuite) TestRunsProjectCode(c *C) {
+	for name, expected := range map[string]bool{
+		"php": true, "phpdbg": true, "php-fpm": true, "php-cgi": true,
+		"pecl": false, "pear": false, "phpize": false, "php-config": false,
+	} {
+		c.Check(RunsProjectCode(name), Equals, expected, Commentf(name))
+	}
+}
+
 func (s *ExecutorSuite) TestEnvInjection(c *C) {
 	php, err := exec.LookPath("php")
 	if err != nil {
