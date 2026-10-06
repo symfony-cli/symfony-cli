@@ -71,7 +71,7 @@ func main() {
 			ExtraEnv: getCliExtraEnv(),
 			Logger:   terminal.Logger,
 		}
-		os.Exit(e.Execute(true))
+		os.Exit(e.Execute(php.RunsScripts(args[1])))
 	}
 	// called via "symfony console"?
 	if len(args) >= 2 && args[1] == "console" {

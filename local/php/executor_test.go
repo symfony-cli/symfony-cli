@@ -203,6 +203,15 @@ func (s *ExecutorSuite) TestBinaryOtherThanPhp(c *C) {
 	c.Assert((&Executor{BinName: "php", Args: []string{"not-php"}}).Execute(true), Equals, 0)
 }
 
+func (s *ExecutorSuite) TestRunsScripts(c *C) {
+	for name, expected := range map[string]bool{
+		"php": true, "phpdbg": true,
+		"pecl": false, "pear": false, "phpize": false, "php-config": false, "php-fpm": false, "php-cgi": false,
+	} {
+		c.Check(RunsScripts(name), Equals, expected, Commentf(name))
+	}
+}
+
 func (s *ExecutorSuite) TestEnvInjection(c *C) {
 	php, err := exec.LookPath("php")
 	if err != nil {

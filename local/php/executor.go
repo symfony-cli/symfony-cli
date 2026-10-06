@@ -88,6 +88,12 @@ func IsBinaryName(name string) bool {
 	return false
 }
 
+// RunsScripts returns true if the PHP binary runs arbitrary scripts, which
+// might expect the project .env files to be loaded.
+func RunsScripts(name string) bool {
+	return name == "php" || name == "phpdbg"
+}
+
 func GetBinaryNames() []string {
 	return []string{"php", "pecl", "pear", "php-fpm", "php-cgi", "php-config", "phpdbg", "phpize"}
 }
