@@ -25,6 +25,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -192,6 +193,15 @@ func TestCheckerDoesNotStartAfterWrapperFailure(t *testing.T) {
 }
 
 func TestProjectEnvironmentIncludesProjectDotenvValues(t *testing.T) {
+	php, err := exec.LookPath("php")
+	if err != nil {
+		t.Skip("PHP is required to run Dotenv")
+	}
+	vendorDir, err := filepath.Abs("../../envs/testdata/dotenv/vendor")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("COMPOSER_VENDOR_DIR", vendorDir)
 	directory := t.TempDir()
 	if err := os.WriteFile(filepath.Join(directory, ".env"), []byte("APP_ENV=test\nAPP_SECRET=project-secret\n"), 0644); err != nil {
 		t.Fatal(err)
@@ -199,7 +209,7 @@ func TestProjectEnvironmentIncludesProjectDotenvValues(t *testing.T) {
 	t.Setenv("APP_ENV", "")
 	os.Unsetenv("APP_ENV")
 
-	environment, err := loadProjectEnvironment(directory)
+	environment, err := loadProjectEnvironment(directory, func() (string, error) { return php, nil })
 	if err != nil {
 		t.Fatal(err)
 	}

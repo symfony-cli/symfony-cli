@@ -29,6 +29,7 @@ import (
 
 	"github.com/symfony-cli/symfony-cli/envs"
 	"github.com/symfony-cli/symfony-cli/local/externaltool"
+	"github.com/symfony-cli/symfony-cli/local/php"
 	"github.com/symfony-cli/terminal"
 )
 
@@ -65,7 +66,7 @@ func NewChecker(home string) *Checker {
 		Runner:             NativeProcessRunner{},
 		Definition:         ToolDefinition(home),
 		SymfonyCLIPath:     os.Executable,
-		ProjectEnvironment: loadProjectEnvironment,
+		ProjectEnvironment: projectEnvironmentLoader(php.PHPBinaryForDir),
 		Stdin:              os.Stdin,
 		Stdout:             os.Stdout,
 		Stderr:             os.Stderr,
@@ -129,12 +130,21 @@ func (c *Checker) Run(arguments []string) (int, error) {
 	)
 }
 
-func loadProjectEnvironment(directory string) ([]string, error) {
+func projectEnvironmentLoader(phpBinaryForDir func(string) envs.PHPBinary) func(string) ([]string, error) {
+	return func(directory string) ([]string, error) {
+		return loadProjectEnvironment(directory, phpBinaryForDir(directory))
+	}
+}
+
+func loadProjectEnvironment(directory string, phpBinary envs.PHPBinary) ([]string, error) {
 	environment, err := envs.GetEnv(directory, terminal.IsDebug())
 	if err != nil {
 		return nil, err
 	}
-	values := envs.LoadDotEnv(envs.AsMap(environment), directory)
+	values, err := envs.LoadDotEnv(envs.AsMap(environment), directory, phpBinary)
+	if err != nil {
+		terminal.Eprintfln("<warning>WARNING</> %s", err)
+	}
 	keys := make([]string, 0, len(values))
 	for key := range values {
 		keys = append(keys, key)

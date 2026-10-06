@@ -38,7 +38,7 @@ func SymfonyConsoleExecutor(logger zerolog.Logger, args []string) (*Executor, er
 
 	for {
 		consolePaths := []string{"bin/console", "app/console"}
-		if consolePath, isConsolePathSpecified := envs.LookupEnv(dir, "SYMFONY_CONSOLE_PATH"); isConsolePathSpecified {
+		if consolePath, isConsolePathSpecified := envs.LookupEnv(dir, "SYMFONY_CONSOLE_PATH", PHPBinaryForDir(dir)); isConsolePathSpecified {
 			consolePaths = []string{consolePath}
 		}
 

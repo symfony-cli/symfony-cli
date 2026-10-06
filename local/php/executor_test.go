@@ -32,6 +32,7 @@ import (
 	"testing"
 
 	"github.com/mitchellh/go-homedir"
+	"github.com/symfony-cli/symfony-cli/envs"
 	. "gopkg.in/check.v1"
 )
 
@@ -203,6 +204,21 @@ func (s *ExecutorSuite) TestBinaryOtherThanPhp(c *C) {
 }
 
 func (s *ExecutorSuite) TestEnvInjection(c *C) {
+	php, err := exec.LookPath("php")
+	if err != nil {
+		c.Skip("PHP is required to run Dotenv")
+	}
+	vendorDir, err := filepath.Abs("../../envs/testdata/dotenv/vendor")
+	c.Assert(err, IsNil)
+	os.Setenv("COMPOSER_VENDOR_DIR", vendorDir)
+	defer os.Unsetenv("COMPOSER_VENDOR_DIR")
+	loadDotEnv := func(vars map[string]string, scriptDir string, phpBinary envs.PHPBinary) (map[string]string, error) {
+		bin, err := phpBinary()
+		c.Check(err, IsNil)
+		c.Check(bin, Equals, "../bin/php")
+		return envs.LoadDotEnv(vars, scriptDir, func() (string, error) { return php, nil })
+	}
+
 	defer restoreExecCommand()
 	fakeExecCommand("dump-env")
 
@@ -227,7 +243,7 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 
 	var output bytes.Buffer
 	outCloser := testStdoutCapture(c, &output)
-	c.Assert((&Executor{BinName: "php", Args: []string{"php"}}).Execute(true), Equals, 0)
+	c.Assert((&Executor{BinName: "php", Args: []string{"php"}, loadDotEnv: loadDotEnv}).Execute(true), Equals, 0)
 	outCloser()
 	// Nothing should be injected by default as tunnel is not open
 	c.Check(false, Equals, strings.Contains(output.String(), "DATABASE_URL=pgsql://127.0.0.1:30000"))
@@ -250,7 +266,7 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 
 	output.Reset()
 	outCloser = testStdoutCapture(c, &output)
-	c.Assert((&Executor{BinName: "php", Args: []string{"php"}}).Execute(true), Equals, 0)
+	c.Assert((&Executor{BinName: "php", Args: []string{"php"}, loadDotEnv: loadDotEnv}).Execute(true), Equals, 0)
 	outCloser()
 
 	// Now overridden, check tunnel information is properly loaded
@@ -284,7 +300,7 @@ func (s *ExecutorSuite) TestEnvInjection(c *C) {
 
 	output.Reset()
 	outCloser = testStdoutCapture(c, &output)
-	c.Assert((&Executor{BinName: "php", Args: []string{"php"}}).Execute(true), Equals, 0)
+	c.Assert((&Executor{BinName: "php", Args: []string{"php"}, loadDotEnv: loadDotEnv}).Execute(true), Equals, 0)
 	outCloser()
 
 	c.Check(true, Equals, strings.Contains(output.String(), "USER_DEFINED_ENVVAR=custom"))

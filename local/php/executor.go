@@ -59,9 +59,24 @@ type Executor struct {
 	iniDir     string
 	scriptDir  string
 	tempDir    string
+	loadDotEnv func(vars map[string]string, scriptDir string, phpBinary envs.PHPBinary) (map[string]string, error)
 }
 
 var execCommand = exec.Command
+
+// PHPBinaryForDir returns the CLI binary of the PHP version selected for dir.
+func PHPBinaryForDir(dir string) envs.PHPBinary {
+	return func() (string, error) {
+		if util.InCloud() {
+			return "php", nil
+		}
+		v, _, _, err := phpstore.New(util.GetHomeDir(), false, nil).BestVersionForDir(dir)
+		if err != nil {
+			return "", err
+		}
+		return v.PHPPath, nil
+	}
+}
 
 // IsBinaryName returns true if the command is a PHP binary name
 func IsBinaryName(name string) bool {
@@ -209,19 +224,12 @@ func (e *Executor) Config(loadDotEnv bool) error {
 			vars[k] = v
 		}
 	}
-	if loadDotEnv {
-		for k, v := range envs.LoadDotEnv(vars, e.scriptDir) {
-			vars[k] = v
-		}
-	}
-	for k, v := range vars {
-		e.environ = append(e.environ, fmt.Sprintf("%s=%s", k, v))
-	}
 
 	// When running in Cloud we don't need to detect PHP or do anything fancy
 	// with the configuration, the only thing we want is to potentially load the
 	// .env file
 	if util.InCloud() {
+		e.configureEnviron(vars, loadDotEnv, "php")
 		// args[0] MUST be the same as path
 		// but as we change the path, we should update args[0] accordingly
 		e.Args[0] = e.BinName
@@ -239,6 +247,7 @@ func (e *Executor) Config(loadDotEnv bool) error {
 			return err
 		}
 	}
+	e.configureEnviron(vars, loadDotEnv, v.PHPPath)
 	e.phpEnviron = append(e.phpEnviron, fmt.Sprintf("PHP_BINARY=%s", v.PHPPath))
 	e.phpEnviron = append(e.phpEnviron, fmt.Sprintf("PHP_PATH=%s", v.PHPPath))
 	// for pecl
@@ -319,6 +328,22 @@ func (e *Executor) Config(loadDotEnv bool) error {
 	}
 
 	return err
+}
+
+func (e *Executor) configureEnviron(vars map[string]string, loadDotEnv bool, phpBinary string) {
+	if loadDotEnv {
+		load := e.loadDotEnv
+		if load == nil {
+			load = envs.LoadDotEnv
+		}
+		var err error
+		if vars, err = load(vars, e.scriptDir, func() (string, error) { return phpBinary, nil }); err != nil {
+			terminal.Eprintfln("<warning>WARNING</> %s", err)
+		}
+	}
+	for k, v := range vars {
+		e.environ = append(e.environ, fmt.Sprintf("%s=%s", k, v))
+	}
 }
 
 func (e *Executor) CleanupTemporaryDirectories() {
