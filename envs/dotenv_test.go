@@ -99,6 +99,20 @@ func (s *DotEnvSuite) TestLoadDotEnvUnlistsComputedVariables(c *C) {
 	c.Check(vars["SYMFONY_DOTENV_VARS"], Equals, "FOO")
 }
 
+func (s *DotEnvSuite) TestLoadDotEnvWithoutDotEnvFiles(c *C) {
+	cwd := c.MkDir()
+	c.Assert(os.WriteFile(filepath.Join(cwd, ".env"), []byte("FOO=cwd\n"), 0644), IsNil)
+	previous, err := os.Getwd()
+	c.Assert(err, IsNil)
+	defer os.Chdir(previous)
+	c.Assert(os.Chdir(cwd), IsNil)
+	withAppEnv("", func() {
+		vars := LoadDotEnv(map[string]string{}, c.MkDir())
+
+		c.Check(vars, DeepEquals, map[string]string{"SYMFONY_DOTENV_VARS": ""})
+	})
+}
+
 func (s *DotEnvSuite) TestLookupEnv(c *C) {
 	dir := c.MkDir()
 	c.Assert(os.WriteFile(filepath.Join(dir, ".env"), []byte("INHERITED=dotenv\nEXPORTED=dotenv\nDOTENV_ONLY=dotenv\n"), 0644), IsNil)

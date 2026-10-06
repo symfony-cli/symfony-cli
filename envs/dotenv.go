@@ -68,7 +68,11 @@ func LoadDotEnv(vars map[string]string, scriptDir string) map[string]string {
 		}
 	}
 	vars["SYMFONY_DOTENV_VARS"] = ""
-	for k, v := range lookupDotEnv(dotEnvDir) {
+	var dotEnvVars map[string]string
+	if dotEnvDir != "" {
+		dotEnvVars = lookupDotEnv(dotEnvDir)
+	}
+	for k, v := range dotEnvVars {
 		if _, alreadyDefined := vars[k]; alreadyDefined {
 			continue
 		}
