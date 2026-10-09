@@ -60,4 +60,4 @@ assets and packages, and they're making it happen!
 [9]: https://www.sigstore.dev/
 [10]: https://docs.sigstore.dev/cosign/signing/signing_with_blobs/
 [11]: https://symfony.com/security
-[12]: https://github.com/symfony/language-tools/blob/main/docs/features/headless-diagnostics.rst
+[12]: https://github.com/symfony/language-tools/blob/main/docs/check.rst
