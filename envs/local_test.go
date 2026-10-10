@@ -26,6 +26,7 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/symfony-cli/symfony-cli/local/pid"
 	"github.com/symfony-cli/symfony-cli/local/upsun"
+	"github.com/symfony-cli/symfony-cli/util"
 	. "gopkg.in/check.v1"
 )
 
@@ -54,16 +55,7 @@ func (s *LocalSuite) TestExtra(c *C) {
 }
 
 func (s *LocalSuite) TestWebServerDefaultUri(c *C) {
-	home := c.MkDir()
-	for _, name := range []string{"HOME", "XDG_CONFIG_HOME"} {
-		if value, ok := os.LookupEnv(name); ok {
-			defer os.Setenv(name, value)
-		} else {
-			defer os.Unsetenv(name)
-		}
-	}
-	os.Setenv("HOME", home)
-	os.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
+	defer util.OverrideHomeDir(c.MkDir())()
 
 	dir := c.MkDir()
 	c.Assert(pid.New(dir, nil).Write(os.Getpid(), 8124, "http"), IsNil)
