@@ -36,9 +36,24 @@ const LegacyConfigurationDirectory = ".symfony5"
 
 var (
 	legacyPathWarning sync.Once
+	homeDirOverride   string
 )
 
+// OverrideHomeDir makes GetHomeDir return dir until the returned function is called, e.g. to isolate tests
+func OverrideHomeDir(dir string) (restore func()) {
+	previous := homeDirOverride
+	homeDirOverride = dir
+
+	return func() {
+		homeDirOverride = previous
+	}
+}
+
 func GetHomeDir() string {
+	if homeDirOverride != "" {
+		return homeDirOverride
+	}
+
 	if InCloud() {
 		u, err := user.Current()
 		if err != nil {
