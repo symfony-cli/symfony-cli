@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 
 	"github.com/mitchellh/go-homedir"
+	"github.com/symfony-cli/symfony-cli/local/pid"
 	"github.com/symfony-cli/symfony-cli/local/upsun"
 	. "gopkg.in/check.v1"
 )
@@ -50,6 +51,28 @@ func (s *LocalSuite) TestExtra(c *C) {
 		"SYMFONY_TUNNEL_BRAND": "Upsun Flex",
 		"SYMFONY_DOCKER_ENV":   "",
 	})
+}
+
+func (s *LocalSuite) TestWebServerDefaultUri(c *C) {
+	home := c.MkDir()
+	for _, name := range []string{"HOME", "XDG_CONFIG_HOME"} {
+		if value, ok := os.LookupEnv(name); ok {
+			defer os.Setenv(name, value)
+		} else {
+			defer os.Unsetenv(name)
+		}
+	}
+	os.Setenv("HOME", home)
+	os.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
+
+	dir := c.MkDir()
+	c.Assert(pid.New(dir, nil).Write(os.Getpid(), 8124, "http"), IsNil)
+
+	envs := (&Local{Dir: dir}).webServer()
+	c.Check(envs["DEFAULT_URI"], Equals, "http://127.0.0.1:8124")
+	c.Check(envs["SYMFONY_DEFAULT_ROUTE_URL"], Equals, "http://127.0.0.1:8124/")
+	c.Check(envs["SYMFONY_PROJECT_DEFAULT_ROUTE_URL"], Equals, "http://127.0.0.1:8124/")
+	c.Check(envs["SYMFONY_APPLICATION_DEFAULT_ROUTE_URL"], Equals, "http://127.0.0.1:8124/")
 }
 
 func (s *LocalSuite) TestTunnelFilePath(c *C) {
