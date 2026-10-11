@@ -209,6 +209,10 @@ func (s *PHPFPMSuite) TestSameOriginMercureURL(c *C) {
 	c.Assert(sameOriginMercureURL(req), Equals, "http://127.0.0.1:8000/.well-known/mercure")
 
 	req.Header.Set("X-Forwarded-Proto", "https")
+	req.RemoteAddr = "192.0.2.1:54321"
+	c.Assert(sameOriginMercureURL(req), Equals, "http://127.0.0.1:8000/.well-known/mercure")
+
+	req.RemoteAddr = "127.0.0.1:54321"
 	c.Assert(sameOriginMercureURL(req), Equals, "https://127.0.0.1:8000/.well-known/mercure")
 
 	req, _ = http.NewRequest("GET", "/", nil)

@@ -34,12 +34,12 @@ import (
 )
 
 func TestMercureProxy(t *testing.T) {
-	type hubRequest struct{ host, uri string }
+	type hubRequest struct{ host, uri, forwardedHost, forwardedProto string }
 	hubRequests := make(chan hubRequest, 10)
 	done := make(chan struct{})
 	defer close(done)
 	hubHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hubRequests <- hubRequest{r.Host, r.URL.RequestURI()}
+		hubRequests <- hubRequest{r.Host, r.URL.RequestURI(), r.Header.Get("X-Forwarded-Host"), r.Header.Get("X-Forwarded-Proto")}
 		w.Header().Set("Content-Type", "text/event-stream")
 		fmt.Fprint(w, "data: hello\n\n")
 		w.(http.Flusher).Flush()
@@ -87,8 +87,9 @@ func TestMercureProxy(t *testing.T) {
 				}
 				res.Body.Close()
 
-				if got := <-hubRequests; got != (hubRequest{hubURL.Host, uri}) {
-					t.Errorf("hub got %+v, want host %q and URI %q", got, hubURL.Host, uri)
+				want := hubRequest{hubURL.Host, uri, fmt.Sprintf("127.0.0.1:%d", port), "http"}
+				if got := <-hubRequests; got != want {
+					t.Errorf("hub got %+v, want %+v", got, want)
 				}
 			}
 
@@ -102,6 +103,30 @@ func TestMercureProxy(t *testing.T) {
 				t.Errorf("got %q, want the request to be served by the app", body)
 			}
 		})
+	}
+}
+
+func TestMercureProxyBehindTLSTerminator(t *testing.T) {
+	forwardedProto := make(chan string, 1)
+	hub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		forwardedProto <- r.Header.Get("X-Forwarded-Proto")
+	}))
+	defer hub.Close()
+
+	port := startServerWithMercureProxy(t, func() (string, error) {
+		return hub.URL + MercureHubPath, nil
+	})
+
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("http://127.0.0.1:%d%s", port, MercureHubPath), nil)
+	req.Header.Set("X-Forwarded-Proto", "https")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res.Body.Close()
+
+	if got := <-forwardedProto; got != "https" {
+		t.Errorf("hub got X-Forwarded-Proto %q, want the scheme of MERCURE_PUBLIC_URL (https)", got)
 	}
 }
 

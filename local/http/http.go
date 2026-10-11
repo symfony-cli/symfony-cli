@@ -154,7 +154,7 @@ func (s *Server) Start(errChan chan error) (int, error) {
 
 	if !s.AllowHTTP {
 		s.httpserver.Handler = withServerHeader(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.Header.Get("X-Forwarded-Proto") == "https" && strings.HasPrefix(r.RemoteAddr, "127.0.0.1:") {
+			if fromLocalTLSTerminator(r) {
 				s.httpsserver.Handler.ServeHTTP(w, r)
 				return
 			}
@@ -261,4 +261,19 @@ func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(html.WrapHTML(err.Error(), html.CreateErrorTerminal("# "+err.Error()), "")))
 		return
 	}
+}
+
+// RequestScheme returns the scheme the client used, as seen through a local TLS terminator
+func RequestScheme(r *http.Request) string {
+	if r.TLS != nil || fromLocalTLSTerminator(r) {
+		return "https"
+	}
+
+	return "http"
+}
+
+// fromLocalTLSTerminator reports whether r was forwarded over plain HTTP by a TLS
+// terminator running on this machine (e.g. a tunnel); other clients can't be trusted
+func fromLocalTLSTerminator(r *http.Request) bool {
+	return r.Header.Get("X-Forwarded-Proto") == "https" && strings.HasPrefix(r.RemoteAddr, "127.0.0.1:")
 }
