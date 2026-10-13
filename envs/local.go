@@ -281,7 +281,7 @@ func (l *Local) webServer() Envs {
 		env[prefix+"PATH"] = "/"
 	}
 
-	env["DEFAULT_URI"] = url
+	env["DEFAULT_URI"] = strings.TrimSuffix(url, "/")
 
 	return env
 }
