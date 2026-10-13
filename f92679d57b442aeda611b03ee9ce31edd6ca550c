@@ -1,0 +1,12 @@
+---------------------------------------------------------------------------
+
+by dunglas at 2026-10-11T21:45:54Z
+
+Two older patterns, outside this PR's scope, trust client headers the same way `X-Forwarded-Proto` was trusted before 8d7fc07:
+
+- `local/php/envs.go:50`: `REMOTE_ADDR` comes from the `X-Client-IP` request header when present, whoever sends it, and nothing in the CLI sets that header, so any client can choose the IP the app sees.
+- `local/http/http.go:253`: `X_FORWARDED_PORT` is the client's `X-Forwarded-Port` header as-is (the local proxy only sets it when missing).
+
+The same loopback-only rule could apply to both.
+
+Unrelated: a previous run of the Release check failed in `go generate ./...`, which calls the GitHub API without `GITHUB_TOKEN` and got a 403 (rate limit). Passing `GITHUB_TOKEN` to the Prepare step would avoid it.
