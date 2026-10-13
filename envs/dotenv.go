@@ -20,69 +20,53 @@
 package envs
 
 import (
-	"maps"
+	"bytes"
+	_ "embed"
+	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
-	"github.com/joho/godotenv"
+	"github.com/pkg/errors"
 )
 
+//go:embed dotenv.php
+var dotEnvScript string
+
+// PHPBinary returns the path of the PHP binary to run Dotenv with. It is only
+// called when Dotenv needs to run.
+type PHPBinary func() (string, error)
+
 // LoadDotEnv adds the variables of the project .env files to vars (the
-// variables computed from Docker or tunnels) and returns vars. The goal is
-// for PHP scripts that do not boot Symfony's Dotenv to see the values
-// Dotenv::loadEnv() would load with its default arguments, without
-// interfering with the scripts that do boot it.
+// variables computed from Docker or tunnels) and returns vars, so that PHP
+// scripts see them even when they do not boot Symfony's Dotenv themselves.
 //
 // # Algorithm
 //
 //  1. The project directory is the first one containing a .env or .env.dist
-//     file, starting from scriptDir and going up. When there is none, nothing
-//     is loaded (not even APP_ENV).
-//  2. A variable is exported when it is defined in the CLI environment (even
-//     empty) and not listed in an inherited SYMFONY_DOTENV_VARS. A listed
-//     variable was loaded from .env files by a parent process, so .env files
-//     can override it, like Dotenv does.
-//  3. The environment is the exported APP_ENV (even empty), else the APP_ENV
-//     of .env (even empty), possibly changed by .env.local, else "dev".
-//  4. Files are merged in this order, later ones winning: .env (or .env.dist
-//     when .env does not exist), .env.local (skipped in the "test"
-//     environment), .env.<env>, and .env.<env>.local (both skipped in the
-//     "local" environment).
-//  5. Exported variables are never taken from .env files.
-//  6. Variables already in vars are never taken from .env files.
-//  7. SYMFONY_DOTENV_VARS is the inherited value minus the variables already
-//     in vars, followed by every variable taken from .env files that is not
-//     listed yet, except APP_ENV.
+//     file, starting from scriptDir and going up. Nothing is loaded when there
+//     is none, or when the project does not depend on symfony/dotenv
+//     (vendor/symfony/dotenv/Dotenv.php, honoring COMPOSER_VENDOR_DIR and the
+//     composer.json vendor-dir option).
+//  2. PHP runs the project's Dotenv::bootEnv() on the project .env file, in
+//     the CLI environment where vars override exported variables and are
+//     removed from an inherited SYMFONY_DOTENV_VARS: Dotenv sees vars as
+//     exported, so it never overrides them. Dotenv versions without bootEnv()
+//     fall back to loadEnv(), then to load().
+//  3. The variables Dotenv lists in SYMFONY_DOTENV_VARS are added to vars,
+//     and SYMFONY_DOTENV_VARS is set to that list, except APP_ENV when Dotenv
+//     set it (from the .env files or as its "dev" default).
 //
-// # Differences with Dotenv
+// The values are thus exactly the ones the project would load on its own:
+// same cascade of .env, .env.local, .env.<env>, and .env.<env>.local files,
+// same .env.local.php support, same parser, same precedence of exported
+// variables, and $(command) values are run when symfony/process is
+// installed. APP_DEBUG, which bootEnv() sets without listing it, is left for
+// Dotenv to compute from the environment PHP actually uses.
 //
-// Values are parsed with godotenv, not with Dotenv's parser. Unquoted,
-// single-quoted, double-quoted, and multiline values, comments, and the
-// export prefix behave the same, but:
-//
-//   - $VAR and ${VAR} only resolve to a variable defined earlier in the same
-//     file; Dotenv resolves them once all files are loaded, and also to
-//     exported variables. A reference to a variable defined in another file,
-//     exported, or computed from Docker, resolves to an empty string.
-//   - ${VAR:-default} and ${VAR:=default} are not supported and produce
-//     invalid values.
-//   - $(command) is kept as is; Dotenv runs the command.
-//   - Backslashes differ: godotenv turns "\t" into "t" in double-quoted
-//     values and keeps "\\" in unquoted ones, while Dotenv keeps "\t" and
-//     turns "\\" into "\".
-//   - Adjacent quoted parts (like A='a'"b") make the file unparsable.
-//   - Values Dotenv rejects (like unquoted values containing spaces) are
-//     accepted.
-//
-// An unparsable .env (or .env.dist) file makes LoadDotEnv load nothing, and
-// any other unparsable file is skipped; Dotenv throws an exception instead.
-//
-// Dotenv::bootEnv(), which Symfony applications call, also uses
-// .env.local.php instead of the .env files when it exists (see composer
-// dump-env), and sets APP_DEBUG from the final environment. LoadDotEnv
-// ignores .env.local.php and never sets APP_DEBUG, so that Dotenv computes it
-// from the environment PHP actually uses.
+// When Dotenv fails (like on a syntax error), vars is returned without any
+// .env variable, with the error.
 //
 // # Interaction with Dotenv in PHP
 //
@@ -93,140 +77,148 @@ import (
 //   - Variables computed from Docker or tunnels are never listed, even when
 //     inherited, so the database of the Docker Compose project always wins
 //     over the DATABASE_URL of the .env files.
-//   - Variables taken from .env files are listed, so Dotenv recomputes them
-//     with its own parser, which fixes the differences above for Symfony
-//     applications.
-//   - APP_ENV is never listed: PHP code sets it before booting Dotenv
-//     (Symfony Runtime's --env option, PHPUnit's <server name="APP_ENV"
-//     force="true"/> or <env> settings), and Dotenv would otherwise revert
-//     it to the .env value. Dotenv then loads the files of the environment
-//     PHP chose, which gives the same values as without the CLI, except for
-//     variables only defined in files of the environment LoadDotEnv chose,
-//     which Dotenv does not reset: with "symfony php bin/phpunit" in a
-//     project using "dev" by default, a variable only defined in .env.local
-//     or .env.dev is still visible in tests.
+//   - APP_ENV is never listed when it comes from the .env files: PHP code sets
+//     it before booting Dotenv (Symfony Runtime's --env option, PHPUnit's
+//     <server name="APP_ENV" force="true"/> or <env> settings), and Dotenv
+//     would otherwise revert it to the .env value. Dotenv then loads the files
+//     of the environment PHP chose, which gives the same values as without the
+//     CLI, except for variables only defined in files of the environment
+//     LoadDotEnv chose, which Dotenv does not reset: with "symfony php
+//     bin/phpunit" in a project using "dev" by default, a variable only
+//     defined in .env.local or .env.dev is still visible in tests.
 //   - A nested CLI run from such a PHP process (like a test running "symfony
 //     php" in another project) sees APP_ENV as exported and keeps it.
 //
 // See LookupEnv for a single variable.
-func LoadDotEnv(vars map[string]string, scriptDir string) map[string]string {
-	dotEnvDir := findDotEnvDir(scriptDir)
-	loaded := dotEnvLoadedVars()
+func LoadDotEnv(vars map[string]string, scriptDir string, phpBinary PHPBinary) (map[string]string, error) {
+	inherited := dotEnvLoadedVars()
 	var listed []string
 	for _, k := range strings.Split(os.Getenv("SYMFONY_DOTENV_VARS"), ",") {
 		if _, computed := vars[k]; k != "" && !computed {
 			listed = append(listed, k)
 		}
 	}
-	vars["SYMFONY_DOTENV_VARS"] = ""
-	var dotEnvVars map[string]string
-	if dotEnvDir != "" {
-		dotEnvVars = lookupDotEnv(dotEnvDir)
-	}
-	for k, v := range dotEnvVars {
-		if _, alreadyDefined := vars[k]; alreadyDefined {
-			continue
-		}
+	vars["SYMFONY_DOTENV_VARS"] = strings.Join(listed, ",")
 
-		vars[k] = v
-		if k != "APP_ENV" && !loaded[k] {
+	dir := findDotEnvDir(scriptDir)
+	if dir == "" {
+		return vars, nil
+	}
+	environ := os.Environ()
+	for k, v := range vars {
+		environ = append(environ, k+"="+v)
+	}
+	values, dotEnvListed, err := runDotEnv(dir, phpBinary, environ)
+	if err != nil {
+		return vars, err
+	}
+
+	listed = listed[:0]
+	for _, k := range dotEnvListed {
+		if k != "APP_ENV" || inherited[k] {
 			listed = append(listed, k)
+		}
+		if v, ok := values[k]; ok {
+			vars[k] = v
 		}
 	}
 	vars["SYMFONY_DOTENV_VARS"] = strings.Join(listed, ",")
 
-	return vars
+	return vars, nil
 }
 
 // LookupEnv looks up a single variable like os.LookupEnv would, but takes it
-// from the .env files of dotEnvDir unless it is exported, following the
-// LoadDotEnv algorithm (without computed variables).
-func LookupEnv(dotEnvDir, key string) (string, bool) {
-	if value, isDefined := lookupDotEnv(dotEnvDir)[key]; isDefined {
-		return value, isDefined
+// from the .env files of dotEnvDir when Dotenv would load it from there (see
+// LoadDotEnv, without computed variables). Dotenv only runs when one of the
+// .env files mentions the variable.
+func LookupEnv(dotEnvDir, key string, phpBinary PHPBinary) (string, bool) {
+	if dotEnvMentions(dotEnvDir, key) {
+		if values, _, err := runDotEnv(dotEnvDir, phpBinary, os.Environ()); err == nil {
+			if value, ok := values[key]; ok {
+				return value, true
+			}
+		}
 	}
 
 	return os.LookupEnv(key)
 }
 
-// lookupDotEnv implements steps 2 to 5 of the LoadDotEnv algorithm for the
-// project directory dir.
-func lookupDotEnv(dir string) map[string]string {
-	var err error
-	vars := map[string]string{}
-
-	// we prefer loading .env
-	path := filepath.Join(dir, ".env")
-	if _, err = os.Stat(path); err == nil {
-		vars, err = godotenv.Read(path)
-		if err != nil {
-			return nil
-		}
-	} else if os.IsNotExist(err) {
-		// if .env is not available, let's try to load .env.dist if it exists (for compat)
-		path := filepath.Join(dir, ".env.dist")
-		if _, err := os.Stat(path); err == nil {
-			vars, err = godotenv.Read(path)
-			if err != nil {
-				return nil
-			}
-		}
+// runDotEnv returns the variables listed by Dotenv in SYMFONY_DOTENV_VARS
+// with their values, and the list itself.
+func runDotEnv(dir string, phpBinary PHPBinary, environ []string) (map[string]string, []string, error) {
+	vendorDir := composerVendorDir(dir)
+	if _, err := os.Stat(filepath.Join(vendorDir, "symfony", "dotenv", "Dotenv.php")); err != nil {
+		return nil, nil, nil
 	}
-
-	env := resolveAppEnv(vars)
-	vars["APP_ENV"] = env
-
-	if env != "test" {
-		mergeDovEnvFile(vars, filepath.Join(dir, ".env.local"))
-		env = resolveAppEnv(vars)
-		vars["APP_ENV"] = env
-	}
-
-	if env != "local" {
-		mergeDovEnvFile(vars, filepath.Join(dir, ".env."+env))
-		mergeDovEnvFile(vars, filepath.Join(dir, ".env."+env+".local"))
-	}
-
-	// Exported variables win, as with Symfony's Dotenv component
-	for k := range vars {
-		if isExported(k) {
-			delete(vars, k)
-		}
-	}
-
-	return vars
-}
-
-func mergeDovEnvFile(vars map[string]string, path string) {
-	if _, err := os.Stat(path); err != nil {
-		return
-	}
-
-	locals, err := godotenv.Read(path)
+	bin, err := phpBinary()
 	if err != nil {
-		return
+		return nil, nil, errors.Wrap(err, "unable to load the .env files")
 	}
 
-	maps.Copy(vars, locals)
+	var stderr bytes.Buffer
+	cmd := exec.Command(bin, "-d", "display_errors=stderr", "--", vendorDir, filepath.Join(dir, ".env"))
+	cmd.Dir = dir
+	cmd.Env = append(append([]string{}, environ...), "XDEBUG_MODE=off")
+	cmd.Stdin = strings.NewReader(dotEnvScript)
+	cmd.Stderr = &stderr
+	out, err := cmd.Output()
+	if err != nil {
+		if msg := strings.TrimSpace(stderr.String()); msg != "" {
+			return nil, nil, errors.Errorf("unable to load the .env files: %s", msg)
+		}
+		return nil, nil, errors.Wrap(err, "unable to load the .env files")
+	}
+
+	parts := strings.Split(string(out), "\x00")
+	var listed []string
+	for _, k := range strings.Split(parts[0], ",") {
+		if k != "" {
+			listed = append(listed, k)
+		}
+	}
+	values := map[string]string{}
+	for i := 1; i+1 < len(parts); i += 2 {
+		values[parts[i]] = parts[i+1]
+	}
+
+	return values, listed, nil
 }
 
-func resolveAppEnv(vars map[string]string) string {
-	if isExported("APP_ENV") {
-		return os.Getenv("APP_ENV")
+func composerVendorDir(dir string) string {
+	vendorDir := os.Getenv("COMPOSER_VENDOR_DIR")
+	if vendorDir == "" {
+		var composer struct {
+			Config struct {
+				VendorDir string `json:"vendor-dir"`
+			} `json:"config"`
+		}
+		if content, err := os.ReadFile(filepath.Join(dir, "composer.json")); err == nil && json.Unmarshal(content, &composer) == nil {
+			vendorDir = composer.Config.VendorDir
+		}
 	}
-	if env, ok := vars["APP_ENV"]; ok {
-		return env
+	if vendorDir == "" {
+		vendorDir = "vendor"
 	}
-	return "dev"
+	if !filepath.IsAbs(vendorDir) {
+		vendorDir = filepath.Join(dir, vendorDir)
+	}
+	return vendorDir
 }
 
-// isExported mirrors Symfony's Dotenv: variables loaded from .env files by a
-// parent process (listed in SYMFONY_DOTENV_VARS) can be overridden.
-func isExported(key string) bool {
-	if _, ok := os.LookupEnv(key); !ok {
+func dotEnvMentions(dir, key string) bool {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
 		return false
 	}
-	return !dotEnvLoadedVars()[key]
+	for _, entry := range entries {
+		if entry.IsDir() || (entry.Name() != ".env" && !strings.HasPrefix(entry.Name(), ".env.")) {
+			continue
+		}
+		if content, err := os.ReadFile(filepath.Join(dir, entry.Name())); err == nil && bytes.Contains(content, []byte(key)) {
+			return true
+		}
+	}
+	return false
 }
 
 func dotEnvLoadedVars() map[string]bool {

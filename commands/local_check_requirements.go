@@ -75,9 +75,10 @@ var localRequirementsCheckCmd = &console.Command{
 			args = append(args, path)
 		}
 		e := &php.Executor{
-			Dir:     path,
-			BinName: "php",
-			Args:    args,
+			Dir:            path,
+			BinName:        "php",
+			Args:           args,
+			SkipProjectEnv: true,
 		}
 		if ret := e.Execute(false); ret != 0 {
 			return console.Exit("", 1)
