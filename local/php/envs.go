@@ -95,10 +95,5 @@ func (p *Server) generateEnv(req *http.Request) map[string]string {
 }
 
 func sameOriginMercureURL(req *http.Request) string {
-	scheme := "http"
-	if req.TLS != nil || req.Header.Get("X-Forwarded-Proto") == "https" {
-		scheme = "https"
-	}
-
-	return scheme + "://" + req.Host + lhttp.MercureHubPath
+	return lhttp.RequestScheme(req) + "://" + req.Host + lhttp.MercureHubPath
 }

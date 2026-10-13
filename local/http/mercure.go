@@ -74,8 +74,12 @@ func (p *mercureProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Transport: p.transport,
 		Rewrite: func(r *httputil.ProxyRequest) {
 			// SetURL also sets the Host to the hub one, as Mercure only serves
-			// its site address and derives the token audience from it
+			// its site address; a hub trusting this proxy derives the token
+			// audience from the X-Forwarded-* headers instead
 			r.SetURL(&url.URL{Scheme: target.Scheme, Host: target.Host})
+			r.SetXForwarded()
+			// match the scheme of MERCURE_PUBLIC_URL, behind a TLS terminator too
+			r.Out.Header.Set("X-Forwarded-Proto", RequestScheme(r.In))
 		},
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
 			p.logger.Error().Err(err).Msg("unable to proxy the request to the Mercure hub")
