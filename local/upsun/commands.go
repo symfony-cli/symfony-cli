@@ -265,6 +265,12 @@ var Commands = []*console.Command{
 		Aliases: []*console.Alias{
 			{Name: "app:config-validate", Hidden: true},
 			{Name: "upsun:app:config-validate", Hidden: true},
+			{Name: "cloud:validate"},
+			{Name: "upsun:validate", Hidden: true},
+			{Name: "validate", Hidden: true},
+			{Name: "cloud:lint"},
+			{Name: "upsun:lint", Hidden: true},
+			{Name: "lint", Hidden: true},
 		},
 		Usage: "Validate the config files of a project",
 	},

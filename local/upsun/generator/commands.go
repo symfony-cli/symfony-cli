@@ -21,11 +21,9 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"go/format"
 	"os"
-	"os/exec"
 	"sort"
 	"strings"
 	"text/template"
@@ -178,11 +176,7 @@ func parseCommands(cloudPath string) (string, error) {
 			}
 		}
 		name := strings.TrimPrefix("cloud:"+command.Name, namespace+":")
-		cmdAliases, err := getCommandAliases(command.Name, cloudPath)
-		if err != nil {
-			return "", err
-		}
-		aliases := commandAliases(command.Name, namespace, cmdAliases, hiddenAliases[command.Name])
+		aliases := commandAliases(command.Name, namespace, command.Aliases, hiddenAliases[command.Name])
 		aliasesAsString := ""
 		if len(aliases) > 0 {
 			aliasesAsString += "\n\t\tAliases: []*console.Alias{\n"
@@ -280,23 +274,4 @@ func commandAliases(commandName, namespace string, visible, hidden []string) []s
 		aliases = append(aliases, fmt.Sprintf("{Name: \"upsun:%s\", Hidden: true}", alias))
 	}
 	return aliases
-}
-
-func getCommandAliases(name, cloudPath string) ([]string, error) {
-	var buf bytes.Buffer
-	var bufErr bytes.Buffer
-	c := exec.Command(cloudPath, name, "--help", "--format=json")
-	c.Stdout = &buf
-	c.Stderr = &bufErr
-	if err := c.Run(); err != nil {
-		// Can currently happen for commands implemented in Go upstream (like app:config-validate)
-		// FIXME: to be removed once upstream implements --help --format=json for all commands
-		return []string{}, nil
-		//return nil, errors.Errorf("unable to get definition for command %s: %s\n%s\n%s", name, err, bufErr.String(), buf.String())
-	}
-	var cmd symfony.CliCommand
-	if err := json.Unmarshal(buf.Bytes(), &cmd); err != nil {
-		return nil, err
-	}
-	return cmd.Aliases, nil
 }
