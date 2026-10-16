@@ -41,13 +41,14 @@ type CliNamespace struct {
 }
 
 type CliCommand struct {
-	Name        string
-	Usage       []string
-	Description string
-	Help        string
-	Definition  CliDefinition
-	Hidden      bool
-	Aliases     []string
+	Name          string
+	Usage         []string
+	Description   string
+	Help          string
+	Definition    CliDefinition
+	Hidden        bool
+	Aliases       []string
+	HiddenAliases []string `json:"hidden_aliases"`
 }
 
 type CliDefinition struct {

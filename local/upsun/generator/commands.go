@@ -21,11 +21,9 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"go/format"
 	"os"
-	"os/exec"
 	"sort"
 	"strings"
 	"text/template"
@@ -156,26 +154,7 @@ func parseCommands(cloudPath string) (string, error) {
 			}
 		}
 		name := strings.TrimPrefix("cloud:"+command.Name, namespace+":")
-		aliases := []string{}
-		if namespace != "cloud" && !strings.HasPrefix(command.Name, "self:") {
-			aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", command.Name))
-		}
-
-		cmdAliases, err := getCommandAliases(command.Name, cloudPath)
-		if err != nil {
-			return "", err
-		}
-		aliases = append(aliases, fmt.Sprintf("{Name: \"upsun:%s\", Hidden: true}", command.Name))
-		for _, alias := range cmdAliases {
-			if alias == "deploy" {
-				continue
-			}
-			aliases = append(aliases, fmt.Sprintf("{Name: \"cloud:%s\"}", alias))
-			aliases = append(aliases, fmt.Sprintf("{Name: \"upsun:%s\", Hidden: true}", alias))
-			if namespace != "cloud" && !strings.HasPrefix(command.Name, "self:") {
-				aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", alias))
-			}
-		}
+		aliases := commandAliases(command.Name, namespace, command.Aliases, command.HiddenAliases)
 		aliasesAsString := ""
 		if len(aliases) > 0 {
 			aliasesAsString += "\n\t\tAliases: []*console.Alias{\n"
@@ -251,21 +230,26 @@ func parseCommands(cloudPath string) (string, error) {
 	return definitionAsString, nil
 }
 
-func getCommandAliases(name, cloudPath string) ([]string, error) {
-	var buf bytes.Buffer
-	var bufErr bytes.Buffer
-	c := exec.Command(cloudPath, name, "--help", "--format=json")
-	c.Stdout = &buf
-	c.Stderr = &bufErr
-	if err := c.Run(); err != nil {
-		// Can currently happen for commands implemented in Go upstream (like app:config-validate)
-		// FIXME: to be removed once upstream implements --help --format=json for all commands
-		return []string{}, nil
-		//return nil, errors.Errorf("unable to get definition for command %s: %s\n%s\n%s", name, err, bufErr.String(), buf.String())
+func commandAliases(commandName, namespace string, visible, hidden []string) []string {
+	withoutPrefix := namespace != "cloud" && !strings.HasPrefix(commandName, "self:")
+	aliases := []string{}
+	if withoutPrefix {
+		aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", commandName))
 	}
-	var cmd symfony.CliCommand
-	if err := json.Unmarshal(buf.Bytes(), &cmd); err != nil {
-		return nil, err
+	aliases = append(aliases, fmt.Sprintf("{Name: \"upsun:%s\", Hidden: true}", commandName))
+	for _, alias := range visible {
+		if alias == "deploy" {
+			continue
+		}
+		aliases = append(aliases, fmt.Sprintf("{Name: \"cloud:%s\"}", alias))
+		aliases = append(aliases, fmt.Sprintf("{Name: \"upsun:%s\", Hidden: true}", alias))
+		if withoutPrefix {
+			aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", alias))
+		}
 	}
-	return cmd.Aliases, nil
+	for _, alias := range hidden {
+		aliases = append(aliases, fmt.Sprintf("{Name: \"cloud:%s\", Hidden: true}", alias))
+		aliases = append(aliases, fmt.Sprintf("{Name: \"upsun:%s\", Hidden: true}", alias))
+	}
+	return aliases
 }
