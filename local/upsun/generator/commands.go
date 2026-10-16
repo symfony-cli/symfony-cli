@@ -67,28 +67,6 @@ var Commands = []*console.Command{
 }
 `))
 
-// Mirrors upstream setHiddenAliases() calls, which the JSON descriptors omit.
-var hiddenAliases = map[string][]string{
-	"backup:create":                  {"snapshot:create", "environment:backup"},
-	"backup:list":                    {"snapshots", "snapshot:list"},
-	"backup:restore":                 {"environment:restore", "snapshot:restore"},
-	"clear-cache":                    {"clearcache"},
-	"db:dump":                        {"sql-dump", "environment:sql-dump"},
-	"db:sql":                         {"environment:sql"},
-	"environment:delete":             {"environment:deactivate"},
-	"environment:info":               {"environment:metadata"},
-	"environment:logs":               {"logs"},
-	"integration:activity:list":      {"int:act", "i:act"},
-	"organization:subscription:list": {"organization:subscriptions"},
-	"organization:user:list":         {"organization:users"},
-	"project:info":                   {"project:metadata"},
-	"project:variable:get":           {"project:variable:list"},
-	"route:list":                     {"environment:routes"},
-	"self:install":                   {"local:install"},
-	"self:update":                    {"self-update"},
-	"user:get":                       {"user:role"},
-}
-
 func generateCommands() {
 	home, err := homedir.Dir()
 	if err != nil {
@@ -176,7 +154,7 @@ func parseCommands(cloudPath string) (string, error) {
 			}
 		}
 		name := strings.TrimPrefix("cloud:"+command.Name, namespace+":")
-		aliases := commandAliases(command.Name, namespace, command.Aliases, hiddenAliases[command.Name])
+		aliases := commandAliases(command.Name, namespace, command.Aliases, command.HiddenAliases)
 		aliasesAsString := ""
 		if len(aliases) > 0 {
 			aliasesAsString += "\n\t\tAliases: []*console.Alias{\n"
