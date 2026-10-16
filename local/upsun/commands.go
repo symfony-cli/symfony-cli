@@ -62,6 +62,8 @@ var Commands = []*console.Command{
 			{Name: "upsun:clear-cache", Hidden: true},
 			{Name: "cloud:cc"},
 			{Name: "upsun:cc", Hidden: true},
+			{Name: "cloud:clearcache", Hidden: true},
+			{Name: "upsun:clearcache", Hidden: true},
 		},
 		Usage: "Clear the CLI cache",
 	},
@@ -424,6 +426,10 @@ var Commands = []*console.Command{
 			{Name: "cloud:backup"},
 			{Name: "upsun:backup", Hidden: true},
 			{Name: "backup", Hidden: true},
+			{Name: "cloud:snapshot:create", Hidden: true},
+			{Name: "upsun:snapshot:create", Hidden: true},
+			{Name: "cloud:environment:backup", Hidden: true},
+			{Name: "upsun:environment:backup", Hidden: true},
 		},
 		Usage: "Make a backup of an environment",
 		Flags: []console.Flag{
@@ -473,6 +479,10 @@ var Commands = []*console.Command{
 			{Name: "cloud:backups"},
 			{Name: "upsun:backups", Hidden: true},
 			{Name: "backups", Hidden: true},
+			{Name: "cloud:snapshots", Hidden: true},
+			{Name: "upsun:snapshots", Hidden: true},
+			{Name: "cloud:snapshot:list", Hidden: true},
+			{Name: "upsun:snapshot:list", Hidden: true},
 		},
 		Usage: "List available backups of an environment",
 		Flags: []console.Flag{
@@ -490,6 +500,10 @@ var Commands = []*console.Command{
 		Aliases: []*console.Alias{
 			{Name: "backup:restore", Hidden: true},
 			{Name: "upsun:backup:restore", Hidden: true},
+			{Name: "cloud:environment:restore", Hidden: true},
+			{Name: "upsun:environment:restore", Hidden: true},
+			{Name: "cloud:snapshot:restore", Hidden: true},
+			{Name: "upsun:snapshot:restore", Hidden: true},
 		},
 		Usage: "Restore an environment backup",
 		Flags: []console.Flag{
@@ -664,6 +678,10 @@ var Commands = []*console.Command{
 		Aliases: []*console.Alias{
 			{Name: "db:dump", Hidden: true},
 			{Name: "upsun:db:dump", Hidden: true},
+			{Name: "cloud:sql-dump", Hidden: true},
+			{Name: "upsun:sql-dump", Hidden: true},
+			{Name: "cloud:environment:sql-dump", Hidden: true},
+			{Name: "upsun:environment:sql-dump", Hidden: true},
 		},
 		Usage: "Create a local dump of the remote database",
 		Flags: []console.Flag{
@@ -692,6 +710,8 @@ var Commands = []*console.Command{
 			{Name: "cloud:sql"},
 			{Name: "upsun:sql", Hidden: true},
 			{Name: "sql", Hidden: true},
+			{Name: "cloud:environment:sql", Hidden: true},
+			{Name: "upsun:environment:sql", Hidden: true},
 		},
 		Usage: "Run SQL on the remote database",
 		Flags: []console.Flag{
@@ -872,6 +892,8 @@ var Commands = []*console.Command{
 		Aliases: []*console.Alias{
 			{Name: "environment:delete", Hidden: true},
 			{Name: "upsun:environment:delete", Hidden: true},
+			{Name: "cloud:environment:deactivate", Hidden: true},
+			{Name: "upsun:environment:deactivate", Hidden: true},
 		},
 		Usage: "Delete one or more environments",
 		Flags: []console.Flag{
@@ -958,6 +980,8 @@ var Commands = []*console.Command{
 		Aliases: []*console.Alias{
 			{Name: "environment:info", Hidden: true},
 			{Name: "upsun:environment:info", Hidden: true},
+			{Name: "cloud:environment:metadata", Hidden: true},
+			{Name: "upsun:environment:metadata", Hidden: true},
 		},
 		Usage: "Read or set properties for an environment",
 		Flags: []console.Flag{
@@ -1025,6 +1049,8 @@ var Commands = []*console.Command{
 			{Name: "cloud:log"},
 			{Name: "upsun:log", Hidden: true},
 			{Name: "log", Hidden: true},
+			{Name: "cloud:logs", Hidden: true},
+			{Name: "upsun:logs", Hidden: true},
 		},
 		Usage: "Read an environment's logs",
 		Flags: []console.Flag{
@@ -1289,6 +1315,10 @@ var Commands = []*console.Command{
 			{Name: "cloud:integration:activities"},
 			{Name: "upsun:integration:activities", Hidden: true},
 			{Name: "integration:activities", Hidden: true},
+			{Name: "cloud:int:act", Hidden: true},
+			{Name: "upsun:int:act", Hidden: true},
+			{Name: "cloud:i:act", Hidden: true},
+			{Name: "upsun:i:act", Hidden: true},
 		},
 		Usage: "Get a list of activities for an integration",
 		Flags: []console.Flag{
@@ -1859,6 +1889,8 @@ var Commands = []*console.Command{
 			{Name: "cloud:org:subs"},
 			{Name: "upsun:org:subs", Hidden: true},
 			{Name: "org:subs", Hidden: true},
+			{Name: "cloud:organization:subscriptions", Hidden: true},
+			{Name: "upsun:organization:subscriptions", Hidden: true},
 		},
 		Usage: "List subscriptions within an organization",
 		Flags: []console.Flag{
@@ -1922,6 +1954,8 @@ var Commands = []*console.Command{
 			{Name: "cloud:org:users"},
 			{Name: "upsun:org:users", Hidden: true},
 			{Name: "org:users", Hidden: true},
+			{Name: "cloud:organization:users", Hidden: true},
+			{Name: "upsun:organization:users", Hidden: true},
 		},
 		Usage: "List organization users",
 		Flags: []console.Flag{
@@ -2063,6 +2097,8 @@ var Commands = []*console.Command{
 		Aliases: []*console.Alias{
 			{Name: "project:info", Hidden: true},
 			{Name: "upsun:project:info", Hidden: true},
+			{Name: "cloud:project:metadata", Hidden: true},
+			{Name: "upsun:project:metadata", Hidden: true},
 		},
 		Usage: "Read or set properties for a project",
 		Flags: []console.Flag{
@@ -2308,6 +2344,8 @@ var Commands = []*console.Command{
 			{Name: "cloud:routes"},
 			{Name: "upsun:routes", Hidden: true},
 			{Name: "routes", Hidden: true},
+			{Name: "cloud:environment:routes", Hidden: true},
+			{Name: "upsun:environment:routes", Hidden: true},
 		},
 		Usage: "List all routes for an environment",
 		Flags: []console.Flag{
@@ -2904,6 +2942,8 @@ var Commands = []*console.Command{
 		Aliases: []*console.Alias{
 			{Name: "user:get", Hidden: true},
 			{Name: "upsun:user:get", Hidden: true},
+			{Name: "cloud:user:role", Hidden: true},
+			{Name: "upsun:user:role", Hidden: true},
 		},
 		Usage: "View a user's role(s)",
 		Flags: []console.Flag{

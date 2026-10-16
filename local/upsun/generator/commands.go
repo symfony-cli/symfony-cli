@@ -69,6 +69,28 @@ var Commands = []*console.Command{
 }
 `))
 
+// Mirrors upstream setHiddenAliases() calls, which the JSON descriptors omit.
+var hiddenAliases = map[string][]string{
+	"backup:create":                  {"snapshot:create", "environment:backup"},
+	"backup:list":                    {"snapshots", "snapshot:list"},
+	"backup:restore":                 {"environment:restore", "snapshot:restore"},
+	"clear-cache":                    {"clearcache"},
+	"db:dump":                        {"sql-dump", "environment:sql-dump"},
+	"db:sql":                         {"environment:sql"},
+	"environment:delete":             {"environment:deactivate"},
+	"environment:info":               {"environment:metadata"},
+	"environment:logs":               {"logs"},
+	"integration:activity:list":      {"int:act", "i:act"},
+	"organization:subscription:list": {"organization:subscriptions"},
+	"organization:user:list":         {"organization:users"},
+	"project:info":                   {"project:metadata"},
+	"project:variable:get":           {"project:variable:list"},
+	"route:list":                     {"environment:routes"},
+	"self:install":                   {"local:install"},
+	"self:update":                    {"self-update"},
+	"user:get":                       {"user:role"},
+}
+
 func generateCommands() {
 	home, err := homedir.Dir()
 	if err != nil {
@@ -156,26 +178,11 @@ func parseCommands(cloudPath string) (string, error) {
 			}
 		}
 		name := strings.TrimPrefix("cloud:"+command.Name, namespace+":")
-		aliases := []string{}
-		if namespace != "cloud" && !strings.HasPrefix(command.Name, "self:") {
-			aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", command.Name))
-		}
-
 		cmdAliases, err := getCommandAliases(command.Name, cloudPath)
 		if err != nil {
 			return "", err
 		}
-		aliases = append(aliases, fmt.Sprintf("{Name: \"upsun:%s\", Hidden: true}", command.Name))
-		for _, alias := range cmdAliases {
-			if alias == "deploy" {
-				continue
-			}
-			aliases = append(aliases, fmt.Sprintf("{Name: \"cloud:%s\"}", alias))
-			aliases = append(aliases, fmt.Sprintf("{Name: \"upsun:%s\", Hidden: true}", alias))
-			if namespace != "cloud" && !strings.HasPrefix(command.Name, "self:") {
-				aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", alias))
-			}
-		}
+		aliases := commandAliases(command.Name, namespace, cmdAliases, hiddenAliases[command.Name])
 		aliasesAsString := ""
 		if len(aliases) > 0 {
 			aliasesAsString += "\n\t\tAliases: []*console.Alias{\n"
@@ -249,6 +256,30 @@ func parseCommands(cloudPath string) (string, error) {
 	}
 
 	return definitionAsString, nil
+}
+
+func commandAliases(commandName, namespace string, visible, hidden []string) []string {
+	withoutPrefix := namespace != "cloud" && !strings.HasPrefix(commandName, "self:")
+	aliases := []string{}
+	if withoutPrefix {
+		aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", commandName))
+	}
+	aliases = append(aliases, fmt.Sprintf("{Name: \"upsun:%s\", Hidden: true}", commandName))
+	for _, alias := range visible {
+		if alias == "deploy" {
+			continue
+		}
+		aliases = append(aliases, fmt.Sprintf("{Name: \"cloud:%s\"}", alias))
+		aliases = append(aliases, fmt.Sprintf("{Name: \"upsun:%s\", Hidden: true}", alias))
+		if withoutPrefix {
+			aliases = append(aliases, fmt.Sprintf("{Name: \"%s\", Hidden: true}", alias))
+		}
+	}
+	for _, alias := range hidden {
+		aliases = append(aliases, fmt.Sprintf("{Name: \"cloud:%s\", Hidden: true}", alias))
+		aliases = append(aliases, fmt.Sprintf("{Name: \"upsun:%s\", Hidden: true}", alias))
+	}
+	return aliases
 }
 
 func getCommandAliases(name, cloudPath string) ([]string, error) {
