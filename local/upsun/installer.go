@@ -55,7 +55,7 @@ func toolDefinition(home string, product CloudProduct) externaltool.Definition {
 
 	return externaltool.Definition{
 		Name:                  name + " CLI",
-		Repository:            "platformsh/cli",
+		Repository:            "upsun/cli",
 		ChecksumsAsset:        "checksums.txt",
 		MinimumVersion:        "0.0.0",
 		VersionPrefix:         versionPrefix,
