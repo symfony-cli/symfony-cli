@@ -24,10 +24,29 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/symfony-cli/console"
 	. "gopkg.in/check.v1"
 )
 
 func Test(t *testing.T) { TestingT(t) }
+
+func TestGenerateEnvIncludesCliBinaryName(t *testing.T) {
+	t.Setenv("SYMFONY_CLI_BINARY_NAME", "stale-cli")
+	server := &Server{projectDir: t.TempDir(), passthru: "/index.php"}
+	for _, path := range []string{"/route", "/direct.php"} {
+		t.Run(path, func(t *testing.T) {
+			request, err := http.NewRequest(http.MethodGet, "http://localhost"+path, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			request.Header.Set("Symfony-Cli-Binary-Name", "client-value")
+			environment := server.generateEnv(request)
+			if actual, expected := environment["SYMFONY_CLI_BINARY_NAME"], console.CurrentBinaryName(); actual != expected {
+				t.Fatalf("CLI binary name = %q, want %q", actual, expected)
+			}
+		})
+	}
+}
 
 type PHPFPMSuite struct{}
 
