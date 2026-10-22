@@ -481,6 +481,7 @@ func (e *Executor) Execute(loadDotEnv bool) int {
 	}
 	environ = append(environ, fmt.Sprintf("%s=%s", gpathname, fullPath))
 	cmd.Env = append(cmd.Env, environ...)
+	cmd.Env = append(cmd.Env, "SYMFONY_CLI_CONSOLE_COMMAND=", "SYMFONY_CLI_CONSOLE_SCRIPT=")
 	cmd.Env = append(cmd.Env, e.ExtraEnv...)
 	if e.Stdout == nil {
 		e.Stdout = os.Stdout
