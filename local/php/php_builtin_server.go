@@ -46,6 +46,10 @@ if (file_exists($envFile = __FILE__.'-'.$_SERVER['HTTP___SYMFONY_LOCAL_REQUEST_I
 	unset($_SERVER['HTTP___SYMFONY_LOCAL_REQUEST_ID__']);
 }
 
+if (isset($_ENV['SYMFONY_CLI_BINARY_NAME'])) {
+	$_SERVER['SYMFONY_CLI_BINARY_NAME'] = $_ENV['SYMFONY_CLI_BINARY_NAME'];
+}
+
 if (is_file($_SERVER['DOCUMENT_ROOT'].DIRECTORY_SEPARATOR.$_SERVER['SCRIPT_NAME'])) {
 	return false;
 }
