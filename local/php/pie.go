@@ -50,13 +50,14 @@ func (p PieResult) ExitCode() int {
 
 func PieExecutor(dir string, args, env []string, stdout, stderr, logger io.Writer, debugLogger zerolog.Logger) (*Executor, error) {
 	e := &Executor{
-		Dir:        dir,
-		BinName:    "php",
-		Stdout:     stdout,
-		Stderr:     stderr,
-		SkipNbArgs: -1,
-		ExtraEnv:   env,
-		Logger:     debugLogger,
+		Dir:            dir,
+		BinName:        "php",
+		Stdout:         stdout,
+		Stderr:         stderr,
+		SkipNbArgs:     -1,
+		ExtraEnv:       env,
+		Logger:         debugLogger,
+		SkipProjectEnv: true,
 	}
 
 	if piePath := os.Getenv("SYMFONY_PIE_PATH"); piePath != "" {

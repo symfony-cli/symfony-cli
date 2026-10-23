@@ -75,11 +75,21 @@ func autocompleteComposerWrapper(context *console.Context, words complete.Args) 
 // autocompleteSymfonyConsoleWrapper bridges the symfony-cli/console (Go)
 // autocompletion with a symfony/console (PHP) one.
 func autocompleteSymfonyConsoleWrapper(words complete.Args, commandName string, executor func(args []string) (*php.Executor, error)) []string {
-	if executor, err := executor(buildSymfonyConsoleWrapperArgs(commandName, words)); err == nil {
+	if executor, err := completionExecutor(words, commandName, executor); err == nil {
 		os.Exit(executor.Execute(false))
 	}
 
 	return []string{}
+}
+
+func completionExecutor(words complete.Args, commandName string, executor func(args []string) (*php.Executor, error)) (*php.Executor, error) {
+	e, err := executor(buildSymfonyConsoleWrapperArgs(commandName, words))
+	if err != nil {
+		return nil, err
+	}
+	// completing does not need the database or other services
+	e.SkipProjectEnv = true
+	return e, nil
 }
 
 func buildSymfonyConsoleWrapperArgs(commandName string, words complete.Args) []string {
