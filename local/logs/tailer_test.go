@@ -20,8 +20,10 @@
 package logs
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -88,6 +90,47 @@ func TestWatchApplicationLogFile(t *testing.T) {
 	writeLog(t, custom, "custom line\n")
 
 	assertLines(t, tailer, "custom line")
+}
+
+func TestTailWithoutFollowStopsAtTheEndOfTheLogs(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("XDG_CONFIG_HOME", "")
+	projectDir := t.TempDir()
+	pidFile := pid.New(projectDir, nil)
+	writeLog(t, pidFile.LogFile(), "server line 1\nserver line 2\n")
+	writeLog(t, filepath.Join(projectDir, "var", "log", "dev.log"), "app line 1\napp line 2\n")
+
+	for name, appLogs := range map[string][]string{
+		"log directories":  nil,
+		"missing log file": {filepath.Join(projectDir, "var", "log", "missing.log")},
+	} {
+		t.Run(name, func(t *testing.T) {
+			tailer := &Tailer{LinesNb: 1, NoHumanize: true, AppLogs: appLogs}
+			if err := tailer.Watch(pidFile); err != nil {
+				t.Fatal(err)
+			}
+
+			var buf bytes.Buffer
+			done := make(chan error, 1)
+			go func() { done <- tailer.Tail(&buf) }()
+			select {
+			case err := <-done:
+				if err != nil {
+					t.Fatal(err)
+				}
+			case <-time.After(5 * time.Second):
+				t.Fatal("logs are still followed")
+			}
+
+			output := buf.String()
+			if !strings.Contains(output, "server line 2") || strings.Contains(output, "server line 1") {
+				t.Errorf("expected only the last server log line, got %q", output)
+			}
+			if appLogs == nil && (!strings.Contains(output, "app line 2") || strings.Contains(output, "app line 1")) {
+				t.Errorf("expected only the last application log line, got %q", output)
+			}
+		})
+	}
 }
 
 func startTailer(t *testing.T, projectDir string, appLogs []string) *Tailer {
