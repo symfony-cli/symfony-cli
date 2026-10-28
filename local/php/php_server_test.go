@@ -41,6 +41,20 @@ func (s *PHPSuite) TestPhpAddslashes(c *C) {
 	c.Assert(addslashes.Replace(`"hello"`), Equals, `"hello"`)
 }
 
+func (s *PHPSuite) TestCliServerWorkersEnv(c *C) {
+	if workers, ok := os.LookupEnv("PHP_CLI_SERVER_WORKERS"); ok {
+		defer os.Setenv("PHP_CLI_SERVER_WORKERS", workers)
+	} else {
+		defer os.Unsetenv("PHP_CLI_SERVER_WORKERS")
+	}
+
+	os.Unsetenv("PHP_CLI_SERVER_WORKERS")
+	c.Check(cliServerWorkersEnv(), DeepEquals, []string{"PHP_CLI_SERVER_WORKERS=4"})
+
+	os.Setenv("PHP_CLI_SERVER_WORKERS", "8")
+	c.Check(cliServerWorkersEnv(), IsNil)
+}
+
 func (s *PHPSuite) TestServerCmdHookLoadsProjectPhpIni(c *C) {
 	defer restoreExecCommand()
 	execCommand = func(name string, arg ...string) *exec.Cmd {

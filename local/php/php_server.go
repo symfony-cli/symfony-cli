@@ -160,6 +160,7 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 		workerName = "PHP"
 		args = []string{p.Version.ServerPath(), "-S", "127.0.0.1:" + strconv.Itoa(port), "-d", "variables_order=EGPCS", routerPath}
 		env = append(env, "APP_FRONT_CONTROLLER="+strings.TrimLeft(p.passthru, "/"))
+		env = append(env, cliServerWorkersEnv()...)
 	}
 
 	e := &Executor{
@@ -194,6 +195,16 @@ func (p *Server) Start(ctx context.Context, pidFile *pid.PidFile) (*pid.PidFile,
 
 		return errors.Wrap(runner.Run(), "PHP server exited unexpectedly")
 	}, nil
+}
+
+// cliServerWorkersEnv lets the built-in web server of PHP serve several requests at once.
+// By default, the server handles one request at a time, so a slow or streamed response blocks the others.
+func cliServerWorkersEnv() []string {
+	if os.Getenv("PHP_CLI_SERVER_WORKERS") != "" {
+		return nil
+	}
+
+	return []string{"PHP_CLI_SERVER_WORKERS=4"}
 }
 
 func serverCmdHook(e *Executor, workingDir string, env []string) func(*exec.Cmd) error {
