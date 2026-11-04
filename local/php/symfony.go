@@ -47,9 +47,10 @@ func SymfonyConsoleExecutor(logger zerolog.Logger, args []string) (*Executor, er
 			consolePath = filepath.Join(dir, consolePath)
 			if _, err := os.Stat(consolePath); err == nil {
 				return &Executor{
-					BinName: "php",
-					Logger:  logger,
-					Args:    append([]string{"php", consolePath}, args...),
+					BinName:       "php",
+					Logger:        logger,
+					Args:          append([]string{"php", consolePath}, args...),
+					consoleScript: consolePath,
 				}, nil
 			}
 		}

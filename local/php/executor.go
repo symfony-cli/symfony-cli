@@ -20,6 +20,7 @@
 package php
 
 import (
+	"encoding/json"
 	"fmt"
 	"html"
 	"io"
@@ -54,11 +55,12 @@ type Executor struct {
 	ExtraEnv   []string
 	Logger     zerolog.Logger
 
-	environ    []string
-	phpEnviron []string
-	iniDir     string
-	scriptDir  string
-	tempDir    string
+	consoleScript string
+	environ       []string
+	phpEnviron    []string
+	iniDir        string
+	scriptDir     string
+	tempDir       string
 }
 
 var execCommand = exec.Command
@@ -482,6 +484,15 @@ func (e *Executor) Execute(loadDotEnv bool) int {
 	environ = append(environ, fmt.Sprintf("%s=%s", gpathname, fullPath))
 	cmd.Env = append(cmd.Env, environ...)
 	cmd.Env = append(cmd.Env, e.ExtraEnv...)
+	consoleCommand := ""
+	if e.consoleScript != "" {
+		command, _ := json.Marshal([]string{os.Args[0], "console"})
+		consoleCommand = string(command)
+	}
+	cmd.Env = append(cmd.Env,
+		"SYMFONY_CLI_CONSOLE_COMMAND="+consoleCommand,
+		"SYMFONY_CLI_CONSOLE_SCRIPT="+e.consoleScript,
+	)
 	if e.Stdout == nil {
 		e.Stdout = os.Stdout
 	}
