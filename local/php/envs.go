@@ -27,6 +27,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/symfony-cli/envs"
 	lhttp "github.com/symfony-cli/symfony-cli/local/http"
 )
@@ -78,6 +79,7 @@ func (p *Server) generateEnv(req *http.Request) map[string]string {
 			env[k] = v
 		}
 	}
+	env["SYMFONY_CLI_BINARY_NAME"] = console.CurrentBinaryName()
 	if p.ProxyMercure && env["MERCURE_URL"] != "" {
 		env["MERCURE_PUBLIC_URL"] = sameOriginMercureURL(req)
 	}
