@@ -25,6 +25,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
+
+	"github.com/symfony-cli/symfony-cli/util"
 )
 
 func TestMain(m *testing.M) {
@@ -170,5 +173,74 @@ func TestWriteRefusesOnlyLiveProcesses(t *testing.T) {
 	}
 	if err := (&PidFile{path: path}).Write(os.Getpid(), 0, "http"); err != nil {
 		t.Errorf("writing a pid file over an exited process should succeed, got: %s", err)
+	}
+}
+
+func TestWaitForPidWithSymlink(t *testing.T) {
+	tempDir := t.TempDir()
+
+	tempHomeDir := filepath.Join(tempDir, "home")
+	if err := os.Mkdir(tempHomeDir, 0774); err != nil {
+		t.Fatalf("failed to create temporary home: %s", err)
+	}
+
+	tempHomeDirLink := tempHomeDir + "-link"
+	if err := os.Symlink(tempHomeDir, tempHomeDirLink); err != nil {
+		t.Fatalf("failed to create symlink to temporary home: %s", err)
+	}
+
+	t.Cleanup(util.OverrideHomeDir(tempHomeDirLink))
+
+	p := New("test", nil)
+
+	waitc := p.WaitForPid()
+
+	if err := p.Write(os.Getpid(), 1337, "leet"); err != nil {
+		t.Fatalf("failed to write pid file: %s", err)
+	}
+
+	select {
+	case err := <-waitc:
+		if err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+	case <-time.After(time.Second):
+		t.Errorf("no event received after 1 second")
+	}
+}
+
+func TestWaitForLogsWithSymlink(t *testing.T) {
+	tempDir := t.TempDir()
+
+	tempHomeDir := filepath.Join(tempDir, "home")
+	if err := os.Mkdir(tempHomeDir, 0774); err != nil {
+		t.Fatalf("failed to create temporary home: %s", err)
+	}
+
+	tempHomeDirLink := tempHomeDir + "-link"
+	if err := os.Symlink(tempHomeDir, tempHomeDirLink); err != nil {
+		t.Fatalf("failed to create symlink to temporary home: %s", err)
+	}
+
+	t.Cleanup(util.OverrideHomeDir(tempHomeDirLink))
+
+	p := New("test", nil)
+
+	done := make(chan error, 1)
+	go func() { done <- p.WaitForLogs() }()
+	// give the watcher time to start before the file appears
+	time.Sleep(200 * time.Millisecond)
+
+	if err := os.WriteFile(p.LogFile(), nil, 0644); err != nil {
+		t.Fatalf("failed to write log file: %s", err)
+	}
+
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+	case <-time.After(time.Second):
+		t.Errorf("no event received after 1 second")
 	}
 }
