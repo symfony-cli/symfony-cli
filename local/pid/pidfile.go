@@ -155,6 +155,17 @@ func (p *PidFile) WaitForExit() error {
 	}
 }
 
+// resolveDir returns path with symlinks in its directory part resolved, as
+// file watchers report events using the real path. It returns path unchanged
+// if the directory cannot be resolved.
+func resolveDir(path string) string {
+	dir, err := filepath.EvalSymlinks(filepath.Dir(path))
+	if err != nil {
+		return path
+	}
+	return filepath.Join(dir, filepath.Base(path))
+}
+
 func (p *PidFile) WaitForPid() <-chan error {
 	ch := make(chan error, 1)
 
@@ -166,7 +177,10 @@ func (p *PidFile) WaitForPid() <-chan error {
 		return ch
 	}
 
-	if err := inotify.Watch(filepath.Dir(p.path), watcherChan, inotify.Create); err != nil {
+	// Events carry the resolved path, so compare against that one
+	pidFile := resolveDir(p.PidFile())
+
+	if err := inotify.Watch(filepath.Dir(pidFile), watcherChan, inotify.Create); err != nil {
 		ch <- err
 		return ch
 	}
@@ -183,7 +197,7 @@ func (p *PidFile) WaitForPid() <-chan error {
 
 		for {
 			e := <-watcherChan
-			if e.Path() == p.PidFile() {
+			if e.Path() == pidFile {
 				ch <- nil
 				return
 			}
@@ -200,6 +214,8 @@ func (p *PidFile) WaitForLogs() error {
 	if err := os.MkdirAll(filepath.Dir(logFile), 0755); err != nil {
 		return err
 	}
+	// Events carry the resolved path, so compare against that one
+	logFile = resolveDir(logFile)
 	if err := inotify.Watch(filepath.Dir(logFile), watcherChan, inotify.Create); err != nil {
 		return errors.Wrap(err, "unable to watch log file")
 	}
