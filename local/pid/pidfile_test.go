@@ -200,7 +200,10 @@ func TestWaitForPidWithSymlink(t *testing.T) {
 	}
 
 	select {
-	case <-waitc:
+	case err := <-waitc:
+		if err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
 	case <-time.After(time.Second):
 		t.Errorf("no event received after 1 second")
 	}
