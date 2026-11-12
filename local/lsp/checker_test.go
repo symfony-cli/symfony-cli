@@ -63,6 +63,7 @@ func (r *capturingProcessRunner) Run(executable string, arguments []string, dire
 }
 
 func TestCheckerDelegatesArgumentsStreamsEnvironmentAndExitStatus(t *testing.T) {
+	t.Setenv("SYMFONY_LSP_TEST_EXPORTED", "exported")
 	directory := t.TempDir()
 	originalDirectory, err := os.Getwd()
 	if err != nil {
@@ -88,12 +89,6 @@ func TestCheckerDelegatesArgumentsStreamsEnvironmentAndExitStatus(t *testing.T) 
 		SymfonyCLIPath: func() (string, error) {
 			return "./symfony", nil
 		},
-		ProjectEnvironment: func(projectDirectory string) ([]string, error) {
-			if projectDirectory != workingDirectory {
-				t.Fatalf("unexpected project directory %q", projectDirectory)
-			}
-			return []string{"DATABASE_URL=mysql://database", "APP_ENV=test"}, nil
-		},
 		Stdin:  bytes.NewBufferString("input"),
 		Stdout: &stdout,
 		Stderr: &stderr,
@@ -116,8 +111,8 @@ func TestCheckerDelegatesArgumentsStreamsEnvironmentAndExitStatus(t *testing.T) 
 	if runner.directory != workingDirectory {
 		t.Fatalf("unexpected working directory %q", runner.directory)
 	}
-	if !slices.Contains(runner.environment, "DATABASE_URL=mysql://database") || !slices.Contains(runner.environment, "APP_ENV=test") {
-		t.Fatalf("project environment was not forwarded: %#v", runner.environment)
+	if !slices.Contains(runner.environment, "SYMFONY_LSP_TEST_EXPORTED=exported") {
+		t.Fatalf("environment was not forwarded: %#v", runner.environment)
 	}
 	expectedCLI := SymfonyCLIEnvironment + "=" + filepath.Join(workingDirectory, "symfony")
 	if !slices.Contains(runner.environment, expectedCLI) {
@@ -128,25 +123,19 @@ func TestCheckerDelegatesArgumentsStreamsEnvironmentAndExitStatus(t *testing.T) 
 	}
 }
 
-func TestCheckerLetsProjectEnvironmentOverrideExportedVariables(t *testing.T) {
-	t.Setenv("DATABASE_URL", "mysql://stale")
+func TestCheckerOverridesExportedSymfonyCLIHandoff(t *testing.T) {
+	t.Setenv(SymfonyCLIEnvironment, "/project")
 	runner := &capturingProcessRunner{}
 	checker := &Checker{
 		Resolver:       &fakeResolver{installation: externaltool.Installation{Executable: "/managed/symfony-lsp"}},
 		Runner:         runner,
 		SymfonyCLIPath: func() (string, error) { return "/symfony", nil },
-		ProjectEnvironment: func(string) ([]string, error) {
-			return []string{"DATABASE_URL=mysql://docker", SymfonyCLIEnvironment + "=/project"}, nil
-		},
-		Stdout: io.Discard,
-		Stderr: io.Discard,
+		Stdout:         io.Discard,
+		Stderr:         io.Discard,
 	}
 
 	if _, err := checker.Run(nil); err != nil {
 		t.Fatal(err)
-	}
-	if value := lastEnvironmentValue(runner.environment, "DATABASE_URL"); value != "mysql://docker" {
-		t.Fatalf("project environment was overridden: %q", value)
 	}
 	expectedCLI, err := filepath.Abs("/symfony")
 	if err != nil {
@@ -176,10 +165,9 @@ func TestCheckerDoesNotStartAfterWrapperFailure(t *testing.T) {
 		SymfonyCLIPath: func() (string, error) {
 			return "/symfony", nil
 		},
-		ProjectEnvironment: func(string) ([]string, error) { return nil, nil },
-		Stdin:              bytes.NewReader(nil),
-		Stdout:             io.Discard,
-		Stderr:             io.Discard,
+		Stdin:  bytes.NewReader(nil),
+		Stdout: io.Discard,
+		Stderr: io.Discard,
 	}
 
 	exitCode, err := checker.Run(nil)
@@ -188,23 +176,6 @@ func TestCheckerDoesNotStartAfterWrapperFailure(t *testing.T) {
 	}
 	if runner.executable != "" {
 		t.Fatalf("checker started after wrapper failure: %q", runner.executable)
-	}
-}
-
-func TestProjectEnvironmentIncludesProjectDotenvValues(t *testing.T) {
-	directory := t.TempDir()
-	if err := os.WriteFile(filepath.Join(directory, ".env"), []byte("APP_ENV=test\nAPP_SECRET=project-secret\n"), 0644); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv("APP_ENV", "")
-	os.Unsetenv("APP_ENV")
-
-	environment, err := loadProjectEnvironment(directory)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !slices.Contains(environment, "APP_ENV=test") || !slices.Contains(environment, "APP_SECRET=project-secret") {
-		t.Fatalf("dotenv values were not prepared: %#v", environment)
 	}
 }
 

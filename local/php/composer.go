@@ -193,13 +193,14 @@ func downloadComposer(dir string, debugLogger zerolog.Logger) (string, error) {
 
 	var stdout bytes.Buffer
 	e := &Executor{
-		Dir:        dir,
-		BinName:    "php",
-		Args:       []string{"php", setupPath, "--quiet"},
-		SkipNbArgs: 1,
-		Stdout:     &stdout,
-		Stderr:     &stdout,
-		Logger:     debugLogger,
+		Dir:            dir,
+		BinName:        "php",
+		Args:           []string{"php", setupPath, "--quiet"},
+		SkipNbArgs:     1,
+		Stdout:         &stdout,
+		Stderr:         &stdout,
+		Logger:         debugLogger,
+		SkipProjectEnv: true,
 	}
 	ret := e.Execute(false)
 	if ret == 1 {
