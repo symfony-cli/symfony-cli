@@ -175,6 +175,15 @@ func (r *Remote) Extra() Envs {
 		v["SYMFONY_DEBUG"] = "0"
 	}
 
+	if _, ok := os.LookupEnv("APP_SHARE_DIR"); !ok {
+		if shareDir := r.extractShareDir(); shareDir != "" {
+			if r.Debug {
+				fmt.Fprintf(os.Stderr, "adding APP_SHARE_DIR: %s (from mounts)\n", shareDir)
+			}
+			v["APP_SHARE_DIR"] = shareDir
+		}
+	}
+
 	if _, ok := os.LookupEnv("APP_SECRET"); !ok {
 		if entropy, ok := os.LookupEnv("PLATFORM_PROJECT_ENTROPY"); ok {
 			if r.Debug {
@@ -241,6 +250,37 @@ func (r *Remote) Extra() Envs {
 		}
 	}
 	return v
+}
+
+func (r *Remote) extractShareDir() string {
+	data, err := base64.StdEncoding.DecodeString(os.Getenv("PLATFORM_APPLICATION"))
+	if err != nil {
+		if r.Debug {
+			fmt.Fprintf(os.Stderr, "unable to decode PLATFORM_APPLICATION: %s\n", err)
+		}
+		return ""
+	}
+	var app struct {
+		Mounts map[string]struct {
+			Source string `json:"source"`
+		} `json:"mounts"`
+	}
+	if err := json.Unmarshal(data, &app); err != nil {
+		if r.Debug {
+			fmt.Fprintf(os.Stderr, "unable to unmarshal PLATFORM_APPLICATION: %s\n", err)
+		}
+		return ""
+	}
+	for path, mount := range app.Mounts {
+		if strings.Trim(path, "/") != "var/share" {
+			continue
+		}
+		switch mount.Source {
+		case "storage", "local", "service":
+			return "var/share"
+		}
+	}
+	return ""
 }
 
 func (r *Remote) extractProjectDefaultUrl() *url.URL {

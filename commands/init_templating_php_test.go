@@ -20,6 +20,7 @@
 package commands
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -103,6 +104,53 @@ func TestHasComposerPackage(t *testing.T) {
 			if result != expected {
 				t.Errorf("hasComposerPackage(%q/%q): got %v, expected %v", testCase, pkg, result, expected)
 			}
+		}
+	}
+}
+
+func TestHasComposerPackageMinimumVersion(t *testing.T) {
+	for _, test := range []struct {
+		version string
+		matches bool
+	}{
+		{"v6.4.0", false},
+		{"v7.3.9", false},
+		{"v7.4.0-RC1", false},
+		{"v7.4.0", true},
+		{"7.4.1", true},
+		{"v8.0.0", true},
+		{"7.4.x-dev", false},
+		{"dev-main", false},
+		{"", false},
+	} {
+		t.Run(test.version, func(t *testing.T) {
+			dir := t.TempDir()
+			lock := `{"packages":[{"name":"symfony/framework-bundle","version":"` + test.version + `"}]}`
+			if err := os.WriteFile(filepath.Join(dir, "composer.lock"), []byte(lock), 0644); err != nil {
+				t.Fatal(err)
+			}
+			if got := hasComposerPackage(dir, "symfony/framework-bundle:>=7.4"); got != test.matches {
+				t.Errorf("version %q: got %v, want %v", test.version, got, test.matches)
+			}
+		})
+	}
+
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "composer.json"), []byte(`{"require":{"symfony/framework-bundle":"^7.4"}}`), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if hasComposerPackage(dir, "symfony/framework-bundle:>=7.4") {
+		t.Fatal("a version check requires a locked version")
+	}
+	if err := os.WriteFile(filepath.Join(dir, "composer.lock"), []byte(`{"packages-dev":[{"name":"symfony/framework-bundle","version":"v7.4.0"}]}`), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if !hasComposerPackage(dir, "symfony/framework-bundle:>=7.4") {
+		t.Fatal("development packages also have locked versions")
+	}
+	for _, pkg := range []string{"symfony/missing:>=7.4", "symfony/framework-bundle:>=unknown", "symfony/framework-bundle:>="} {
+		if hasComposerPackage(dir, pkg) {
+			t.Errorf("unexpected match for %q", pkg)
 		}
 	}
 }
