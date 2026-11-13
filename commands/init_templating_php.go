@@ -27,10 +27,30 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/hashicorp/go-version"
 	"github.com/symfony-cli/terminal"
 )
 
 func hasComposerPackage(directory, pkg string) bool {
+	// Keep one argument so older CLIs can still render templates with version checks.
+	if name, minimum, constrained := strings.Cut(pkg, ":>="); constrained {
+		minVersion, err := version.NewVersion(minimum)
+		if err != nil {
+			return false
+		}
+		lock, err := parseComposerLock(directory)
+		if err != nil {
+			return false
+		}
+		for _, p := range append(lock.Packages, lock.PackagesDev...) {
+			if p.Name == name {
+				installed, err := version.NewVersion(p.Version)
+				return err == nil && installed.GreaterThanOrEqual(minVersion)
+			}
+		}
+		return false
+	}
+
 	lock, err := parseComposerLock(directory)
 	if err == nil {
 		for _, p := range lock.Packages {

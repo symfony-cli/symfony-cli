@@ -123,6 +123,55 @@ func (s *RemoteSuite) TestIsWorker(c *C) {
 	c.Assert(r.Extra()["SYMFONY_IS_WORKER"], Equals, "1")
 }
 
+func (s *RemoteSuite) TestShareDir(c *C) {
+	defer os.Unsetenv("PLATFORM_APPLICATION")
+	r := &Remote{}
+	for _, test := range []struct {
+		application string
+		shareDir    string
+	}{
+		{`{"mounts":{"/var/share":{"source":"storage","source_path":"shared-data"}}}`, "var/share"},
+		{`{"mounts":{"var/share":{"source":"local"}}}`, "var/share"},
+		{`{"mounts":{"/var/share/":{"source":"service","service":"files"}}}`, "var/share"},
+		{`{"mounts":{"/var/share":{"source":"tmp"}}}`, ""},
+		{`{"mounts":{"/var/share":{"source":"temporary"}}}`, ""},
+		{`{"mounts":{"/var/share":{"source":"instance"}}}`, ""},
+		{`{"mounts":{"/var/share":{"source":"unknown"}}}`, ""},
+		{`{"mounts":{"/var/share":{}}}`, ""},
+		{`{"mounts":{"/public/uploads":{"source":"storage"}}}`, ""},
+		{`{"mounts":{"/var/share-extra":{"source":"storage"}}}`, ""},
+		{`{"mounts":{}}`, ""},
+		{`{}`, ""},
+		{`null`, ""},
+		{`invalid JSON`, ""},
+	} {
+		os.Setenv("PLATFORM_APPLICATION", base64.StdEncoding.EncodeToString([]byte(test.application)))
+		shareDir, defined := r.Extra()["APP_SHARE_DIR"]
+		c.Check(shareDir, Equals, test.shareDir, Commentf("application: %s", test.application))
+		c.Check(defined, Equals, test.shareDir != "", Commentf("application: %s", test.application))
+	}
+
+	os.Setenv("PLATFORM_APPLICATION", "not base64")
+	_, defined := r.Extra()["APP_SHARE_DIR"]
+	c.Check(defined, Equals, false)
+	os.Unsetenv("PLATFORM_APPLICATION")
+	_, defined = r.Extra()["APP_SHARE_DIR"]
+	c.Check(defined, Equals, false)
+}
+
+func (s *RemoteSuite) TestShareDirPreservesExportedValue(c *C) {
+	os.Setenv("PLATFORM_APPLICATION", base64.StdEncoding.EncodeToString([]byte(`{"mounts":{"/var/share":{"source":"storage"}}}`)))
+	defer os.Unsetenv("PLATFORM_APPLICATION")
+	defer os.Unsetenv("APP_SHARE_DIR")
+
+	for _, value := range []string{"custom/share", "/data/shared", "false", "0", ""} {
+		os.Setenv("APP_SHARE_DIR", value)
+		_, defined := (&Remote{}).Extra()["APP_SHARE_DIR"]
+		c.Check(defined, Equals, false, Commentf("APP_SHARE_DIR=%s", value))
+		c.Check(os.Getenv("APP_SHARE_DIR"), Equals, value)
+	}
+}
+
 func (s *RemoteSuite) TestDefaultRoute(c *C) {
 	r := &Remote{}
 	_, hasUrl := r.Extra()["SYMFONY_DEFAULT_ROUTE_URL"]
