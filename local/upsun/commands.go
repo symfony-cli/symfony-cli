@@ -2353,7 +2353,6 @@ var Commands = []*console.Command{
 		Flags: []console.Flag{
 			&console.StringFlag{Name: "app"},
 			&console.StringFlag{Name: "count", Aliases: []string{"C"}},
-			&console.StringFlag{Name: "disk", Aliases: []string{"D"}},
 			&console.BoolFlag{Name: "dry-run"},
 			&console.StringFlag{Name: "environment", Aliases: []string{"e"}},
 			&console.BoolFlag{Name: "force", Aliases: []string{"f"}},
@@ -2362,6 +2361,7 @@ var Commands = []*console.Command{
 			&console.StringFlag{Name: "project", Aliases: []string{"p"}},
 			&console.StringFlag{Name: "service", Aliases: []string{"s"}},
 			&console.StringFlag{Name: "size", Aliases: []string{"S"}},
+			&console.StringFlag{Name: "storage"},
 			&console.StringFlag{Name: "task"},
 			&console.BoolFlag{Name: "wait"},
 			&console.StringFlag{Name: "worker"},
