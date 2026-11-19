@@ -53,15 +53,33 @@ type Executor struct {
 	Paths      []string
 	ExtraEnv   []string
 	Logger     zerolog.Logger
+	// SkipProjectEnv skips the variables computed from Docker or tunnels, for
+	// commands not running project code
+	SkipProjectEnv bool
 
 	environ    []string
 	phpEnviron []string
 	iniDir     string
 	scriptDir  string
 	tempDir    string
+	loadDotEnv func(vars map[string]string, scriptDir string, phpBinary envs.PHPBinary) (map[string]string, error)
 }
 
 var execCommand = exec.Command
+
+// PHPBinaryForDir returns the CLI binary of the PHP version selected for dir.
+func PHPBinaryForDir(dir string) envs.PHPBinary {
+	return func() (string, error) {
+		if util.InCloud() {
+			return "php", nil
+		}
+		v, _, _, err := phpstore.New(util.GetHomeDir(), false, nil).BestVersionForDir(dir)
+		if err != nil {
+			return "", err
+		}
+		return v.PHPPath, nil
+	}
+}
 
 // IsBinaryName returns true if the command is a PHP binary name
 func IsBinaryName(name string) bool {
@@ -71,6 +89,22 @@ func IsBinaryName(name string) bool {
 		}
 	}
 	return false
+}
+
+// RunsScripts returns true if the PHP binary runs arbitrary scripts, which
+// might expect the project .env files to be loaded.
+func RunsScripts(name string) bool {
+	return name == "php" || name == "phpdbg"
+}
+
+// RunsProjectCode returns false for the PHP binaries that never run project
+// code, like the ones installing or building extensions.
+func RunsProjectCode(name string) bool {
+	switch name {
+	case "pecl", "pear", "phpize", "php-config":
+		return false
+	}
+	return true
 }
 
 func GetBinaryNames() []string {
@@ -182,8 +216,8 @@ func (e *Executor) DetectScriptDir() (string, error) {
 //  1. exported variables (os.Environ);
 //  2. when loadDotEnv is true, variables from the project .env files, which
 //     never override exported ones (see envs.LoadDotEnv);
-//  3. variables computed from Docker or tunnels, which override exported ones
-//     as these can be stale;
+//  3. unless SkipProjectEnv is true, variables computed from Docker or
+//     tunnels, which override exported ones as these can be stale;
 //  4. PHP_BINARY, PHP_PATH, PHP_PEAR_PHP_BIN and PHP_INI_SCAN_DIR, which point
 //     to the selected PHP version.
 //
@@ -204,24 +238,19 @@ func (e *Executor) Config(loadDotEnv bool) error {
 
 	vars := make(map[string]string)
 	// env defined by Platform.sh services/tunnels or docker-compose services
-	if env, err := envs.GetEnv(e.scriptDir, terminal.IsDebug()); err == nil {
-		for k, v := range envs.AsMap(env) {
-			vars[k] = v
+	if !e.SkipProjectEnv {
+		if env, err := envs.GetEnv(e.scriptDir, terminal.IsDebug()); err == nil {
+			for k, v := range envs.AsMap(env) {
+				vars[k] = v
+			}
 		}
-	}
-	if loadDotEnv {
-		for k, v := range envs.LoadDotEnv(vars, e.scriptDir) {
-			vars[k] = v
-		}
-	}
-	for k, v := range vars {
-		e.environ = append(e.environ, fmt.Sprintf("%s=%s", k, v))
 	}
 
 	// When running in Cloud we don't need to detect PHP or do anything fancy
 	// with the configuration, the only thing we want is to potentially load the
 	// .env file
 	if util.InCloud() {
+		e.configureEnviron(vars, loadDotEnv, "php")
 		// args[0] MUST be the same as path
 		// but as we change the path, we should update args[0] accordingly
 		e.Args[0] = e.BinName
@@ -239,6 +268,7 @@ func (e *Executor) Config(loadDotEnv bool) error {
 			return err
 		}
 	}
+	e.configureEnviron(vars, loadDotEnv, v.PHPPath)
 	e.phpEnviron = append(e.phpEnviron, fmt.Sprintf("PHP_BINARY=%s", v.PHPPath))
 	e.phpEnviron = append(e.phpEnviron, fmt.Sprintf("PHP_PATH=%s", v.PHPPath))
 	// for pecl
@@ -319,6 +349,22 @@ func (e *Executor) Config(loadDotEnv bool) error {
 	}
 
 	return err
+}
+
+func (e *Executor) configureEnviron(vars map[string]string, loadDotEnv bool, phpBinary string) {
+	if loadDotEnv {
+		load := e.loadDotEnv
+		if load == nil {
+			load = envs.LoadDotEnv
+		}
+		var err error
+		if vars, err = load(vars, e.scriptDir, func() (string, error) { return phpBinary, nil }); err != nil {
+			terminal.Eprintfln("<warning>WARNING</> %s", err)
+		}
+	}
+	for k, v := range vars {
+		e.environ = append(e.environ, fmt.Sprintf("%s=%s", k, v))
+	}
 }
 
 func (e *Executor) CleanupTemporaryDirectories() {
