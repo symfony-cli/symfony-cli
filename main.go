@@ -76,7 +76,7 @@ func main() {
 	// called via "symfony console"?
 	if len(args) >= 2 && args[1] == "console" {
 		if executor, err := php.SymfonyConsoleExecutor(terminal.Logger, args[2:]); err == nil {
-			executor.ExtraEnv = getCliExtraEnv()
+			executor.ExtraEnv = append(executor.ExtraEnv, getCliExtraEnv()...)
 			os.Exit(executor.Execute(false))
 		}
 	}
@@ -129,7 +129,7 @@ func main() {
 			cmdArgs := ctx.Args().Slice()
 			if executor, err := php.SymfonyConsoleExecutor(terminal.Logger, cmdArgs); err == nil {
 				terminal.Eprintfln("<info>Running \"symfony console %s\"</>", strings.Join(cmdArgs, " "))
-				executor.ExtraEnv = getCliExtraEnv()
+				executor.ExtraEnv = append(executor.ExtraEnv, getCliExtraEnv()...)
 				return console.Exit("", executor.Execute(false))
 			}
 			return console.ShowAppHelpAction(ctx)
