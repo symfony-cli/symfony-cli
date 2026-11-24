@@ -20,6 +20,7 @@
 package php
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 
@@ -46,10 +47,15 @@ func SymfonyConsoleExecutor(logger zerolog.Logger, args []string) (*Executor, er
 			logger.Debug().Str("consolePath", consolePath).Str("directory", dir).Msgf("Looking for Symfony console")
 			consolePath = filepath.Join(dir, consolePath)
 			if _, err := os.Stat(consolePath); err == nil {
+				command, _ := json.Marshal([]string{os.Args[0], "console"})
 				return &Executor{
 					BinName: "php",
 					Logger:  logger,
 					Args:    append([]string{"php", consolePath}, args...),
+					ExtraEnv: []string{
+						"SYMFONY_CLI_CONSOLE_COMMAND=" + string(command),
+						"SYMFONY_CLI_CONSOLE_SCRIPT=" + consolePath,
+					},
 				}, nil
 			}
 		}
