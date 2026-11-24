@@ -1,0 +1,39 @@
+name: Publish Installer
+
+on:
+    push:
+        tags:
+            - 'v*'
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    id-token: write
+
+jobs:
+    publish:
+        name: Publish
+        runs-on: ubuntu-latest
+        steps:
+            -
+                name: Checkout
+                uses: actions/checkout@v7
+            -
+                name: Validate installer syntax
+                run: bash -n installer/bash-installer
+            -
+                name: Configure AWS credentials
+                uses: aws-actions/configure-aws-credentials@v6
+                with:
+                    role-to-assume: ${{ vars.INSTALLER_AWS_ROLE_ARN }}
+                    aws-region: ${{ vars.INSTALLER_AWS_REGION }}
+            -
+                name: Upload installer
+                env:
+                    S3_BUCKET: ${{ vars.INSTALLER_S3_BUCKET }}
+                run: aws s3 cp installer/bash-installer "s3://${S3_BUCKET}/cli/installer" --content-type 'text/plain; charset=utf-8' --acl public-read
+            -
+                name: Invalidate CDN cache
+                env:
+                    DISTRIBUTION_ID: ${{ vars.INSTALLER_CLOUDFRONT_DISTRIBUTION_ID }}
+                run: aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths /cli/installer
