@@ -52,36 +52,21 @@ type Tailer struct {
 	NoWorkerLogs bool
 	NoServerLogs bool
 
-	pidFileChan chan *pid.PidFile
-	lines       chan *namedLine
+	lines chan *namedLine
+	seen  sync.Map
+	tails sync.WaitGroup
 }
 
 func (tailer *Tailer) Watch(pidFile *pid.PidFile) error {
-	// This has to be the very first things to be sure to have the chans
-	// initialized soon enough
-	tailer.pidFileChan = make(chan *pid.PidFile)
 	tailer.lines = make(chan *namedLine, 100)
-
-	seenDirs := sync.Map{}
-	go func() {
-		for {
-			pidFile := <-tailer.pidFileChan
-			if _, ok := seenDirs.Load(pidFile.PidFile()); ok {
-				continue
-			}
-
-			seenDirs.Store(pidFile.PidFile(), true)
-			go tailLogFile(pidFile, tailer.lines, tailer.Follow, tailer.LinesNb)
-		}
-	}()
 
 	// Web server/PHP log file
 	if !tailer.NoServerLogs {
-		tailer.pidFileChan <- pidFile
+		tailer.tailPidFile(pidFile)
 	}
 
 	// Worker log files
-	if !tailer.NoWorkerLogs {
+	if !tailer.NoWorkerLogs && tailer.Follow {
 		workerDir := pidFile.WorkerPidDir()
 		if err := os.MkdirAll(workerDir, 0755); err != nil {
 			return err
@@ -93,7 +78,7 @@ func (tailer *Tailer) Watch(pidFile *pid.PidFile) error {
 		go func() {
 			for {
 				e := <-watcherChan
-				if _, ok := seenDirs.Load(e.Path()); ok {
+				if _, ok := tailer.seen.Load(e.Path()); ok {
 					continue
 				}
 				if fi, err := os.Stat(e.Path()); err == nil && fi.IsDir() {
@@ -104,24 +89,26 @@ func (tailer *Tailer) Watch(pidFile *pid.PidFile) error {
 					terminal.Printfln("<warning>WARNING</> %s", err)
 					continue
 				}
-				tailer.pidFileChan <- p
+				tailer.tailPidFile(p)
 			}
 		}()
+	}
+	if !tailer.NoWorkerLogs {
 		for _, p := range pid.AllWorkers(pidFile.Dir) {
-			tailer.pidFileChan <- p
+			tailer.tailPidFile(p)
 		}
 	}
 
 	// Application log files (Symfony for now)
 	if !tailer.NoAppLogs {
 		for _, applog := range tailer.AppLogs {
-			if err := tailer.watchAppLogFile(applog, &seenDirs); err != nil {
+			if err := tailer.watchAppLogFile(applog); err != nil {
 				return err
 			}
 		}
 		if len(tailer.AppLogs) == 0 {
 			for _, dir := range findApplicationLogDirs(pidFile.Dir) {
-				if err := tailer.watchAppLogDir(dir, &seenDirs); err != nil {
+				if err := tailer.watchAppLogDir(dir); err != nil {
 					return err
 				}
 			}
@@ -140,12 +127,15 @@ func (tailer *Tailer) Tail(w io.Writer) error {
 		})
 	}
 
+	if !tailer.Follow {
+		go func() {
+			tailer.tails.Wait()
+			close(tailer.lines)
+		}()
+	}
+
 	var buf bytes.Buffer
-	for {
-		line := <-tailer.lines
-		if line == nil {
-			continue
-		}
+	for line := range tailer.lines {
 		buf.Reset()
 		fmt.Fprintf(&buf, "[<info>%-11s</>] ", line.name)
 		content := strings.TrimRight(line.line.Text, "\n")
@@ -157,16 +147,30 @@ func (tailer *Tailer) Tail(w io.Writer) error {
 		}
 		w.Write(buf.Bytes())
 	}
+	return nil
 }
 
-func (tailer Tailer) WatchAdditionalPidFile(file *pid.PidFile) {
-	tailer.pidFileChan <- file
+func (tailer *Tailer) WatchAdditionalPidFile(file *pid.PidFile) {
+	tailer.tailPidFile(file)
+}
+
+func (tailer *Tailer) tailPidFile(p *pid.PidFile) {
+	if _, loaded := tailer.seen.LoadOrStore(p.PidFile(), true); loaded {
+		return
+	}
+	tailer.tails.Add(1)
+	go func() {
+		defer tailer.tails.Done()
+		tailLogFile(p, tailer.lines, tailer.Follow, tailer.LinesNb)
+	}()
 }
 
 func tailLogFile(p *pid.PidFile, lines chan *namedLine, follow bool, nblines int64) {
-	if err := p.WaitForLogs(); err != nil {
-		terminal.Printfln("<warning>WARNING</> %s log file cannot be tailed: %s", p.String(), err)
-		return
+	if follow {
+		if err := p.WaitForLogs(); err != nil {
+			terminal.Printfln("<warning>WARNING</> %s log file cannot be tailed: %s", p.String(), err)
+			return
+		}
 	}
 	t, err := tailFile(p.LogFile(), follow, nblines)
 	if err != nil {
@@ -195,10 +199,11 @@ func tailFileAt(filename string, follow bool, pos int64) (*tail.Tail, error) {
 			Offset: pos,
 			Whence: io.SeekStart,
 		},
-		ReOpen: follow,
-		Follow: follow,
-		Poll:   true,
-		Logger: tail.DiscardingLogger,
+		ReOpen:    follow,
+		Follow:    follow,
+		MustExist: !follow,
+		Poll:      true,
+		Logger:    tail.DiscardingLogger,
 	})
 }
 
@@ -219,10 +224,14 @@ func findApplicationLogDirs(projectDir string) []string {
 }
 
 // watchAppLogFile tails the given log file, waiting for it to be created if needed
-func (tailer *Tailer) watchAppLogFile(applog string, seen *sync.Map) error {
+func (tailer *Tailer) watchAppLogFile(applog string) error {
 	applog, err := filepath.Abs(applog)
 	if err != nil {
 		return errors.Wrapf(err, "unable to get absolute path for %s", applog)
+	}
+	if !tailer.Follow {
+		tailer.tailAppLog(applog, replayLastLines)
+		return nil
 	}
 	dir := filepath.Dir(applog)
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -240,10 +249,10 @@ func (tailer *Tailer) watchAppLogFile(applog string, seen *sync.Map) error {
 		return errors.Wrapf(err, "unable to evaluate symlinks for %s", applog)
 	}
 
-	if err := tailer.watchAppLogs(dir, func(path string) bool { return path == applog }, seen); err != nil {
+	if err := tailer.watchAppLogs(dir, func(path string) bool { return path == applog }); err != nil {
 		return err
 	}
-	tailer.tailAppLog(applog, replayLastLines, seen)
+	tailer.tailAppLog(applog, replayLastLines)
 	return nil
 }
 
@@ -251,7 +260,7 @@ func (tailer *Tailer) watchAppLogFile(applog string, seen *sync.Map) error {
 // modified one replays its last lines, the other ones (like rotated files) are
 // followed from their current end once written to, and the ones created later
 // on are read from their first line.
-func (tailer *Tailer) watchAppLogDir(dir string, seen *sync.Map) error {
+func (tailer *Tailer) watchAppLogDir(dir string) error {
 	realDir, err := filepath.EvalSymlinks(dir)
 	if err != nil {
 		return errors.Wrapf(err, "unable to evaluate symlinks for %s", dir)
@@ -265,25 +274,27 @@ func (tailer *Tailer) watchAppLogDir(dir string, seen *sync.Map) error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	watcherChan := make(chan inotify.EventInfo, 100)
-	if err := inotify.Watch(dir, watcherChan, inotify.Create, inotify.Write); err != nil {
-		return errors.Wrap(err, "unable to watch the applog directory")
-	}
-	go func() {
-		for e := range watcherChan {
-			if !isLogFile(e.Path()) {
-				continue
-			}
-			mu.Lock()
-			offset := idleSizes[e.Path()]
-			delete(idleSizes, e.Path())
-			mu.Unlock()
-			if fi, err := os.Stat(e.Path()); err == nil && fi.Size() < offset {
-				offset = 0
-			}
-			tailer.tailAppLog(e.Path(), offset, seen)
+	if tailer.Follow {
+		watcherChan := make(chan inotify.EventInfo, 100)
+		if err := inotify.Watch(dir, watcherChan, inotify.Create, inotify.Write); err != nil {
+			return errors.Wrap(err, "unable to watch the applog directory")
 		}
-	}()
+		go func() {
+			for e := range watcherChan {
+				if !isLogFile(e.Path()) {
+					continue
+				}
+				mu.Lock()
+				offset := idleSizes[e.Path()]
+				delete(idleSizes, e.Path())
+				mu.Unlock()
+				if fi, err := os.Stat(e.Path()); err == nil && fi.Size() < offset {
+					offset = 0
+				}
+				tailer.tailAppLog(e.Path(), offset)
+			}
+		}()
+	}
 
 	entries, err := os.ReadDir(realDir)
 	if err != nil {
@@ -307,12 +318,12 @@ func (tailer *Tailer) watchAppLogDir(dir string, seen *sync.Map) error {
 	}
 	if latest != "" {
 		delete(idleSizes, latest)
-		tailer.tailAppLog(latest, replayLastLines, seen)
+		tailer.tailAppLog(latest, replayLastLines)
 	}
 	return nil
 }
 
-func (tailer *Tailer) watchAppLogs(dir string, match func(path string) bool, seen *sync.Map) error {
+func (tailer *Tailer) watchAppLogs(dir string, match func(path string) bool) error {
 	watcherChan := make(chan inotify.EventInfo, 10)
 	if err := inotify.Watch(dir, watcherChan, inotify.Create); err != nil {
 		return errors.Wrap(err, "unable to watch the applog directory")
@@ -321,7 +332,7 @@ func (tailer *Tailer) watchAppLogs(dir string, match func(path string) bool, see
 		for e := range watcherChan {
 			if match(e.Path()) {
 				// everything in a file created after the tailer started is new
-				tailer.tailAppLog(e.Path(), 0, seen)
+				tailer.tailAppLog(e.Path(), 0)
 			}
 		}
 	}()
@@ -331,11 +342,13 @@ func (tailer *Tailer) watchAppLogs(dir string, match func(path string) bool, see
 // replayLastLines makes tailAppLog start with the last tailer.LinesNb lines
 const replayLastLines = -1
 
-func (tailer *Tailer) tailAppLog(applog string, offset int64, seen *sync.Map) {
-	if _, loaded := seen.LoadOrStore(applog, true); loaded {
+func (tailer *Tailer) tailAppLog(applog string, offset int64) {
+	if _, loaded := tailer.seen.LoadOrStore(applog, true); loaded {
 		return
 	}
+	tailer.tails.Add(1)
 	go func() {
+		defer tailer.tails.Done()
 		var tsf *tail.Tail
 		var err error
 		if offset == replayLastLines {
