@@ -26,7 +26,25 @@ import (
 	"testing"
 
 	"github.com/posener/complete"
+	"github.com/symfony-cli/symfony-cli/local/php"
 )
+
+func TestCompletionExecutorSkipsProjectEnv(t *testing.T) {
+	var args []string
+	e, err := completionExecutor(complete.Args{All: []string{"console", ""}}, "console", func(a []string) (*php.Executor, error) {
+		args = a
+		return &php.Executor{}, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !e.SkipProjectEnv {
+		t.Error("expected the completion executor to skip the project environment")
+	}
+	if !slices.Contains(args, "-a1") {
+		t.Errorf("unexpected completion arguments %v", args)
+	}
+}
 
 func TestBuildSymfonyConsoleWrapperArgsShell(t *testing.T) {
 	for name, tc := range map[string]struct {
